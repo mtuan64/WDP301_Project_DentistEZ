@@ -1,0 +1,22 @@
+# node_modules chứa thư viện => không nên đẩy lên Git
+node_modules/
+
+# Biến môi trường - chứa thông tin nhạy cảm
+.env
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Tệp hệ thống
+.DS_Store
+Thumbs.db
+
+# Tệp tạm của editor/IDE
+.vscode/
+.idea/
+
+# Tệp build hoặc output (nếu có)
+dist/
+build/
