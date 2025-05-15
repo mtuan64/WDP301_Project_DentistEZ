@@ -1,0 +1,116 @@
+
+.loginContainer {
+    font-family: sans-serif;
+    background-color: #f5f5f5;
+    display: flex;
+    justify-content: center; 
+    align-items: center;
+    min-height: 100vh;
+    width: 100vw; 
+  }
+  
+  .loginWrapper {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    display: flex;
+    width: 90%; 
+    max-width: 1200px; 
+    overflow: hidden;
+  }
+  
+  .imageContainer {
+    width: 40%; 
+    background-color: #e0f7fa;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+    text-align: center;
+  }
+  
+  .imagePlaceholder {
+    /* Các стил cho phần nội dung placeholder nếu cần */
+  }
+  
+  .loginFormContainer {
+    width: 60%; /* Điều chỉnh tỷ lệ chiều rộng giữa hình ảnh và form */
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Căn giữa các phần tử trong form */
+  }
+  
+  .loginTitle {
+    color: #e91e63;
+    margin-bottom: 30px;
+    text-align: center;
+    width: 400px; /* Giới hạn chiều rộng tiêu đề */
+  }
+  
+  .formGroup {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    width: 400px; 
+  }
+  
+  .label {
+    display: block;
+    margin-bottom: 5px;
+    color: #495057;
+    font-size: 0.9rem;
+    text-align: left;
+  }
+  
+  .input {
+    width: 90%;
+    padding: 12px 15px;
+    border: 1px solid #ced4da;
+    border-radius: 20px;
+    font-size: 1em;
+    color: #cfd5db;
+    background-color: #d9dde1;
+  }
+  
+  .input:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(203, 204, 206, 0.25);
+  }
+  
+  .forgotPasswordLink {
+    text-align: right;
+    width: 380px;
+    margin-bottom: 5px;
+    font-size: 0.9em;
+  }
+  
+  .forgotPasswordLink a {
+    color: #1976d2;
+    text-decoration: none;
+  }
+  
+  .loginButton {
+    background-color: #e91e63;
+    color: #fff;
+    border: none;
+    border-radius: 20px;
+    padding: 12px 20px;
+    font-size: 1em;
+    cursor: pointer;
+    width: 390px;
+  }
+  
+  .signupLink {
+    margin-top: 20px;
+    font-size: 0.9em;
+    color: #555;
+    text-align: center;
+    width: 400px;
+  }
+  
+  .signupLink a {
+    color: #1976d2;
+    text-decoration: none;
+  }
