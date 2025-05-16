@@ -1,21 +1,29 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const cors = require('cors');
+const express = require("express");
+const bodyParser = require("body-parser");
+const cors = require("cors");
+const connectDB = require("./config/db");
+const { authRoutes } = require("./routes/client");
+
+require("dotenv").config();
+
 const app = express();
-const connectDb = require('./config/db')
-require('dotenv').config();
+
 const corsOptions = {
-    origin: ["http://localhost:5173"],
-    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true,
+  origin: ["http://localhost:5173"],
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
 };
+
 app.use(cors(corsOptions));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-router(app);
+
+connectDB();
+
+app.use("/api/client/auth", authRoutes);
+
 const PORT = process.env.PORT || 9999;
 app.listen(PORT, () => {
-    connectDb();
-    console.log(`Server is running on port ${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
 });

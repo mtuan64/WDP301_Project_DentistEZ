@@ -1,15 +1,37 @@
 import React, { useState } from "react";
-import "../css/Login.css";
-
+import { useNavigate } from "react-router-dom";
+import "../assets/css/Login.css";
 
 const LoginPage = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Đăng nhập với:", { username, password });
-    // Thêm logic đăng nhập 
+    try {
+      const response = await fetch(
+        "http://localhost:9999/api/client/auth/login",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ username, password }),
+        }
+      );
+
+      const data = await response.json();
+      if (response.ok) {
+        localStorage.setItem("user", JSON.stringify(data.user));
+        navigate("/");
+      } else {
+        alert(data.msg);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      alert("An error occurred. Please try again.");
+    }
   };
 
   return (
@@ -21,7 +43,6 @@ const LoginPage = () => {
             <h3>Hình Ảnh Minh Họa</h3>
             <p>Đây là nơi bạn sẽ đặt hình ảnh mô tả.</p>
           </div>
-          {/* )} */}
         </div>
 
         {/* Phần bên phải - Form đăng nhập */}
@@ -62,7 +83,7 @@ const LoginPage = () => {
             </button>
           </form>
           <div className="signupLink">
-            Bạn Chưa Có Tài Khoản? <a href="#">Đăng Ký</a>
+            Bạn Chưa Có Tài Khoản? <a href="/register">Đăng Ký</a>
           </div>
         </div>
       </div>
