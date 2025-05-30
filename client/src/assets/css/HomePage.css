@@ -1,0 +1,427 @@
+/********** Root & Fonts **********/
+:root {
+    --primary: #06A3DA;
+    --secondary: #F57E57;
+    --light: #EEF9FF;
+    --dark: #091E3E;
+    --white: #fff;
+}
+
+/* Reset cơ bản */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+body, html {
+    margin: 0;
+    padding: 0;
+    font-family: 'Jost', sans-serif;
+    background-color: var(--light);
+    color: var(--dark);
+    scroll-behavior: smooth;
+}
+
+img {
+    max-width: 100%;
+    display: block;
+}
+
+/********** Typography **********/
+h1, h2, .font-weight-bold {
+    font-weight: 700 !important;
+    margin: 0 0 15px 0;
+    color: var(--dark);
+}
+
+h3, h4, .font-weight-semi-bold {
+    font-weight: 600 !important;
+    margin: 0 0 10px 0;
+    color: var(--dark);
+}
+
+h5, h6, .font-weight-medium {
+    font-weight: 500 !important;
+    margin: 0 0 8px 0;
+    color: var(--dark);
+}
+
+p {
+    line-height: 1.6;
+    margin-bottom: 15px;
+}
+
+/********** Buttons **********/
+.btn {
+    font-family: 'Jost', sans-serif;
+    font-weight: 600;
+    padding: 10px 20px;
+    border-radius: 4px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: background-color 0.5s, border-color 0.5s;
+    display: inline-block;
+    text-align: center;
+    text-decoration: none;
+    user-select: none;
+}
+
+.btn-primary, .btn-secondary {
+    color: var(--white);
+    background-color: var(--primary);
+    border-color: var(--primary);
+}
+
+.btn-primary:hover {
+    background: var(--secondary);
+    border-color: var(--secondary);
+}
+
+.btn-secondary {
+    background-color: var(--secondary);
+    border-color: var(--secondary);
+}
+
+.btn-secondary:hover {
+    background: var(--primary);
+    border-color: var(--primary);
+}
+
+/* Square buttons */
+.btn-square, .btn-sm-square, .btn-lg-square {
+    padding-left: 0;
+    padding-right: 0;
+    text-align: center;
+}
+
+.btn-square { width: 36px; height: 36px; }
+.btn-sm-square { width: 28px; height: 28px; }
+.btn-lg-square { width: 46px; height: 46px; }
+
+/********** Spinner **********/
+#spinner {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(255, 255, 255, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.5s ease-out, visibility 0s linear 0.5s;
+    z-index: 99999;
+}
+
+#spinner.show {
+    visibility: visible;
+    opacity: 1;
+    transition-delay: 0s;
+}
+
+/********** Back to top button **********/
+.back-to-top {
+    position: fixed;
+    display: none;
+    right: 45px;
+    bottom: 45px;
+    z-index: 99;
+    background: var(--primary);
+    color: var(--white);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 24px;
+    line-height: 40px;
+    text-align: center;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.back-to-top:hover {
+    background: var(--secondary);
+}
+
+/********** Topbar **********/
+.topbar {
+    background-color: var(--light);
+    padding: 0.5rem 2rem;
+    font-size: 14px;
+    color: var(--dark);
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.topbar i {
+    color: var(--primary);
+    margin-left: 8px;
+}
+
+/********** Navbar **********/
+.navbar {
+    background-color: var(--white);
+    box-shadow: 0 2px 8px rgb(0 0 0 / 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.navbar-light .navbar-nav {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0 2rem;
+}
+
+.navbar-light .navbar-nav .nav-link {
+    font-family: 'Jost', sans-serif;
+    padding: 35px 15px;
+    font-size: 18px;
+    color: var(--dark);
+    text-decoration: none;
+    transition: color 0.5s;
+}
+
+.navbar-light .navbar-nav .nav-link:hover,
+.navbar-light .navbar-nav .nav-link.active {
+    color: var(--primary);
+}
+
+@media (max-width: 991.98px) {
+    .navbar-light .navbar-nav {
+        flex-direction: column;
+        padding: 0 1rem;
+    }
+    .navbar-light .navbar-nav .nav-link {
+        padding: 10px 0;
+    }
+}
+
+/********** Carousel **********/
+.carousel-caption {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(9, 30, 62, 0.85);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    z-index: 1;
+    text-align: center;
+    padding: 0 15px;
+}
+
+.carousel-caption h5 {
+    font-size: 18px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--secondary);
+    margin-bottom: 10px;
+}
+
+.carousel-caption h1 {
+    font-size: 48px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: var(--white);
+}
+
+.carousel-caption .btn {
+    margin: 5px;
+}
+
+@media (max-width: 576px) {
+    .carousel-caption h5 {
+        font-size: 14px;
+    }
+    .carousel-caption h1 {
+        font-size: 30px;
+    }
+}
+
+/* Carousel controls */
+.carousel-control-prev,
+.carousel-control-next {
+    width: 10%;
+}
+
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+    width: 3rem;
+    height: 3rem;
+}
+
+/********** Banner Section **********/
+.banner-section .bg-primary,
+.banner-section .bg-dark,
+.banner-section .bg-secondary {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 40px 20px;
+    color: var(--white);
+}
+
+.banner-section h3 {
+    font-size: 24px;
+    margin-bottom: 15px;
+}
+
+.banner-section p,
+.banner-section h2 {
+    font-size: 16px;
+}
+
+/********** About Us Section **********/
+.about-section {
+    padding: 60px 20px;
+    background-color: var(--white);
+    text-align: center;
+}
+
+.about-section h1 {
+    font-size: 36px;
+    margin-bottom: 20px;
+}
+
+.about-section h5 {
+    color: var(--primary);
+    margin-bottom: 20px;
+}
+
+.about-section .fa-check-circle {
+    color: var(--primary);
+    margin-right: 8px;
+}
+
+.about-section img {
+    border-radius: 12px;
+    width: 100%;
+    height: auto;
+    max-width: 600px;
+    margin: 30px auto 0 auto;
+}
+
+/********** Section title underline **********/
+.section-title {
+    position: relative;
+    margin-bottom: 40px;
+    text-align: center;
+}
+
+.section-title h5 {
+    display: inline-block;
+    position: relative;
+    padding-bottom: 10px;
+    font-weight: 700;
+    font-size: 20px;
+}
+
+.section-title h5::before,
+.section-title h5::after {
+    content: "";
+    position: absolute;
+    bottom: 11px;
+    height: 3px;
+    background-color: var(--primary);
+}
+
+.section-title h5::before {
+    width: 45px;
+    right: -55px;
+}
+
+.section-title h5::after {
+    width: 15px;
+    right: -75px;
+    background-color: var(--secondary);
+}
+
+/********** Forms **********/
+input, textarea, select {
+    width: 100%;
+    padding: 12px 15px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-family: 'Jost', sans-serif;
+    font-size: 16px;
+    transition: border-color 0.3s;
+}
+
+input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+/********** Tables **********/
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 30px;
+    font-family: 'Jost', sans-serif;
+}
+
+table th, table td {
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+table th {
+    background-color: var(--primary);
+    color: var(--white);
+    font-weight: 700;
+}
+
+/********** Footer **********/
+.footer {
+    background-color: var(--dark);
+    color: var(--light);
+    padding: 40px 20px;
+    font-family: 'Jost', sans-serif;
+    text-align: center;
+}
+
+.footer a {
+    color: var(--secondary);
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.footer a:hover {
+    color: var(--primary);
+}
+
+.footer .footer-title {
+    font-weight: 700;
+    margin-bottom: 20px;
+    font-size: 20px;
+}
+
+.footer .social-icons a {
+    display: inline-block;
+    margin: 0 10px;
+    font-size: 24px;
+    color: var(--secondary);
+    transition: color 0.3s;
+}
+
+.footer .social-icons a:hover {
+    color: var(--primary);
+}
+
+/********** Responsive **********/
+@media (max-width: 768px) {
+    .navbar-light .navbar-nav {
+        flex-direction: column;
+    }
+    .banner-section h3 {
+        font-size: 20px;
+    }
+    .about-section h1 {
+        font-size: 28px;
+    }
+}

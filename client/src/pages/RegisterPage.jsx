@@ -18,7 +18,7 @@ const RegisterPage = () => {
     e.preventDefault();
     try {
       const response = await fetch(
-        "http://localhost:9999/api/client/auth/register",
+        "http://localhost:9999/api/register",
         {
           method: "POST",
           headers: {

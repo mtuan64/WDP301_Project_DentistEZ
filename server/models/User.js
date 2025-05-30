@@ -7,11 +7,12 @@ const UserSchema = new Schema(
     fullname: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    roleid: { type: Number, default: 1 }, // mặc định là 'patient'
+    role: { type: String, enum: ['patient', 'doctor', 'staff', 'admin'], default: 'patient' },
     phone: { type: String },
     address: { type: String },
     dateOfBirth: { type: Date },
     gender: { type: String, enum: ['male', 'female', 'other'] },
+    profilePicture: { type: String }, 
   },
   { timestamps: true }
 );

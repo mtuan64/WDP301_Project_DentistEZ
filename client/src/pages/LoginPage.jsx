@@ -1,35 +1,40 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/authContext";
 import "../assets/css/Login.css";
 
 const LoginPage = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(
-        "http://localhost:9999/api/client/auth/login",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ username, password }),
-        }
-      );
+      const response = await fetch("http://localhost:9999/api/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, password }),
+      });
 
       const data = await response.json();
       if (response.ok) {
+        console.log("Login successful, user data:", data.user);
+        // Store user data in localStorage
         localStorage.setItem("user", JSON.stringify(data.user));
-        navigate("/");
+        // Update auth context
+        login(data.user);
+        // Slight delay to ensure context update propagates
+        setTimeout(() => navigate("/"), 0);
       } else {
+        console.error("Login failed:", data.msg);
         alert(data.msg);
       }
     } catch (error) {
-      console.error("Error:", error);
+      console.error("Login error:", error);
       alert("An error occurred. Please try again.");
     }
   };
