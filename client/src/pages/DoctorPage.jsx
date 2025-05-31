@@ -46,7 +46,7 @@ const DoctorPage = () => {
         </Row>
       </div>
 
-      <HeaderComponent />
+      
 
       {/* Hero Carousel */}
       <div id="heroCarousel" className="carousel slide carousel-fade" data-bs-ride="carousel">

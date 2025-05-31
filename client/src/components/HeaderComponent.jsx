@@ -1,19 +1,39 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/authContext";
+import { Button } from "antd";
+import { MenuOutlined } from "@ant-design/icons";
 
-const Header = () => {
+const Header = ({ onMenuClick }) => {
   const { user, logout } = useAuth();
 
-  console.log("Header rendered, user:", user); // Debug user state
-
   return (
-    <nav className="navbar navbar-expand-lg bg-white navbar-light shadow-sm px-5 py-3 py-lg-0">
-      <Link to="/" className="navbar-brand p-0">
-        <h1 className="m-0 text-primary">
+    <nav
+      className="navbar navbar-expand-lg bg-white navbar-light shadow-sm px-5 py-3 py-lg-0"
+      style={{ position: 'fixed', width: '100%', top: 0, left: 0, zIndex: 3000 }}
+    >
+      {/* Nút menu 3 gạch chỉ hiện khi đã đăng nhập */}
+      {user && (
+        <Button
+          type="text"
+          icon={<MenuOutlined style={{ fontSize: 24 }} />}
+          onClick={onMenuClick}
+          style={{
+            marginRight: 16,
+            border: 'none',
+            background: 'none',
+            boxShadow: 'none',
+            outline: 'none'
+          }}
+        />
+      )}
+
+      <Link to="/" className="navbar-brand p-0 d-flex align-items-center">
+        <h1 className="m-0 text-primary" style={{ fontWeight: 700, fontSize: 32 }}>
           <i className="fa fa-tooth me-2"></i>DentistEZ
         </h1>
       </Link>
+
       <button
         className="navbar-toggler"
         type="button"
@@ -25,7 +45,7 @@ const Header = () => {
 
       <div className="collapse navbar-collapse" id="navbarCollapse">
         <div className="navbar-nav ms-auto py-0 align-items-center d-flex">
-          <Link to="/" className="nav-item nav-link active">Home</Link>
+          <Link to="/" className="nav-item nav-link ">Home</Link>
           <Link to="/about" className="nav-item nav-link">About</Link>
           <Link to="/service" className="nav-item nav-link">Service</Link>
           <Link to="/doctor" className="nav-item nav-link">Doctor</Link>
