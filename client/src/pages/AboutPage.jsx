@@ -29,7 +29,7 @@ const AboutPage = () => {
         </Row>
       </div>
 
-      <HeaderComponent />
+      
 
       {/* Hero Section */}
       <div id="heroCarousel" className="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="4000">

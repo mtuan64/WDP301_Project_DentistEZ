@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Container, Row, Col } from "react-bootstrap";
 import { Link, useParams } from "react-router-dom";
-import HeaderComponent from "../components/HeaderComponent";
+
 import FooterComponent from "../components/FooterComponent";
 import axios from "axios";
 import "../assets/css/Homepage.css";
@@ -77,7 +77,7 @@ const DoctorDetail = () => {
         </Row>
       </div>
 
-      <HeaderComponent />
+      
 
       {/* Hero Carousel */}
       <div id="heroCarousel" className="carousel slide carousel-fade" data-bs-ride="carousel">

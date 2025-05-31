@@ -2,7 +2,7 @@ import React from "react";
 import { Container, Row, Col, Button, Form } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import FooterComponent from "../components/FooterComponent";
-import Header from "../components/HeaderComponent";
+
 import '../assets/css/HomePage.css'
 
 const HomePage = () => {
@@ -29,7 +29,7 @@ const HomePage = () => {
           </Col>
         </Row>
       </div>
-      <Header />
+      
 
 
       {/* Hero Carousel */}
