@@ -65,6 +65,12 @@ const ProfilePage = () => {
     setSuccess("");
 
     try {
+      // Log the token to debug
+      console.log("Token being sent:", user?.token);
+      if (!user?.token) {
+        throw new Error("No token found. Please log in again.");
+      }
+
       // Update profile picture if a file is selected
       let updatedProfilePicture = profilePicture;
       if (file) {
@@ -72,15 +78,16 @@ const ProfilePage = () => {
         formData.append("profilePicture", file);
 
         const response = await fetch("http://localhost:9999/api/user/upload-profile-picture", {
-          method: "POST",
+          method: "POST", // Reverted to POST
           headers: {
-            "Authorization": `Bearer ${user.token}`, // Assume token-based auth
+            "Authorization": `Bearer ${user.token}`,
           },
           body: formData,
         });
 
         const data = await response.json();
         if (!response.ok) {
+          console.log("Profile picture upload error:", data); // Debug log
           throw new Error(data.msg || "Failed to upload profile picture");
         }
         updatedProfilePicture = data.profilePictureUrl; // Backend returns URL
@@ -88,7 +95,7 @@ const ProfilePage = () => {
 
       // Update user details
       const response = await fetch("http://localhost:9999/api/user/update", {
-        method: "POST",
+        method: "POST", // Reverted to POST
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${user.token}`,
@@ -118,6 +125,7 @@ const ProfilePage = () => {
         setSuccess("Hồ sơ đã được cập nhật thành công!");
         setFile(null); // Clear file input
       } else {
+        console.log("User update error:", data); // Debug log
         throw new Error(data.msg || "Không thể cập nhật hồ sơ");
       }
     } catch (err) {
