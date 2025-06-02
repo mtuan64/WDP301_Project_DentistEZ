@@ -24,8 +24,25 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 40px;
+  padding: 0px;
   text-align: center;
+}
+
+.imagePlaceholder {
+  width: 100%;
+  height: 100%; 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden; 
+}
+
+.loginImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Makes the image fill the container while maintaining aspect ratio */
+  object-position: center; /* Centers the image */
+  border-radius: 8px; /* Optional: matches the wrapper's border-radius */
 }
 
 .loginFormContainer {
@@ -37,7 +54,7 @@
 }
 
 .loginTitle {
-  color: #e91e63;
+  color: #1976d2;
   margin-bottom: 30px;
   text-align: center;
   width: 400px;
@@ -66,7 +83,7 @@
   font-size: 1em;
   color: #06080a;
   background-color: #d9dde1;
-  -webkit-text-fill-color: #000
+  -webkit-text-fill-color: #000;
 }
 
 .input:focus {
@@ -88,7 +105,7 @@
 }
 
 .loginButton {
-  background-color: #e91e63;
+  background-color: #1976d2;
   color: #fff;
   border: none;
   border-radius: 20px;
