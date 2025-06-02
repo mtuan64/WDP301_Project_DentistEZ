@@ -26,21 +26,8 @@ const upload = multer({
   },
 });
 
-// Authentication middleware
-const authMiddleware = (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) {
-    return res.status(401).json({ msg: 'No token provided' });
-  }
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // Attach userId and role to req
-    next();
-  } catch (err) {
-    console.error('Token verification failed:', err);
-    res.status(401).json({ msg: 'Invalid token' });
-  }
-};
+
+
 
 exports.registerUser = async (req, res, next) => {
   try {
@@ -128,25 +115,7 @@ exports.loginUser = async (req, res, next) => {
       { expiresIn: '1h' }
     );
 
-    // Determine redirect URL based on role
-    let redirect;
-    switch (user.role) {
-      case 'patient':
-        redirect = '/patient/home';
-        break;
-      case 'doctor':
-        redirect = '/doctor/dashboard';
-        break;
-      case 'staff':
-        redirect = '/staff/dashboard';
-        break;
-      case 'admin':
-        redirect = '/admin/dashboard';
-        break;
-      default:
-        redirect = '/'; // Fallback redirect
-    }
-
+    
     // Return token, user info, and redirect URL
     res.status(200).json({
       msg: 'Đăng nhập thành công.',
@@ -163,7 +132,7 @@ exports.loginUser = async (req, res, next) => {
         role: user.role,
         profilePicture: user.profilePicture,
       },
-      redirect, // Include redirect URL
+      
     });
   } catch (error) {
     console.error('Lỗi khi đăng nhập:', error);
