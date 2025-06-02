@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "../assets/css/Register.css"; 
+import "../assets/css/Register.css";
 
 const RegisterPage = () => {
   const [username, setUsername] = useState("");
@@ -11,32 +11,29 @@ const RegisterPage = () => {
   const [address, setAddress] = useState("");
   const [dob, setDob] = useState("");
   const [gender, setGender] = useState("");
-  const roleid = 1; 
+  const roleid = 1;
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(
-        "http://localhost:9999/api/register",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            username,
-            password,
-            fullname,
-            email,
-            phone,
-            address,
-            dob,
-            gender,
-            roleid,
-          }),
-        }
-      );
+      const response = await fetch("http://localhost:9999/api/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username,
+          password,
+          fullname,
+          email,
+          phone,
+          address,
+          dob,
+          gender,
+          roleid,
+        }),
+      });
       const data = await response.json();
       if (response.ok) {
         alert("Registration successful!");
@@ -56,8 +53,11 @@ const RegisterPage = () => {
         {/* Phần bên trái - Hình ảnh mô tả */}
         <div className="imageContainer">
           <div className="imagePlaceholder">
-            <h3>Hình Ảnh Minh Họa</h3>
-            <p>Đây là nơi bạn sẽ đặt hình ảnh mô tả.</p>
+            <img
+              src="https://mir-s3-cdn-cf.behance.net/project_modules/max_1200/08763c148032171.62ce0e981e54f.jpg"
+              alt="Hình ảnh minh họa"
+              className="registerImage"
+            />
           </div>
         </div>
         {/* Phần bên phải - Form đăng ký */}
