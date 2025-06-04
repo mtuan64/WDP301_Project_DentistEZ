@@ -13,15 +13,15 @@ const doctorSchema = new mongoose.Schema({
   },
   Specialty: {
     type: String,
-    required: true
+    
   },
   Degree: {
     type: String,
-    required: true
+    
   },
   ExperienceYears: {
     type: Number,
-    required: true
+    
   },
   Description: {
     type: String
