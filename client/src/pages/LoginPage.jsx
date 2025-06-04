@@ -23,10 +23,14 @@ const LoginPage = () => {
       const data = await response.json();
       if (response.ok) {
         console.log("Login successful, user data:", data.user);
-        // Store user data in localStorage
+
+
         localStorage.setItem("user", JSON.stringify(data.user));
+        localStorage.setItem("token", data.token);
+
         // Update auth context
         login(data.user);
+
         // Slight delay to ensure context update propagates
         setTimeout(() => navigate("/"), 0);
       } else {

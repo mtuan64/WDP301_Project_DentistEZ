@@ -17,6 +17,10 @@ import {
   DialogContentText,
 } from "@mui/material";
 import "../assets/css/BlogListPage.css";
+import { useNavigate } from "react-router-dom";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+import AddIcon from "@mui/icons-material/Add";
 
 const BlogListPage = () => {
   const [blogs, setBlogs] = useState([]);
@@ -24,7 +28,6 @@ const BlogListPage = () => {
   const [newBlog, setNewBlog] = useState({
     title: "",
     content: "",
-    author: "",
     image: "",
   });
   const [openEdit, setOpenEdit] = useState(false);
@@ -32,14 +35,27 @@ const BlogListPage = () => {
   const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false);
   const [imageFile, setImageFile] = useState(null);
   const [blogToDelete, setBlogToDelete] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
+    const token = localStorage.getItem("token");
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    if (!token || !user || user.role !== "admin") {
+      navigate("/");
+      return;
+    }
+
     fetchBlogs();
-  }, []);
+  }, [navigate]);
 
   const fetchBlogs = async () => {
     try {
-      const response = await axios.get("http://localhost:9999/api/blogs");
+      const response = await axios.get("http://localhost:9999/api/blogs", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
       setBlogs(response.data);
     } catch (error) {
       console.error("Error fetching blogs:", error);
@@ -48,18 +64,33 @@ const BlogListPage = () => {
 
   const handleUpdateBlog = async () => {
     try {
+      let updatedBlog = { ...editingBlog };
       if (imageFile) {
         const formData = new FormData();
         formData.append("image", imageFile);
         const uploadResponse = await axios.post(
           "http://localhost:9999/api/blogs/upload",
-          formData
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
         );
-        editingBlog.image = uploadResponse.data.url;
+        updatedBlog.image = uploadResponse.data.url;
       }
       const response = await axios.put(
         `http://localhost:9999/api/blogs/${editingBlog._id}`,
-        editingBlog
+        {
+          title: updatedBlog.title,
+          content: updatedBlog.content,
+          image: updatedBlog.image,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
       );
       setBlogs(
         blogs.map((blog) =>
@@ -76,7 +107,14 @@ const BlogListPage = () => {
 
   const handleDeleteBlog = async () => {
     try {
-      await axios.delete(`http://localhost:9999/api/blogs/${blogToDelete._id}`);
+      await axios.delete(
+        `http://localhost:9999/api/blogs/${blogToDelete._id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
       setBlogs(blogs.filter((blog) => blog._id !== blogToDelete._id));
       setOpenDeleteConfirm(false);
       setBlogToDelete(null);
@@ -87,21 +125,36 @@ const BlogListPage = () => {
 
   const handleAddBlog = async () => {
     try {
+      let blogToAdd = { ...newBlog };
       if (imageFile) {
         const formData = new FormData();
         formData.append("image", imageFile);
         const uploadResponse = await axios.post(
           "http://localhost:9999/api/blogs/upload",
-          formData
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
         );
-        newBlog.image = uploadResponse.data.url;
+        blogToAdd.image = uploadResponse.data.url;
       }
       const response = await axios.post(
         "http://localhost:9999/api/blogs",
-        newBlog
+        {
+          title: blogToAdd.title,
+          content: blogToAdd.content,
+          image: blogToAdd.image,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
       );
       setBlogs([...blogs, response.data]);
-      setNewBlog({ title: "", content: "", author: "", image: "" });
+      setNewBlog({ title: "", content: "", image: "" });
       setImageFile(null);
       setOpenAdd(false);
     } catch (error) {
@@ -110,7 +163,12 @@ const BlogListPage = () => {
   };
 
   const handleOpenEdit = (blog) => {
-    setEditingBlog(blog);
+    setEditingBlog({
+      _id: blog._id,
+      title: blog.title,
+      content: blog.content,
+      image: blog.image,
+    });
     setOpenEdit(true);
   };
 
@@ -126,7 +184,7 @@ const BlogListPage = () => {
 
   const handleCloseAdd = () => {
     setOpenAdd(false);
-    setNewBlog({ title: "", content: "", author: "", image: "" });
+    setNewBlog({ title: "", content: "", image: "" });
     setImageFile(null);
   };
 
@@ -143,7 +201,12 @@ const BlogListPage = () => {
   return (
     <div className="blog-list-page">
       <h1>Blog List</h1>
-      <Button variant="contained" color="primary" onClick={handleOpenAdd}>
+      <Button
+        variant="contained"
+        color="primary"
+        startIcon={<AddIcon />}
+        onClick={handleOpenAdd}
+      >
         Add Blog
       </Button>
       <TableContainer component={Paper}>
@@ -151,7 +214,6 @@ const BlogListPage = () => {
           <TableHead>
             <TableRow>
               <TableCell>Title</TableCell>
-              <TableCell>Author</TableCell>
               <TableCell>Content</TableCell>
               <TableCell>Image</TableCell>
               <TableCell>Actions</TableCell>
@@ -161,7 +223,6 @@ const BlogListPage = () => {
             {blogs.map((blog) => (
               <TableRow key={blog._id}>
                 <TableCell>{blog.title}</TableCell>
-                <TableCell>{blog.author}</TableCell>
                 <TableCell>{blog.content}</TableCell>
                 <TableCell>
                   {blog.image && (
@@ -174,19 +235,15 @@ const BlogListPage = () => {
                 </TableCell>
                 <TableCell>
                   <Button
-                    variant="contained"
                     color="primary"
                     onClick={() => handleOpenEdit(blog)}
-                  >
-                    Edit
-                  </Button>
+                    startIcon={<EditIcon />}
+                  />
                   <Button
-                    variant="contained"
                     color="secondary"
                     onClick={() => handleOpenDeleteConfirm(blog)}
-                  >
-                    Delete
-                  </Button>
+                    startIcon={<DeleteIcon />}
+                  />
                 </TableCell>
               </TableRow>
             ))}
@@ -194,6 +251,7 @@ const BlogListPage = () => {
         </Table>
       </TableContainer>
 
+      {/* Edit Dialog */}
       <Dialog open={openEdit} onClose={handleCloseEdit}>
         <DialogTitle>Edit Blog</DialogTitle>
         <DialogContent>
@@ -206,16 +264,6 @@ const BlogListPage = () => {
             value={editingBlog?.title || ""}
             onChange={(e) =>
               setEditingBlog({ ...editingBlog, title: e.target.value })
-            }
-          />
-          <TextField
-            margin="dense"
-            label="Author"
-            type="text"
-            fullWidth
-            value={editingBlog?.author || ""}
-            onChange={(e) =>
-              setEditingBlog({ ...editingBlog, author: e.target.value })
             }
           />
           <TextField
@@ -246,6 +294,7 @@ const BlogListPage = () => {
         </DialogActions>
       </Dialog>
 
+      {/* Add Dialog */}
       <Dialog open={openAdd} onClose={handleCloseAdd}>
         <DialogTitle>Add Blog</DialogTitle>
         <DialogContent>
@@ -257,14 +306,6 @@ const BlogListPage = () => {
             fullWidth
             value={newBlog.title}
             onChange={(e) => setNewBlog({ ...newBlog, title: e.target.value })}
-          />
-          <TextField
-            margin="dense"
-            label="Author"
-            type="text"
-            fullWidth
-            value={newBlog.author}
-            onChange={(e) => setNewBlog({ ...newBlog, author: e.target.value })}
           />
           <TextField
             margin="dense"
@@ -294,6 +335,7 @@ const BlogListPage = () => {
         </DialogActions>
       </Dialog>
 
+      {/* Delete Confirm Dialog */}
       <Dialog open={openDeleteConfirm} onClose={handleCloseDeleteConfirm}>
         <DialogTitle>Delete Blog</DialogTitle>
         <DialogContent>

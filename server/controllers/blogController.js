@@ -4,7 +4,7 @@ const fs = require("fs").promises;
 
 exports.getAllBlogs = async (req, res) => {
   try {
-    const blogs = await Blog.find();
+    const blogs = await Blog.find().populate("author_id", "fullname email");
     res.json(blogs);
   } catch (error) {
     console.error("Error fetching blogs:", error);
@@ -14,8 +14,9 @@ exports.getAllBlogs = async (req, res) => {
 
 exports.createBlog = async (req, res) => {
   try {
-    const { title, content, author, image } = req.body;
-    const newBlog = new Blog({ title, content, author, image });
+    const { title, content, image } = req.body;
+    const author_id = req.user.userId;
+    const newBlog = new Blog({ title, content, author_id, image });
     await newBlog.save();
     res.status(201).json(newBlog);
   } catch (error) {
@@ -27,10 +28,10 @@ exports.createBlog = async (req, res) => {
 exports.updateBlog = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, content, author, image } = req.body;
+    const { title, content, image } = req.body;
     const updatedBlog = await Blog.findByIdAndUpdate(
       id,
-      { title, content, author, image, updatedAt: Date.now() },
+      { title, content, image, updatedAt: Date.now() },
       { new: true }
     );
     if (!updatedBlog) {
@@ -63,27 +64,20 @@ exports.uploadImage = async (req, res) => {
     if (!file) {
       return res.status(400).json({ message: "No image file provided" });
     }
-
-    console.log("Uploading file to Cloudinary:", file.path); // Debug log
-
     // Upload file to Cloudinary
     const result = await cloudinary.uploader.upload(file.path, {
       folder: "blog_images",
     });
-
     // Delete local file after upload
     await fs
       .unlink(file.path)
       .catch((err) => console.error("Error deleting local file:", err));
-
     res.status(200).json({ url: result.secure_url });
   } catch (error) {
-    console.error("Cloudinary upload error:", error); // Detailed error logging
-    res
-      .status(500)
-      .json({
-        message: "Failed to upload image to Cloudinary",
-        error: error.message,
-      });
+    console.error("Cloudinary upload error:", error);
+    res.status(500).json({
+      message: "Failed to upload image to Cloudinary",
+      error: error.message,
+    });
   }
 };

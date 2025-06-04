@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { authMiddleware } = require("../middleware/authMiddleware");
+const { authMiddleware, authAdminMiddleware } = require("../middleware/authMiddleware");
 const {
   registerUser,
   loginUser,
@@ -46,7 +46,6 @@ const uploadMulter = multer({
   },
 });
 
-
 router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.get("/doctor", getAllDoctors);
@@ -59,11 +58,10 @@ router.post(
 );
 router.post("/user/update", authMiddleware, updateUser);
 
-
-router.get("/blogs", getAllBlogs); 
-router.post("/blogs", createBlog); 
-router.put("/blogs/:id", updateBlog); 
-router.delete("/blogs/:id", deleteBlog);
-router.post("/blogs/upload", uploadMulter.single("image"), uploadImage); 
+router.get("/blogs", authAdminMiddleware, getAllBlogs); 
+router.post("/blogs", authAdminMiddleware, createBlog); 
+router.put("/blogs/:id", authAdminMiddleware, updateBlog); 
+router.delete("/blogs/:id", authAdminMiddleware, deleteBlog);
+router.post("/blogs/upload", authAdminMiddleware, uploadMulter.single("image"), uploadImage);
 
 module.exports = router;
