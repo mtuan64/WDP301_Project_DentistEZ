@@ -1,13 +1,14 @@
-const User = require('../models/User');
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
-const multer = require('multer');
-const path = require('path');
+const User = require("../models/User");
+const Doctor = require("../models/Doctor");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
+const multer = require("multer");
+const path = require("path");
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/'); // Ensure this folder exists
+    cb(null, "uploads/"); // Ensure this folder exists
   },
   filename: (req, file, cb) => {
     cb(null, `${Date.now()}-${file.originalname}`);
@@ -17,17 +18,32 @@ const upload = multer({
   storage,
   fileFilter: (req, file, cb) => {
     const filetypes = /jpeg|jpg|png/;
-    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+    const extname = filetypes.test(
+      path.extname(file.originalname).toLowerCase()
+    );
     const mimetype = filetypes.test(file.mimetype);
     if (extname && mimetype) {
       return cb(null, true);
     }
-    cb(new Error('Only JPEG/PNG images are allowed'));
+    cb(new Error("Only JPEG/PNG images are allowed"));
   },
 });
 
-
-
+// Authentication middleware
+const authMiddleware = (req, res, next) => {
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) {
+    return res.status(401).json({ msg: "No token provided" });
+  }
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded; // Attach userId and role to req
+    next();
+  } catch (err) {
+    console.error("Token verification failed:", err);
+    res.status(401).json({ msg: "Invalid token" });
+  }
+};
 
 exports.registerUser = async (req, res, next) => {
   try {
@@ -46,7 +62,7 @@ exports.registerUser = async (req, res, next) => {
     // Check if email or username already exists
     const existingUser = await User.findOne({ $or: [{ email }, { username }] });
     if (existingUser) {
-      return res.status(400).json({ msg: 'Người dùng đã tồn tại!' });
+      return res.status(400).json({ msg: "Người dùng đã tồn tại!" });
     }
 
     // Hash password
@@ -79,46 +95,76 @@ exports.registerUser = async (req, res, next) => {
       role: newUser.role,
     });
   } catch (error) {
-    console.error('Error in registerUser:', error);
+    console.error("Error in registerUser:", error);
     next(error);
   }
 };
 
+const isDoctorProfileComplete = (user, doctor) => {
+  if (
+    !user.fullname ||
+    !user.phone ||
+    !user.address ||
+    !user.dateOfBirth ||
+    !user.gender ||
+    !doctor.Specialty ||
+    !doctor.Degree ||
+    doctor.ExperienceYears == null
+  ) {
+    return false;
+  }
+  return true;
+};
 exports.loginUser = async (req, res, next) => {
   try {
     const { username, password } = req.body;
 
-    console.log('Request body:', req.body);
+    console.log("Request body:", req.body);
 
     if (!username || !password) {
-      return res.status(400).json({ msg: 'Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.' });
+      return res
+        .status(400)
+        .json({ msg: "Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu." });
     }
 
     // Find user by username
     const user = await User.findOne({ username });
 
     if (!user) {
-      return res.status(404).json({ msg: 'Người dùng không tồn tại.' });
+      return res.status(404).json({ msg: "Người dùng không tồn tại." });
     }
 
     // Check password
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      return res.status(401).json({ msg: 'Mật khẩu không đúng.' });
+      return res.status(401).json({ msg: "Mật khẩu không đúng." });
     }
 
     // Create JWT token
     const token = jwt.sign(
       { userId: user._id, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: '1h' }
+      { expiresIn: "1h" }
     );
 
-    
-    // Return token, user info, and redirect URL
+    let requireProfileCompletion = false;
+    let doctorInfo = null;
+
+    // If doctor — check profile completeness
+    if (user.role === "doctor") {
+      doctorInfo = await Doctor.findOne({ userId: user._id });
+      if (!doctorInfo) {
+        return res.status(404).json({ msg: "Thông tin bác sĩ chưa được tạo." });
+      }
+
+      requireProfileCompletion = !isDoctorProfileComplete(user, doctorInfo);
+    }
+    // Prepare response1s
     res.status(200).json({
-      msg: 'Đăng nhập thành công.',
+      msg: requireProfileCompletion
+        ? "Đăng nhập thành công. Vui lòng hoàn thiện hồ sơ!"
+        : "Đăng nhập thành công.",
       token,
       user: {
         id: user._id,
@@ -132,11 +178,23 @@ exports.loginUser = async (req, res, next) => {
         role: user.role,
         profilePicture: user.profilePicture,
       },
-      
+      doctorinfo: doctorInfo
+        ? {
+            id: doctorInfo._id,
+            clinic_id: doctorInfo.clinic_id,
+            Specialty: doctorInfo.Specialty,
+            Degree: doctorInfo.Degree,
+            ExperienceYears: doctorInfo.ExperienceYears,
+            Description: doctorInfo.Description,
+            Status: doctorInfo.Status,
+            ProfileImage: doctorInfo.ProfileImage,
+          }
+        : null,
+      requireProfileCompletion,
     });
   } catch (error) {
-    console.error('Lỗi khi đăng nhập:', error);
-    res.status(500).json({ msg: 'Đã có lỗi xảy ra. Vui lòng thử lại sau.' });
+    console.error("Lỗi khi đăng nhập:", error);
+    res.status(500).json({ msg: "Đã có lỗi xảy ra. Vui lòng thử lại sau." });
   }
 };
 
@@ -146,7 +204,7 @@ exports.uploadProfilePicture = async (req, res, next) => {
     const file = req.file;
 
     if (!file) {
-      return res.status(400).json({ msg: 'No file uploaded' });
+      return res.status(400).json({ msg: "No file uploaded" });
     }
 
     const profilePictureUrl = `/uploads/${file.filename}`;
@@ -157,33 +215,41 @@ exports.uploadProfilePicture = async (req, res, next) => {
     );
 
     if (!user) {
-      return res.status(404).json({ msg: 'User not found' });
+      return res.status(404).json({ msg: "User not found" });
     }
 
     res.status(200).json({
-      msg: 'Profile picture uploaded successfully',
+      msg: "Profile picture uploaded successfully",
       profilePictureUrl,
     });
   } catch (error) {
-    console.error('Error in uploadProfilePicture:', error);
-    res.status(500).json({ msg: 'Failed to upload profile picture' });
+    console.error("Error in uploadProfilePicture:", error);
+    res.status(500).json({ msg: "Failed to upload profile picture" });
   }
 };
 
 exports.updateUser = async (req, res, next) => {
   try {
     const userId = req.user.userId; // From authMiddleware
-    const { fullname, email, phone, address, dateOfBirth, gender, profilePicture } = req.body;
+    const {
+      fullname,
+      email,
+      phone,
+      address,
+      dateOfBirth,
+      gender,
+      profilePicture,
+    } = req.body;
 
     // Validate required fields
     if (!fullname || !email) {
-      return res.status(400).json({ msg: 'Fullname and email are required' });
+      return res.status(400).json({ msg: "Fullname and email are required" });
     }
 
     // Check if email is already taken by another user
     const existingUser = await User.findOne({ email, _id: { $ne: userId } });
     if (existingUser) {
-      return res.status(400).json({ msg: 'Email already in use' });
+      return res.status(400).json({ msg: "Email already in use" });
     }
 
     // Update user
@@ -202,11 +268,11 @@ exports.updateUser = async (req, res, next) => {
     );
 
     if (!updatedUser) {
-      return res.status(404).json({ msg: 'User not found' });
+      return res.status(404).json({ msg: "User not found" });
     }
 
     res.status(200).json({
-      msg: 'User updated successfully',
+      msg: "User updated successfully",
       user: {
         id: updatedUser._id,
         username: updatedUser.username,
@@ -221,8 +287,8 @@ exports.updateUser = async (req, res, next) => {
       },
     });
   } catch (error) {
-    console.error('Error in updateUser:', error);
-    res.status(500).json({ msg: 'Failed to update user' });
+    console.error("Error in updateUser:", error);
+    res.status(500).json({ msg: "Failed to update user" });
   }
 };
 

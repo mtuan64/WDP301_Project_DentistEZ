@@ -23,12 +23,17 @@ const LoginPage = () => {
       const data = await response.json();
       if (response.ok) {
         console.log("Login successful, user data:", data.user);
-        // Store user data in localStorage
         localStorage.setItem("user", JSON.stringify(data.user));
-        // Update auth context
+        localStorage.setItem("token", data.token);
         login(data.user);
-        // Slight delay to ensure context update propagates
-        setTimeout(() => navigate("/"), 0);
+
+        if (data.requireProfileCompletion) {
+          alert(data.msg); // show message from backend
+          setTimeout(() => navigate("/myprofile"), 0); // navigate to profile completion page
+        } else {
+          alert(data.msg); // still show message, if you want
+          setTimeout(() => navigate("/"), 0); // normal homepage
+        }
       } else {
         console.error("Login failed:", data.msg);
         alert(data.msg);
