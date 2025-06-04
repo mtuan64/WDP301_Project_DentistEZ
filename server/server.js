@@ -5,6 +5,7 @@ const path = require("path");
 const connectDB = require("./config/db");
 const cors = require("cors");
 const cloudinary = require("cloudinary").v2;
+require("dotenv").config();
 
 const app = express();
 
@@ -36,7 +37,6 @@ app.get("/", (req, res) => {
 
 // Routes
 app.use("/api", require("./routes/authRoute"));
-app.use("/api/blogs", require("./routes/blogRoute"));
 
 // 404 handler
 app.use((req, res, next) => {
