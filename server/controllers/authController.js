@@ -86,37 +86,35 @@ exports.registerUser = async (req, res, next) => {
 
 exports.loginUser = async (req, res, next) => {
   try {
-    const { username, password } = req.body;
+    const { email, password } = req.body;
 
-    console.log('Request body:', req.body);
-
-    if (!username || !password) {
-      return res.status(400).json({ msg: 'Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.' });
+    // Kiểm tra đầu vào
+    if (!email || !password) {
+      return res.status(400).json({ msg: 'Vui lòng nhập đầy đủ email và mật khẩu.' });
     }
 
-    // Find user by username
-    const user = await User.findOne({ username });
+    // Tìm user theo email
+    const user = await User.findOne({ email });
 
     if (!user) {
       return res.status(404).json({ msg: 'Người dùng không tồn tại.' });
     }
 
-    // Check password
+    // Kiểm tra mật khẩu
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
       return res.status(401).json({ msg: 'Mật khẩu không đúng.' });
     }
 
-    // Create JWT token
+    // Tạo JWT token
     const token = jwt.sign(
       { userId: user._id, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: '1h' }
+      { expiresIn: '20h' }
     );
 
-    
-    // Return token, user info, and redirect URL
+    // Trả về token và thông tin user
     res.status(200).json({
       msg: 'Đăng nhập thành công.',
       token,
@@ -132,13 +130,13 @@ exports.loginUser = async (req, res, next) => {
         role: user.role,
         profilePicture: user.profilePicture,
       },
-      
     });
   } catch (error) {
     console.error('Lỗi khi đăng nhập:', error);
     res.status(500).json({ msg: 'Đã có lỗi xảy ra. Vui lòng thử lại sau.' });
   }
 };
+
 
 exports.uploadProfilePicture = async (req, res, next) => {
   try {

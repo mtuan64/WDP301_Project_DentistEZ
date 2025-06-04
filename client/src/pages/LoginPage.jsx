@@ -4,7 +4,7 @@ import { useAuth } from "../context/authContext";
 import "../assets/css/Login.css";
 
 const LoginPage = () => {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -17,7 +17,7 @@ const LoginPage = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ email, password }),
       });
 
       const data = await response.json();
@@ -58,14 +58,14 @@ const LoginPage = () => {
           <h2 className="loginTitle">ĐĂNG NHẬP</h2>
           <form onSubmit={handleSubmit} className="loginForm">
             <div className="formGroup">
-              <label htmlFor="username" className="label">
+              <label htmlFor="email" className="label">
                 Tên Người Dùng
               </label>
               <input
                 type="text"
-                id="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="input"
                 required
               />
