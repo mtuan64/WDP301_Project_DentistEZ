@@ -23,10 +23,14 @@ const LoginPage = () => {
       const data = await response.json();
       if (response.ok) {
         console.log("Login successful, user data:", data.user);
-        // Store user data in localStorage
+
+
         localStorage.setItem("user", JSON.stringify(data.user));
+        localStorage.setItem("token", data.token);
+
         // Update auth context
         login(data.user);
+
         // Slight delay to ensure context update propagates
         setTimeout(() => navigate("/"), 0);
       } else {
@@ -45,8 +49,11 @@ const LoginPage = () => {
         {/* Phần bên trái - Hình ảnh mô tả */}
         <div className="imageContainer">
           <div className="imagePlaceholder">
-            <h3>Hình Ảnh Minh Họa</h3>
-            <p>Đây là nơi bạn sẽ đặt hình ảnh mô tả.</p>
+            <img
+              src="https://mir-s3-cdn-cf.behance.net/project_modules/max_1200/08763c148032171.62ce0e981e54f.jpg"
+              alt="Hình ảnh minh họa"
+              className="loginImage"
+            />
           </div>
         </div>
 

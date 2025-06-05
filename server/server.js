@@ -4,8 +4,17 @@ const morgan = require("morgan");
 const path = require("path");
 const connectDB = require("./config/db");
 const cors = require("cors");
+const cloudinary = require("cloudinary").v2;
+require("dotenv").config();
 
 const app = express();
+
+// Cấu hình Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 // Cấu hình CORS
 const corsOptions = {
@@ -20,9 +29,6 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));
-
-// Static files nếu cần (ví dụ nếu bạn có thư mục Uploads)
-app.use('/uploads', express.static(path.join(__dirname, 'Uploads')));
 
 // Route mặc định
 app.get("/", (req, res) => {
