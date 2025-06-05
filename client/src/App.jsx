@@ -10,7 +10,7 @@ import AboutPage from "./pages/AboutPage";
 import ProfilePage from "./pages/ProfilePage";
 import HomePage from "./pages/Homepage";
 import BlogListPage from "./pages/BlogListPage";
-
+import DoctorAccountManagement from "./pages/DoctorAccountManagement";
 import Header from "./components/HeaderComponent";
 import MenuComponent from "./components/MenuComponent";
 import "antd/dist/reset.css"; // hoặc 'antd/dist/antd.css' nếu bạn dùng antd v4
@@ -60,6 +60,7 @@ const App = () => {
           <Route path="/myprofile" element={<ProfilePage />} />
           <Route path="/doctor/:doctorId" element={<DoctorDetail />} />
           <Route path="/bloglist" element={<BlogListPage />} />
+          <Route path="/doctoraccount" element={<DoctorAccountManagement />} />
         </Routes>
       </div>
     </Router>

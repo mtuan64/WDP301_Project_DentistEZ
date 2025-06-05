@@ -11,6 +11,7 @@ const {
 const {
   getAllDoctors,
   getDoctorById,
+  updateDoctorStatus
 } = require("../controllers/doctorController");
 const {
   getAllBlogs,
@@ -57,6 +58,9 @@ router.post(
   uploadProfilePicture
 );
 router.post("/user/update", authMiddleware, updateUser);
+
+router.get("/docroraccount", authAdminMiddleware, getAllDoctors);
+router.put("/doctor/:doctorId/status", authAdminMiddleware, updateDoctorStatus);
 
 router.get("/blogs", authAdminMiddleware, getAllBlogs); 
 router.post("/blogs", authAdminMiddleware, createBlog); 

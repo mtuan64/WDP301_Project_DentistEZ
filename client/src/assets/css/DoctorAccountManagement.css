@@ -1,0 +1,24 @@
+.doctor-account-management {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.doctor-account-management h1 {
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+.MuiTableContainer-root {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.MuiTableCell-root {
+  padding: 10px;
+  word-break: break-word;
+}
+
+.MuiButton-root {
+  min-width: 80px;
+  font-size: 12px;
+}
