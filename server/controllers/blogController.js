@@ -1,6 +1,12 @@
 const Blog = require("../models/Blog");
 const cloudinary = require("cloudinary").v2;
 const fs = require("fs").promises;
+const path = require("path");
+
+const uploadDir = path.join(__dirname, "../uploads");
+fs.mkdir(uploadDir, { recursive: true }).catch((err) =>
+  console.error("Error creating uploads directory:", err)
+);
 
 exports.getAllBlogs = async (req, res) => {
   try {
@@ -61,6 +67,7 @@ exports.deleteBlog = async (req, res) => {
 exports.uploadImage = async (req, res) => {
   try {
     const file = req.file; // File uploaded via multer
+    console.log("File received:", file);
     if (!file) {
       return res.status(400).json({ message: "No image file provided" });
     }
@@ -68,13 +75,14 @@ exports.uploadImage = async (req, res) => {
     const result = await cloudinary.uploader.upload(file.path, {
       folder: "blog_images",
     });
+    console.log("Cloudinary upload result:", result);
     // Delete local file after upload
-    await fs
-      .unlink(file.path)
-      .catch((err) => console.error("Error deleting local file:", err));
+    await fs.unlink(file.path).catch((err) => {
+      console.error("Error deleting local file:", err);
+    });
     res.status(200).json({ url: result.secure_url });
   } catch (error) {
-    console.error("Cloudinary upload error:", error);
+    console.error("Cloudinary upload error:", error.message, error.stack);
     res.status(500).json({
       message: "Failed to upload image to Cloudinary",
       error: error.message,

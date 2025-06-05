@@ -46,6 +46,9 @@ const BlogListPage = () => {
       return;
     }
 
+    console.log("User role:", user.role);
+    console.log("Token:", token);
+
     fetchBlogs();
   }, [navigate]);
 
@@ -59,6 +62,7 @@ const BlogListPage = () => {
       setBlogs(response.data);
     } catch (error) {
       console.error("Error fetching blogs:", error);
+      alert("Failed to fetch blogs: " + error.message);
     }
   };
 
@@ -66,8 +70,18 @@ const BlogListPage = () => {
     try {
       let updatedBlog = { ...editingBlog };
       if (imageFile) {
+        if (
+          !["image/jpeg", "image/jpg", "image/png"].includes(imageFile.type)
+        ) {
+          alert("Please select a JPEG or PNG image.");
+          return;
+        }
         const formData = new FormData();
         formData.append("image", imageFile);
+        console.log("Uploading image for update:");
+        for (let pair of formData.entries()) {
+          console.log(`${pair[0]}: ${pair[1]}`);
+        }
         const uploadResponse = await axios.post(
           "http://localhost:9999/api/blogs/upload",
           formData,
@@ -102,6 +116,7 @@ const BlogListPage = () => {
       setImageFile(null);
     } catch (error) {
       console.error("Error updating blog:", error);
+      alert("Failed to update blog: " + error.message);
     }
   };
 
@@ -120,6 +135,7 @@ const BlogListPage = () => {
       setBlogToDelete(null);
     } catch (error) {
       console.error("Error deleting blog:", error);
+      alert("Failed to delete blog: " + error.message);
     }
   };
 
@@ -127,8 +143,18 @@ const BlogListPage = () => {
     try {
       let blogToAdd = { ...newBlog };
       if (imageFile) {
+        if (
+          !["image/jpeg", "image/jpg", "image/png"].includes(imageFile.type)
+        ) {
+          alert("Please select a JPEG or PNG image.");
+          return;
+        }
         const formData = new FormData();
         formData.append("image", imageFile);
+        console.log("Uploading image for add:");
+        for (let pair of formData.entries()) {
+          console.log(`${pair[0]}: ${pair[1]}`);
+        }
         const uploadResponse = await axios.post(
           "http://localhost:9999/api/blogs/upload",
           formData,
@@ -139,6 +165,9 @@ const BlogListPage = () => {
           }
         );
         blogToAdd.image = uploadResponse.data.url;
+      } else {
+        alert("Please select an image to upload.");
+        return;
       }
       const response = await axios.post(
         "http://localhost:9999/api/blogs",
@@ -159,6 +188,7 @@ const BlogListPage = () => {
       setOpenAdd(false);
     } catch (error) {
       console.error("Error adding blog:", error);
+      alert("Failed to add blog: " + error.message);
     }
   };
 
@@ -280,8 +310,12 @@ const BlogListPage = () => {
           />
           <input
             type="file"
-            accept="image/*"
-            onChange={(e) => setImageFile(e.target.files[0])}
+            accept="image/jpeg,image/jpg,image/png"
+            onChange={(e) => {
+              const file = e.target.files[0];
+              console.log("Selected file for edit:", file);
+              setImageFile(file);
+            }}
           />
         </DialogContent>
         <DialogActions>
@@ -321,8 +355,12 @@ const BlogListPage = () => {
           />
           <input
             type="file"
-            accept="image/*"
-            onChange={(e) => setImageFile(e.target.files[0])}
+            accept="image/jpeg,image/jpg,image/png"
+            onChange={(e) => {
+              const file = e.target.files[0];
+              console.log("Selected file for add:", file);
+              setImageFile(file);
+            }}
           />
         </DialogContent>
         <DialogActions>

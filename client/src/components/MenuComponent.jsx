@@ -10,33 +10,62 @@ const DRAWER_WIDTH = 240;
 
 // Định nghĩa menu theo từng vai trò với đường dẫn rõ ràng
 const menuByRole = {
-    admin: [
-        { title: "Home", path: "/", icon: <HomeOutlined /> },
-        { title: "Manage Users", path: "/users-management", icon: <TeamOutlined /> },
-        { title: "Manage Recruitment", path: "/manage-recruitment", icon: <FileTextOutlined /> },
-        { title: "Settings", path: "/settings", icon: <SettingOutlined /> },
-    ],
-    doctor: [
-        { title: "Home", path: "/", icon: <HomeOutlined /> },
-        { title: "My Project", path: "/my-project", icon: <TeamOutlined /> },
-        { title: "Report Management", path: "/report", icon: <LockOutlined /> },
-        { title: "Message Management", path: "/message-management", icon: <LockOutlined /> },
-        { title: "Attendance Management", path: "/attendance-management", icon: <LockOutlined /> },
-        { title: "Recruitment Management", path: "/recruitment-management-mentor", icon: <LockOutlined /> },
-    ],
-    staff: [
-        { title: "Home", path: "/", icon: <HomeOutlined /> },
-        { title: "Addresses", path: "/addresses", icon: <UserOutlined /> },
-        { title: "Change Password", path: "/change-password", icon: <LockOutlined /> },
-    ],
-    patient: [
-        { title: "Home", path: "/", icon: <HomeOutlined /> },
-        { title: "My Project", path: "/my-project-intern", icon: <HomeOutlined /> },
-        { title: "Report Management", path: "/report-management", icon: <FileTextOutlined /> },
-        { title: "Schedule", path: "/schedule", icon: <FileTextOutlined /> },
-        { title: "Attendance", path: "/attendance", icon: <FileTextOutlined /> },
-        { title: "Mark Report", path: "/attendance", icon: <FileTextOutlined /> },
-    ],
+  admin: [
+    { title: "Home", path: "/", icon: <HomeOutlined /> },
+    {
+      title: "Manage Users",
+      path: "/users-management",
+      icon: <TeamOutlined />,
+    },
+    {
+      title: "Manage Recruitment",
+      path: "/manage-recruitment",
+      icon: <FileTextOutlined />,
+    },
+    { title: "Settings", path: "/settings", icon: <SettingOutlined /> },
+    { title: "Manage Blogs", path: "/bloglist", icon: <FileTextOutlined /> },
+  ],
+  doctor: [
+    { title: "Home", path: "/", icon: <HomeOutlined /> },
+    { title: "My Project", path: "/my-project", icon: <TeamOutlined /> },
+    { title: "Report Management", path: "/report", icon: <LockOutlined /> },
+    {
+      title: "Message Management",
+      path: "/message-management",
+      icon: <LockOutlined />,
+    },
+    {
+      title: "Attendance Management",
+      path: "/attendance-management",
+      icon: <LockOutlined />,
+    },
+    {
+      title: "Recruitment Management",
+      path: "/recruitment-management-mentor",
+      icon: <LockOutlined />,
+    },
+  ],
+  staff: [
+    { title: "Home", path: "/", icon: <HomeOutlined /> },
+    { title: "Addresses", path: "/addresses", icon: <UserOutlined /> },
+    {
+      title: "Change Password",
+      path: "/change-password",
+      icon: <LockOutlined />,
+    },
+  ],
+  patient: [
+    { title: "Home", path: "/", icon: <HomeOutlined /> },
+    { title: "My Project", path: "/my-project-intern", icon: <HomeOutlined /> },
+    {
+      title: "Report Management",
+      path: "/report-management",
+      icon: <FileTextOutlined />,
+    },
+    { title: "Schedule", path: "/schedule", icon: <FileTextOutlined /> },
+    { title: "Attendance", path: "/attendance", icon: <FileTextOutlined /> },
+    { title: "Mark Report", path: "/attendance", icon: <FileTextOutlined /> },
+  ],
 };
 
 const MenuComponent = ({ isOpen, onClose, role }) => {
