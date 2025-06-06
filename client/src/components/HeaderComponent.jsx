@@ -1,11 +1,18 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; // Added useNavigate
 import { useAuth } from "../context/authContext";
 import { Button } from "antd";
 import { MenuOutlined } from "@ant-design/icons";
 
 const Header = ({ onMenuClick }) => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate(); // Hook for programmatic navigation
+
+  // Handle logout with redirection to homepage
+  const handleLogout = () => {
+    logout(); // Call the logout function from auth context
+    navigate("/"); // Redirect to homepage
+  };
 
   return (
     <nav
@@ -45,7 +52,7 @@ const Header = ({ onMenuClick }) => {
 
       <div className="collapse navbar-collapse" id="navbarCollapse">
         <div className="navbar-nav ms-auto py-0 align-items-center d-flex">
-          <Link to="/" className="nav-item nav-link ">Home</Link>
+          <Link to="/" className="nav-item nav-link">Home</Link>
           <Link to="/about" className="nav-item nav-link">About</Link>
           <Link to="/service" className="nav-item nav-link">Service</Link>
           <Link to="/doctor" className="nav-item nav-link">Doctor</Link>
@@ -68,7 +75,7 @@ const Header = ({ onMenuClick }) => {
                   <hr className="dropdown-divider" />
                 </li>
                 <li>
-                  <button className="dropdown-item" onClick={logout}>Log out</button>
+                  <button className="dropdown-item" onClick={handleLogout}>Log out</button>
                 </li>
               </ul>
             </div>

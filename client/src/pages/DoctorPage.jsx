@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Container, Row, Col } from "react-bootstrap";
 import { Link } from "react-router-dom";
-import HeaderComponent from "../components/HeaderComponent";
+import Header from "../components/HeaderComponent";
 import FooterComponent from "../components/FooterComponent";
 import axios from "axios";
 import "../assets/css/HomePage.css";
@@ -12,7 +12,7 @@ const DoctorPage = () => {
   useEffect(() => {
     const fetchDoctors = async () => {
       try {
-        const res = await axios.get("http://localhost:9999/api/doctor");
+        const res = await axios.get("http://localhost:9999/api/doctor?status=active");
         setDoctors(res.data.data);
       } catch (error) {
         console.error("Error fetching doctors:", error);
@@ -46,8 +46,6 @@ const DoctorPage = () => {
         </Row>
       </div>
 
-      
-
       {/* Hero Carousel */}
       <div id="heroCarousel" className="carousel slide carousel-fade" data-bs-ride="carousel">
         <div className="carousel-inner">
@@ -77,7 +75,6 @@ const DoctorPage = () => {
           </div>
         </div>
       </div>
-
 
       {/* Team Section */}
       <div className="container-fluid py-5">
@@ -129,13 +126,9 @@ const DoctorPage = () => {
                 </div>
               </Col>
             ))}
-
-
-
           </Row>
         </Container>
       </div>
-
 
       <FooterComponent />
     </>
