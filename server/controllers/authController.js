@@ -138,6 +138,8 @@ exports.loginUser = async (req, res, next) => {
 };
 
 
+
+
 exports.uploadProfilePicture = async (req, res, next) => {
   try {
     const userId = req.user.userId; // From authMiddleware
@@ -221,6 +223,117 @@ exports.updateUser = async (req, res, next) => {
   } catch (error) {
     console.error('Error in updateUser:', error);
     res.status(500).json({ msg: 'Failed to update user' });
+  }
+};
+
+// Get all user accounts
+exports.getAllUserAccounts = async (req, res) => {
+  try {
+    // Ensure only admin can access this endpoint
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ msg: 'Access denied. Admin role required.' });
+    }
+
+    // Extract query parameters for pagination, filtering, and sorting
+    const { page = 1, limit = 10, search, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
+
+    // Build query object
+    const query = {};
+    if (search) {
+      // Search by username, fullname, or email (case-insensitive)
+      query.$or = [
+        { username: { $regex: search, $options: 'i' } },
+        { fullname: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+      ];
+    }
+
+    // Calculate pagination values
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
+
+    // Define sort options
+    const sortOptions = {};
+    sortOptions[sortBy] = sortOrder === 'desc' ? -1 : 1;
+
+    // Fetch users from database, excluding password field
+    const users = await User.find(query)
+      .select('-password') // Exclude password field
+      .sort(sortOptions)
+      .skip(skip)
+      .limit(limitNum)
+      .lean(); // Convert to plain JavaScript object for better performance
+
+    // Get total count for pagination metadata
+    const totalUsers = await User.countDocuments(query);
+
+    // Prepare response
+    const response = {
+      success: true,
+      data: users,
+      pagination: {
+        currentPage: pageNum,
+        totalPages: Math.ceil(totalUsers / limitNum),
+        totalUsers,
+        limit: limitNum,
+      },
+    };
+
+    res.status(200).json(response);
+  } catch (error) {
+    console.error('Error fetching all user accounts:', error);
+    res.status(500).json({ msg: 'Server error', error: error.message });
+  }
+};
+
+// Get users by role
+exports.getUserByRole = async (req, res) => {
+  try {
+    // Ensure only admin can access this endpoint
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ msg: 'Access denied. Admin role required.' });
+    }
+
+    // Extract query parameters for pagination and role filtering
+    const { page = 1, limit = 10, role } = req.query;
+
+    // Validate role parameter
+    if (!role || !['patient', 'doctor', 'staff', 'admin'].includes(role)) {
+      return res.status(400).json({ msg: 'Invalid or missing role parameter' });
+    }
+
+    // Calculate pagination values
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
+
+    // Fetch users by role, excluding password field
+    const users = await User.find({ role })
+      .select('-password') // Exclude password field
+      .skip(skip)
+      .limit(limitNum)
+      .lean(); // Convert to plain JavaScript object for better performance
+
+    // Get total count for pagination metadata
+    const totalUsers = await User.countDocuments({ role });
+
+    // Prepare response
+    const response = {
+      success: true,
+      data: users,
+      pagination: {
+        currentPage: pageNum,
+        totalPages: Math.ceil(totalUsers / limitNum),
+        totalUsers,
+        limit: limitNum,
+      },
+    };
+
+    res.status(200).json(response);
+  } catch (error) {
+    console.error('Error fetching users by role:', error);
+    res.status(500).json({ msg: 'Server error', error: error.message });
   }
 };
 

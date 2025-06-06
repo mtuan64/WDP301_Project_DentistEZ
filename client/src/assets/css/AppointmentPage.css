@@ -1,0 +1,121 @@
+/* Checkmark animation (giữ nguyên) */
+.checkmark-animated {
+  width: 52px;
+  height: 52px;
+}
+.checkmark__circle {
+  stroke: #007bff;
+  stroke-width: 2;
+  stroke-miterlimit: 10;
+  animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+}
+.checkmark__check {
+  stroke: #007bff;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
+}
+@keyframes stroke {
+  100% { stroke-dashoffset: 0; }
+}
+
+/* Styling for doctor selection */
+.doctor-card {
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 20px;
+  min-height: 280px; /* Tăng chiều cao để phù hợp với 3 cột */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  background-color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.doctor-card:hover {
+  border-color: #007bff;
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
+  background-color: #f8f9fa;
+}
+
+.doctor-card.selected {
+  border-color: #007bff;
+  background-color: #e7f0ff;
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+.doctor-image-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 15px;
+}
+
+.doctor-image {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #e0e0e0;
+  transition: border-color 0.3s ease;
+}
+
+.doctor-card:hover .doctor-image,
+.doctor-card.selected .doctor-image {
+  border-color: #007bff;
+}
+
+.doctor-name {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #333;
+  text-align: center;
+}
+
+.doctor-specialty,
+.doctor-experience {
+  font-size: 0.9rem;
+  margin-bottom: 5px;
+  color: #6c757d;
+  text-align: center;
+}
+
+/* Responsive adjustments */
+@media (max-width: 991px) {
+  .doctor-card {
+    min-height: 260px;
+    padding: 15px;
+  }
+
+  .doctor-image {
+    width: 80px;
+    height: 80px;
+  }
+
+  .doctor-name {
+    font-size: 1.1rem;
+  }
+
+  .doctor-specialty,
+  .doctor-experience {
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .doctor-card {
+    min-height: 240px;
+  }
+}
+
+@media (max-width: 575px) {
+  .doctor-card {
+    min-height: 220px;
+  }
+}
