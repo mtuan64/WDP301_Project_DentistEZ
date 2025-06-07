@@ -391,8 +391,6 @@ const AppointmentPage = () => {
 
         <MilestoneSection />
       </div>
-
-      <FooterComponent />
     </>
   );
 };

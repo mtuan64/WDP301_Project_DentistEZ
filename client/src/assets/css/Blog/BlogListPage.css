@@ -1,0 +1,76 @@
+.blog-list-page {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  font-family: Arial, sans-serif;
+}
+
+.blog-list-page h1 {
+  font-size: 20px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.blog-list-page .MuiTableContainer-root {
+  margin-top: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.blog-list-page .MuiTableCell-root {
+  padding: 10px;
+  word-break: break-word;
+  max-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.blog-list-page .MuiTableCell-root.title {
+  max-width: 50px;
+}
+
+.blog-list-page .MuiTableCell-root.content {
+  max-width: 50px;
+}
+
+.blog-list-page .MuiTableCell-root.category {
+  max-width: 30px;
+}
+
+.blog-list-page .MuiTableCell-root.slug {
+  max-width: 50px;
+}
+
+.blog-list-page .MuiTableCell-root.actions {
+  max-width: 50px;
+  display: flex;
+  justify-content: flex-start;
+  gap: 4px;
+  padding: 10px;
+}
+
+.blog-list-page .MuiTableCell-root.actions .MuiButton-root {
+  margin-right: 0;
+  padding: 6px;
+  min-width: 0;
+}
+
+.blog-list-page .MuiButton-root {
+  min-width: 0;
+  font-size: 12px;
+  margin-right: 0;
+}
+
+.blog-list-page .MuiTabs-root {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.blog-list-page .MuiTab-root {
+  min-width: 120px;
+  text-transform: none;
+}
+
+.blog-list-page img {
+  border-radius: 4px;
+  vertical-align: middle;
+}

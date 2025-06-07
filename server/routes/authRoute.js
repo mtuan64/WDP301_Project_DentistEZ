@@ -19,6 +19,11 @@ const {
   updateBlog,
   deleteBlog,
   uploadImage,
+  getAllCategories,
+  createCategory,
+  updateCategory,
+  deleteCategory,
+  getBlogBySlug,
 } = require("../controllers/blogController");
 const multer = require("multer");
 const path = require("path");
@@ -62,10 +67,24 @@ router.post("/user/update", authMiddleware, updateUser);
 router.get("/docroraccount", authAdminMiddleware, getAllDoctors);
 router.put("/doctor/:doctorId/status", authAdminMiddleware, updateDoctorStatus);
 
-router.get("/blogs", authAdminMiddleware, getAllBlogs); 
-router.post("/blogs", authAdminMiddleware, createBlog); 
-router.put("/blogs/:id", authAdminMiddleware, updateBlog); 
+//Blog
+router.get("/blogs", getAllBlogs);
+router.post("/blogs", authAdminMiddleware, createBlog);
+router.put("/blogs/:id", authAdminMiddleware, updateBlog);
 router.delete("/blogs/:id", authAdminMiddleware, deleteBlog);
-router.post("/blogs/upload", authAdminMiddleware, uploadMulter.single("image"), uploadImage);
+router.post(
+  "/blogs/upload",
+  authAdminMiddleware,
+  uploadMulter.fields([
+    { name: "mainImage", maxCount: 1 },
+    { name: "contentImages", maxCount: 10 }, 
+  ]),
+  uploadImage
+);
+router.get("/categories", getAllCategories);
+router.post("/categories", authAdminMiddleware, createCategory);
+router.put("/categories/:id", authAdminMiddleware, updateCategory);
+router.delete("/categories/:id", authAdminMiddleware, deleteCategory);
+router.get("/blogs/slug/:slug", getBlogBySlug);
 
 module.exports = router;

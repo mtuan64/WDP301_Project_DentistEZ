@@ -10,9 +10,12 @@ import AboutPage from "./pages/AboutPage";
 import ProfilePage from "./pages/ProfilePage";
 import HomePage from "./pages/Homepage";
 import BlogListPage from "./pages/BlogListPage";
+import BlogPage from "./pages/BlogPage";
+import BlogDetail from "./pages/BlogDetail";
 import DoctorAccountManagement from "./pages/DoctorAccountManagement";
 import Header from "./components/HeaderComponent";
 import MenuComponent from "./components/MenuComponent";
+import FooterComponent from "./components/FooterComponent";
 import "antd/dist/reset.css"; // hoặc 'antd/dist/antd.css' nếu bạn dùng antd v4
 
 const DRAWER_WIDTH = 240;
@@ -60,9 +63,14 @@ const App = () => {
           <Route path="/myprofile" element={<ProfilePage />} />
           <Route path="/doctor/:doctorId" element={<DoctorDetail />} />
           <Route path="/bloglist" element={<BlogListPage />} />
+          <Route path="/blog" element={<BlogPage />} />
+          <Route path="/blog/:slug" element={<BlogDetail />} />
           <Route path="/doctoraccount" element={<DoctorAccountManagement />} />
         </Routes>
       </div>
+
+      {/* Footer luôn hiện trên mọi trang */}
+      <FooterComponent />
     </Router>
   );
 };
