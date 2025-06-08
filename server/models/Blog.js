@@ -17,17 +17,26 @@ const blogSchema = new Schema({
       text: {
         type: String,
         required: function () {
-          return this.type !== "image"; // Only required for non-image types
+          return this.type !== "image";
         },
       },
       bold: {
         type: Boolean,
         default: false,
       },
+      italic: {
+        type: Boolean,
+        default: false,
+      },
+      fontSize: {
+        type: String,
+        enum: ["small", "medium", "large"],
+        default: "medium",
+      },
       url: {
-        type: String, 
+        type: String,
         required: function () {
-          return this.type === "image"; 
+          return this.type === "image";
         },
       },
     },
@@ -59,6 +68,10 @@ const blogSchema = new Schema({
   updatedAt: {
     type: Date,
     default: Date.now,
+  },
+  views: {
+    type: Number,
+    default: 0, 
   },
 });
 

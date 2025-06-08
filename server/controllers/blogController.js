@@ -81,7 +81,12 @@ exports.createBlog = async (req, res) => {
             return { ...item, url: result.secure_url };
           }
         }
-        return item;
+        return {
+          ...item,
+          bold: item.bold || false,
+          italic: item.italic || false,
+          fontSize: item.fontSize || "medium",
+        };
       })
     );
     const newBlog = new Blog({
@@ -145,7 +150,12 @@ exports.updateBlog = async (req, res) => {
             return { ...item, url: result.secure_url };
           }
         }
-        return item;
+        return {
+          ...item,
+          bold: item.bold || false,
+          italic: item.italic || false,
+          fontSize: item.fontSize || "medium",
+        };
       })
     );
     const updatedBlog = await Blog.findByIdAndUpdate(
@@ -225,7 +235,6 @@ exports.uploadImage = async (req, res) => {
   }
 };
 
-// Category Functions
 exports.getAllCategories = async (req, res) => {
   try {
     const categories = await CategoryBlog.find();
@@ -289,6 +298,36 @@ exports.deleteCategory = async (req, res) => {
     res.json({ message: "Category deleted successfully" });
   } catch (error) {
     console.error("Error deleting category:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.getTopViewedBlogs = async (req, res) => {
+  try {
+    const topBlogs = await Blog.find()
+      .populate("categoryId", "name")
+      .sort({ views: -1 }) // Sắp xếp giảm dần theo views
+      .limit(5) // Lấy 5 bài viết đầu tiên
+      .select("title content slug image views"); // Chỉ lấy các trường cần thiết
+    res.json(topBlogs);
+  } catch (error) {
+    console.error("Error fetching top viewed blogs:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.incrementBlogViews = async (req, res) => {
+  try {
+    const { slug } = req.params;
+    const blog = await Blog.findOne({ slug });
+    if (!blog) {
+      return res.status(404).json({ message: "Blog not found" });
+    }
+    blog.views = (blog.views || 0) + 1;
+    await blog.save();
+    res.json({ message: "View count incremented", views: blog.views });
+  } catch (error) {
+    console.error("Error incrementing blog views:", error);
     res.status(500).json({ message: error.message });
   }
 };

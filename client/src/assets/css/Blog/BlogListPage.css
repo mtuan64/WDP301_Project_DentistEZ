@@ -19,32 +19,30 @@
 .blog-list-page .MuiTableCell-root {
   padding: 10px;
   word-break: break-word;
-  max-width: 0;
+  min-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .blog-list-page .MuiTableCell-root.title {
-  max-width: 50px;
+  max-width: 250px;
 }
 
 .blog-list-page .MuiTableCell-root.content {
-  max-width: 50px;
+  max-width: 250px;
 }
 
 .blog-list-page .MuiTableCell-root.category {
-  max-width: 30px;
+  max-width: 120px;
 }
 
 .blog-list-page .MuiTableCell-root.slug {
-  max-width: 50px;
+  max-width: 100px;
 }
 
 .blog-list-page .MuiTableCell-root.actions {
-  max-width: 50px;
-  display: flex;
-  justify-content: flex-start;
+  max-width: 70px;
   gap: 4px;
   padding: 10px;
 }
@@ -73,4 +71,69 @@
 .blog-list-page img {
   border-radius: 4px;
   vertical-align: middle;
+}
+
+/* Thiết kế lại bộ lọc (filter-search-container) */
+.blog-list-page .filter-search-container {
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  background: #ffffff;
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.3s ease;
+}
+
+.blog-list-page .filter-search-container:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.blog-list-page .filter-search-container .MuiTextField-root {
+  flex-grow: 1;
+}
+
+.blog-list-page .filter-search-container .MuiTextField-root input {
+  padding: 12px 16px;
+  font-size: 14px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  outline: none;
+  transition: border-color 0.3s ease;
+}
+
+.blog-list-page .filter-search-container .MuiTextField-root input:focus {
+  border-color: #1976d2;
+}
+
+.blog-list-page .filter-search-container .MuiTextField-root input::placeholder {
+  color: #1976d2;
+  font-style: normal;
+  font-weight: 400;
+}
+
+.blog-list-page .filter-search-container .MuiButton-root {
+  background: linear-gradient(90deg, #1976d2, #42a5f5);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 6px;
+  text-transform: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.blog-list-page .filter-search-container .MuiButton-root:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3);
+}
+
+.blog-list-page .filter-search-container .MuiButton-root .MuiBadge-root {
+  background-color: #d32f2f;
+  color: white;
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-size: 12px;
+  margin-left: 6px;
 }

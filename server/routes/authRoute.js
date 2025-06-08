@@ -24,6 +24,8 @@ const {
   updateCategory,
   deleteCategory,
   getBlogBySlug,
+  getTopViewedBlogs,
+  incrementBlogViews
 } = require("../controllers/blogController");
 const multer = require("multer");
 const path = require("path");
@@ -86,5 +88,7 @@ router.post("/categories", authAdminMiddleware, createCategory);
 router.put("/categories/:id", authAdminMiddleware, updateCategory);
 router.delete("/categories/:id", authAdminMiddleware, deleteCategory);
 router.get("/blogs/slug/:slug", getBlogBySlug);
+router.get("/blogs/top-viewed", getTopViewedBlogs);
+router.post("/blogs/slug/:slug/views", incrementBlogViews);
 
 module.exports = router;
