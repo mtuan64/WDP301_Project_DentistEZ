@@ -161,7 +161,7 @@ const BlogDetail = () => {
           </div>
         </div>
         <div className="blogdetail-sidebar">
-          <h3 className="blogdetail-sidebar-title">Other Featured Posts</h3>
+          <h3 className="blogdetail-sidebar-title">Most Viewed News</h3>
           <div className="blogdetail-featured-posts">
             {topViewedBlogs.map((topBlog, index) => (
               <div key={index} className="blogdetail-featured-post-card">
