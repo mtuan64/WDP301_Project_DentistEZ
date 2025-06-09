@@ -13,17 +13,13 @@ const menuByRole = {
   admin: [
     { title: "Home", path: "/", icon: <HomeOutlined /> },
     {
-      title: "Manage Users",
-      path: "/users-management",
-      icon: <TeamOutlined />,
-    },
-    {
       title: "Manage Recruitment",
       path: "/manage-recruitment",
       icon: <FileTextOutlined />,
     },
     { title: "Settings", path: "/settings", icon: <SettingOutlined /> },
     { title: "Manage Blogs", path: "/bloglist", icon: <FileTextOutlined /> },
+    { title: "Manage User", path: "/userlist", icon:  <TeamOutlined /> },
     { title: "Manage Doctor Account", path: "/doctoraccount", icon: <FileTextOutlined /> },
   ],
   doctor: [

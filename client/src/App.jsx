@@ -12,6 +12,8 @@ import HomePage from "./pages/Homepage";
 import BlogListPage from "./pages/BlogListPage";
 import BlogPage from "./pages/BlogPage";
 import BlogDetail from "./pages/BlogDetail";
+import UserListPage from "./pages/UserListManage";
+import AppointmentPage from "./pages/AppointmentPage";
 import DoctorAccountManagement from "./pages/DoctorAccountManagement";
 import Header from "./components/HeaderComponent";
 import MenuComponent from "./components/MenuComponent";
@@ -61,6 +63,8 @@ const App = () => {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/myprofile" element={<ProfilePage />} />
+          <Route path="/appointment" element={<AppointmentPage />} />
+          <Route path="/userlist" element={<UserListPage />} />
           <Route path="/doctor/:doctorId" element={<DoctorDetail />} />
           <Route path="/bloglist" element={<BlogListPage />} />
           <Route path="/blog" element={<BlogPage />} />

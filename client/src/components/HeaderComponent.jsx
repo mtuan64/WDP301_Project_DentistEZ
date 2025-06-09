@@ -1,18 +1,23 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; // 👈 Thêm useNavigate
 import { useAuth } from "../context/authContext";
 import { Button } from "antd";
 import { MenuOutlined } from "@ant-design/icons";
 
 const Header = ({ onMenuClick }) => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate(); // 👈 Khởi tạo navigate
+
+  const handleLogout = () => {
+    logout();           // Gọi hàm logout từ context
+    navigate("/");      // Sau đó điều hướng về trang Home
+  };
 
   return (
     <nav
       className="navbar navbar-expand-lg bg-white navbar-light shadow-sm px-5 py-3 py-lg-0"
       style={{ position: 'fixed', width: '100%', top: 0, left: 0, zIndex: 3000 }}
     >
-      {/* Nút menu 3 gạch chỉ hiện khi đã đăng nhập */}
       {user && (
         <Button
           type="text"
@@ -65,11 +70,9 @@ const Header = ({ onMenuClick }) => {
                 <li>
                   <Link to="/myprofile" className="dropdown-item">Profile</Link>
                 </li>
+                <li><hr className="dropdown-divider" /></li>
                 <li>
-                  <hr className="dropdown-divider" />
-                </li>
-                <li>
-                  <button className="dropdown-item" onClick={logout}>Log out</button>
+                  <button className="dropdown-item" onClick={handleLogout}>Log out</button> {/* 👈 Sử dụng handleLogout */}
                 </li>
               </ul>
             </div>

@@ -1,17 +1,21 @@
 const Doctor = require("../models/Doctor");
 
-exports.getAllDoctors = async (req, res, next) => {
+exports.getAllDoctors = async (req, res) => {
   try {
-     // Thêm .populate('userId', 'fullname') để lấy fullname từ User
-     const doctors = await Doctor.find().populate('userId', 'fullname');
+    const doctors = await Doctor.find()
+      .populate("userId", "fullname email gender phone") // lấy các field cần từ User
+      .exec();
 
     res.status(200).json({
       success: true,
-      data: doctors
+      data: doctors,
     });
   } catch (error) {
     console.error("Error in getAllDoctors:", error);
-    next(error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 };
 

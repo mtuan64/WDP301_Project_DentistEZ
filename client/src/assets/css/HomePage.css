@@ -1,10 +1,12 @@
 /********** Root & Fonts **********/
 :root {
-    --primary: #06A3DA;
-    --secondary: #F57E57;
-    --light: #EEF9FF;
-    --dark: #091E3E;
+    --primary: #06A3DA; /* Bright blue for primary actions */
+    --secondary: #F57E57; /* Warm coral for accents */
+    --light: #EEF9FF; /* Light blue background */
+    --dark: #091E3E; /* Deep navy for text and contrast */
     --white: #fff;
+    --gray: #6c757d; /* Muted gray for secondary text */
+    --light-blue: #E6F0FA; /* Light blue for doctor cards */
 }
 
 /* Reset cơ bản */
@@ -25,70 +27,80 @@ body, html {
 
 img {
     max-width: 100%;
+    height: auto;
     display: block;
 }
 
 /********** Typography **********/
 h1, h2, .font-weight-bold {
     font-weight: 700 !important;
-    margin: 0 0 15px 0;
+    margin: 0 0 20px 0;
     color: var(--dark);
 }
 
 h3, h4, .font-weight-semi-bold {
     font-weight: 600 !important;
-    margin: 0 0 10px 0;
+    margin: 0 0 15px 0;
     color: var(--dark);
 }
 
 h5, h6, .font-weight-medium {
     font-weight: 500 !important;
-    margin: 0 0 8px 0;
+    margin: 0 0 10px 0;
     color: var(--dark);
 }
 
 p {
-    line-height: 1.6;
-    margin-bottom: 15px;
+    line-height: 1.8;
+    margin-bottom: 20px;
+    font-size: 1.1rem;
 }
 
 /********** Buttons **********/
 .btn {
     font-family: 'Jost', sans-serif;
     font-weight: 600;
-    padding: 10px 20px;
-    border-radius: 4px;
+    padding: 12px 24px;
+    border-radius: 8px;
     border: 2px solid transparent;
     cursor: pointer;
-    transition: background-color 0.5s, border-color 0.5s;
-    display: inline-block;
-    text-align: center;
+    transition: all 0.3s ease;
     text-decoration: none;
-    user-select: none;
 }
 
-.btn-primary, .btn-secondary {
-    color: var(--white);
+.btn-primary {
     background-color: var(--primary);
     border-color: var(--primary);
+    color: var(--white);
 }
 
 .btn-primary:hover {
-    background: var(--secondary);
-    border-color: var(--secondary);
-}
-
-.btn-secondary {
     background-color: var(--secondary);
     border-color: var(--secondary);
+    color: var(--white);
 }
 
-.btn-secondary:hover {
-    background: var(--primary);
+.btn-outline-light {
+    border-color: var(--white);
+    color: var(--white);
+}
+
+.btn-outline-light:hover {
+    background-color: var(--secondary);
+    border-color: var(--secondary);
+    color: var(--white);
+}
+
+.btn-outline-primary {
     border-color: var(--primary);
+    color: var(--primary);
 }
 
-/* Square buttons */
+.btn-outline-primary:hover {
+    background-color: var(--primary);
+    color: var(--white);
+}
+
 .btn-square, .btn-sm-square, .btn-lg-square {
     padding-left: 0;
     padding-right: 0;
@@ -198,182 +210,357 @@ p {
     }
 }
 
-/********** Carousel **********/
+/********** Hero Carousel **********/
+#heroCarousel {
+    position: relative;
+}
+
+.carousel-item img {
+    object-fit: cover;
+    height: 90vh;
+}
+
 .carousel-caption {
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(9, 30, 62, 0.85);
+    background: rgba(9, 30, 62, 0.7);
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-    flex-direction: column;
-    z-index: 1;
-    text-align: center;
-    padding: 0 15px;
+    padding: 2rem;
 }
 
 .carousel-caption h5 {
-    font-size: 18px;
+    font-size: 1.25rem;
     letter-spacing: 2px;
     text-transform: uppercase;
     color: var(--secondary);
-    margin-bottom: 10px;
+    margin-bottom: 1rem;
 }
 
 .carousel-caption h1 {
-    font-size: 48px;
+    font-size: 3.5rem;
     font-weight: 700;
-    margin-bottom: 20px;
     color: var(--white);
+    margin-bottom: 2rem;
 }
 
 .carousel-caption .btn {
-    margin: 5px;
+    margin: 0.5rem;
+    padding: 12px 30px;
+    font-size: 1.1rem;
 }
 
-@media (max-width: 576px) {
-    .carousel-caption h5 {
-        font-size: 14px;
-    }
-    .carousel-caption h1 {
-        font-size: 30px;
-    }
+/* Custom Doctors Carousel */
+.doctors-carousel {
+  position: relative;
+  overflow: hidden;
+}
+
+.doctors-carousel-inner {
+  display: flex;
+  transition: transform 0.5s ease-in-out;
+}
+
+.doctors-carousel .col-lg-3 {
+  flex: 0 0 25%;
+  max-width: 25%;
 }
 
 /* Carousel controls */
 .carousel-control-prev,
 .carousel-control-next {
-    width: 10%;
+  width: 5%;
+  background: none;
+  border: none;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+}
+
+.carousel-control-prev:hover,
+.carousel-control-next:hover {
+  opacity: 1;
 }
 
 .carousel-control-prev-icon,
 .carousel-control-next-icon {
-    width: 3rem;
-    height: 3rem;
+  background-size: 100% 100%;
+  width: 30px;
+  height: 30px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 991.98px) {
+  .doctors-carousel .col-lg-3 {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .doctors-carousel .col-lg-3 {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+}
+
+/********** Doctors Section **********/
+/* Doctors section container */
+.doctors-section {
+    padding: 5rem 0;
+    background-color: var(--white);
+}
+
+.doctors-section h3 {
+    font-size: 2rem;
+    color: var(--primary);
+    text-align: center;
+    margin-bottom: 2.5rem;
+    position: relative;
+}
+
+.doctors-section h3::after {
+    content: "";
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 3px;
+    background-color: var(--primary);
+}
+
+/* Doctor card */
+.doctor-card {
+    background-color: var(--light-blue);
+    border-radius: 50%;
+    overflow: hidden;
+    padding: 20px;
+    position: relative;
+    max-width: 250px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.doctor-image {
+    position: relative;
+    margin-bottom: 15px;
+}
+
+.doctor-image img {
+    width: 200px;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 5px solid var(--white);
+}
+
+.tooth-logo {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: 50px;
+    height: 50px;
+    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%2306A3DA"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>') no-repeat center;
+    background-size: contain;
+}
+
+.doctor-card h5 {
+    font-size: 1.1rem;
+    color: var(--dark);
+    margin-bottom: 5px;
+}
+
+.doctor-card p {
+    font-size: 0.9rem;
+    color: var(--gray);
+    margin-bottom: 10px;
+}
+
+/* Contact icons */
+.contact-icons a {
+    color: var(--primary);
+    font-size: 1.2rem;
+    margin: 0 5px;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.contact-icons a:hover {
+    color: var(--secondary);
+}
+
+.contact-icons i {
+    margin-right: 5px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .doctor-card {
+        max-width: 200px;
+    }
+    .doctor-image img {
+        width: 150px;
+        height: 150px;
+    }
+    .tooth-logo {
+        width: 40px;
+        height: 40px;
+    }
+    .doctor-card h5 {
+        font-size: 1rem;
+    }
+    .doctor-card p {
+        font-size: 0.85rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .doctor-card {
+        max-width: 180px;
+    }
+    .doctor-image img {
+        width: 130px;
+        height: 130px;
+    }
+    .tooth-logo {
+        width: 35px;
+        height: 35px;
+    }
+    .doctor-card h5 {
+        font-size: 0.9rem;
+    }
+    .doctor-card p {
+        font-size: 0.8rem;
+    }
 }
 
 /********** Banner Section **********/
 .banner-section .bg-primary,
 .banner-section .bg-dark,
 .banner-section .bg-secondary {
-    height: 100%;
+    padding: 3rem 2rem;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    padding: 40px 20px;
-    color: var(--white);
+    align-items: center;
+    text-align: center;
+    transition: transform 0.3s ease;
+}
+
+.banner-section .bg-primary:hover,
+.banner-section .bg-dark:hover,
+.banner-section .bg-secondary:hover {
+    transform: translateY(-5px);
 }
 
 .banner-section h3 {
-    font-size: 24px;
-    margin-bottom: 15px;
+    font-size: 1.75rem;
+    margin-bottom: 1.5rem;
+    color: var(--white);
 }
 
-.banner-section p,
+.banner-section p {
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+}
+
 .banner-section h2 {
-    font-size: 16px;
+    font-size: 1.5rem;
+    color: var(--white);
+}
+
+.banner-section .btn {
+    font-size: 1rem;
+    padding: 10px 20px;
 }
 
 /********** About Us Section **********/
 .about-section {
-    padding: 60px 20px;
-    background-color: var(--white);
-    text-align: center;
-}
-
-.about-section h1 {
-    font-size: 36px;
-    margin-bottom: 20px;
-}
-
-.about-section h5 {
-    color: var(--primary);
-    margin-bottom: 20px;
-}
-
-.about-section .fa-check-circle {
-    color: var(--primary);
-    margin-right: 8px;
+    padding: 5rem 0;
 }
 
 .about-section img {
     border-radius: 12px;
-    width: 100%;
-    height: auto;
-    max-width: 600px;
-    margin: 30px auto 0 auto;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
 }
 
-/********** Section title underline **********/
-.section-title {
-    position: relative;
-    margin-bottom: 40px;
-    text-align: center;
+.about-section img:hover {
+    transform: scale(1.05);
 }
 
-.section-title h5 {
-    display: inline-block;
-    position: relative;
-    padding-bottom: 10px;
-    font-weight: 700;
-    font-size: 20px;
+.about-section p {
+    color: var(--gray);
+    font-size: 1.1rem;
 }
 
-.section-title h5::before,
-.section-title h5::after {
-    content: "";
-    position: absolute;
-    bottom: 11px;
-    height: 3px;
-    background-color: var(--primary);
+.about-section .fa-check-circle {
+    color: var(--primary);
+    margin-right: 10px;
 }
 
-.section-title h5::before {
-    width: 45px;
-    right: -55px;
+/********** Services Section **********/
+.service-item {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border-radius: 12px;
+    padding: 2rem;
+    background-color: var(--white);
 }
 
-.section-title h5::after {
-    width: 15px;
-    right: -75px;
-    background-color: var(--secondary);
+.service-item:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.service-item i {
+    color: var(--primary);
+    margin-bottom: 1.5rem;
+}
+
+.service-item h5 {
+    font-size: 1.25rem;
+    color: var(--dark);
+}
+
+.service-item p {
+    font-size: 0.95rem;
+    color: var(--gray);
+}
+
+/********** Blog Section **********/
+.blog-item {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border-radius: 12px;
+    overflow: hidden;
+    background-color: var(--white);
+}
+
+.blog-item:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.blog-item img {
+    border-radius: 12px 12px 0 0;
+}
+
+.blog-item .btn {
+    font-size: 0.95rem;
+    padding: 8px 20px;
 }
 
 /********** Forms **********/
-input, textarea, select {
-    width: 100%;
-    padding: 12px 15px;
-    margin-bottom: 15px;
+.form-control {
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 1rem;
     border: 1px solid #ccc;
-    border-radius: 6px;
-    font-family: 'Jost', sans-serif;
-    font-size: 16px;
-    transition: border-color 0.3s;
+    transition: border-color 0.3s ease;
 }
 
-input:focus, textarea:focus, select:focus {
-    outline: none;
+.form-control:focus {
     border-color: var(--primary);
-}
-
-/********** Tables **********/
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 30px;
-    font-family: 'Jost', sans-serif;
-}
-
-table th, table td {
-    padding: 12px 15px;
-    border: 1px solid #ddd;
-    text-align: left;
-}
-
-table th {
-    background-color: var(--primary);
-    color: var(--white);
-    font-weight: 700;
+    box-shadow: 0 0 5px rgba(6, 163, 218, 0.3);
 }
 
 /********** Footer **********/
@@ -411,17 +598,4 @@ table th {
 
 .footer .social-icons a:hover {
     color: var(--primary);
-}
-
-/********** Responsive **********/
-@media (max-width: 768px) {
-    .navbar-light .navbar-nav {
-        flex-direction: column;
-    }
-    .banner-section h3 {
-        font-size: 20px;
-    }
-    .about-section h1 {
-        font-size: 28px;
-    }
 }

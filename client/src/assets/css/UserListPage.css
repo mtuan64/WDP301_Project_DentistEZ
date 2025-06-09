@@ -1,0 +1,194 @@
+/* Root variables to align with HomePage.css */
+:root {
+  --primary: #06A3DA;
+  --secondary: #F57E57;
+  --light: #EEF9FF;
+  --dark: #091E3E;
+  --white: #fff;
+  --gray: #6c757d;
+}
+
+/* Page container */
+.user-list-page {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Page title */
+.user-list-page h1 {
+  font-size: 24px;
+  margin-bottom: 20px;
+  color: var(--dark);
+  font-weight: 600;
+}
+
+/* Total count */
+.user-list-page .total-count {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--dark);
+  margin-bottom: 15px;
+}
+
+/* Table container */
+.MuiTableContainer-root {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  margin-top: 20px;
+}
+
+.MuiTableCell-root {
+  padding: 10px;
+  word-break: break-word;
+  color: var(--dark);
+}
+
+.MuiTableHead-root .MuiTableCell-root {
+  background-color: var(--primary);
+  color: var(--white);
+  font-weight: 600;
+}
+
+/* Button styling */
+.MuiButton-root {
+  min-width: 80px;
+  font-size: 12px;
+  text-transform: none;
+  padding: 6px 12px;
+}
+
+.MuiButton-containedPrimary {
+  background-color: var(--primary) !important;
+}
+
+.MuiButton-containedSecondary {
+  background-color: var(--secondary) !important;
+}
+
+.MuiButton-root:hover {
+  opacity: 0.9;
+}
+
+/* Specific styling for Doctor status buttons */
+.doctor-status-btn {
+  min-width: 120px !important; /* Wider horizontally */
+  height: 30px !important; /* Shorter vertically */
+  padding: 0 12px !important; /* Adjust padding to fit content */
+  font-size: 12px !important; /* Maintain font size */
+  line-height: 30px !important; /* Ensure text aligns vertically */
+  text-align: center !important;
+}
+
+/* Profile image */
+.profile-img {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+/* Tabs styling */
+.user-list-page .MuiTabs-root {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  margin-bottom: 20px;
+}
+
+.user-list-page .MuiTab-root {
+  min-width: 100px;
+  font-size: 14px;
+  font-weight: 500;
+  text-transform: none;
+}
+
+.user-list-page .Mui-selected {
+  color: var(--primary) !important;
+}
+
+.user-list-page .MuiTabs-indicator {
+  background-color: var(--primary) !important;
+}
+
+/* No data styling */
+.user-list-page .no-data {
+  text-align: center;
+  color: var(--gray);
+  padding: 20px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .user-list-page {
+    padding: 15px;
+  }
+
+  .user-list-page h1 {
+    font-size: 20px;
+  }
+
+  .user-list-page .total-count {
+    font-size: 12px;
+  }
+
+  .MuiTableCell-root {
+    padding: 8px;
+    font-size: 12px;
+  }
+
+  .profile-img {
+    width: 40px;
+    height: 40px;
+  }
+
+  .MuiButton-root {
+    min-width: 60px;
+    font-size: 10px;
+    padding: 4px 8px;
+  }
+
+  .doctor-status-btn {
+    min-width: 100px !important; /* Adjust width for smaller screens */
+    height: 28px !important; /* Slightly adjust height */
+    padding: 0 10px !important;
+    font-size: 10px !important;
+    line-height: 28px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .user-list-page {
+    padding: 10px;
+  }
+
+  .user-list-page h1 {
+    font-size: 18px;
+  }
+
+  .user-list-page .total-count {
+    font-size: 10px;
+  }
+
+  .MuiTableCell-root {
+    padding: 6px;
+    font-size: 10px;
+  }
+
+  .profile-img {
+    width: 30px;
+    height: 30px;
+  }
+
+  .MuiButton-root {
+    min-width: 50px;
+    font-size: 8px;
+    padding: 2px 6px;
+  }
+
+  .doctor-status-btn {
+    min-width: 80px !important; 
+    height: 26px !important; 
+    padding: 0 8px !important;
+    font-size: 8px !important;
+    line-height: 26px !important;
+  }
+}

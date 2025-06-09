@@ -1,4 +1,7 @@
 const User = require('../models/User');
+const Patient = require('../models/Patient');
+const Doctor = require('../models/Doctor');
+const Staff = require('../models/Staff');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const multer = require('multer');
@@ -27,8 +30,6 @@ const upload = multer({
 });
 
 
-
-
 exports.registerUser = async (req, res, next) => {
   try {
     const {
@@ -40,19 +41,19 @@ exports.registerUser = async (req, res, next) => {
       address,
       dob,
       gender,
-      role,
+      role // có thể không truyền => sẽ là undefined
     } = req.body;
 
-    // Check if email or username already exists
+    // Kiểm tra trùng email hoặc username
     const existingUser = await User.findOne({ $or: [{ email }, { username }] });
     if (existingUser) {
       return res.status(400).json({ msg: 'Người dùng đã tồn tại!' });
     }
 
-    // Hash password
+    // Mã hóa mật khẩu
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create new user
+    // Tạo user, nếu không có role thì mặc định là "patient"
     const newUser = new User({
       username,
       password: hashedPassword,
@@ -62,21 +63,34 @@ exports.registerUser = async (req, res, next) => {
       address,
       dateOfBirth: dob,
       gender,
-      role,
+      role: role || 'patient'
     });
 
-    await newUser.save();
+    const savedUser = await newUser.save();
+
+    // Tùy theo role mà tạo bản ghi tương ứng
+    switch (newUser.role) {
+      case 'patient':
+        await new Patient({ userId: savedUser._id }).save();
+        break;
+      case 'doctor':
+        await new Doctor({ userId: savedUser._id }).save();
+        break;
+      case 'staff':
+        await new Staff({ userId: savedUser._id }).save();
+        break;
+    }
 
     res.status(201).json({
-      id: newUser._id,
-      username: newUser.username,
-      fullname: newUser.fullname,
-      email: newUser.email,
-      phone: newUser.phone,
-      address: newUser.address,
-      dateOfBirth: newUser.dateOfBirth,
-      gender: newUser.gender,
-      role: newUser.role,
+      id: savedUser._id,
+      username: savedUser.username,
+      fullname: savedUser.fullname,
+      email: savedUser.email,
+      phone: savedUser.phone,
+      address: savedUser.address,
+      dateOfBirth: savedUser.dateOfBirth,
+      gender: savedUser.gender,
+      role: savedUser.role,
     });
   } catch (error) {
     console.error('Error in registerUser:', error);
