@@ -1,14 +1,14 @@
 const express = require("express");
 const router = express.Router();
 const { authMiddleware, authAdminMiddleware } = require("../middleware/authMiddleware");
+const {getAllPatients} = require("../controllers/patientController");
+const {getAllStaffs, updateStaffStatus} = require("../controllers/staffController");
 const {
   registerUser,
   loginUser,
   uploadProfilePicture,
   updateUser,
   upload,
-  getAllUserAccounts,
-  getUserByRole
 } = require("../controllers/authController");
 const {
   getAllDoctors,
@@ -21,6 +21,13 @@ const {
   updateBlog,
   deleteBlog,
   uploadImage,
+  getAllCategories,
+  createCategory,
+  updateCategory,
+  deleteCategory,
+  getBlogBySlug,
+  getTopViewedBlogs,
+  incrementBlogViews
 } = require("../controllers/blogController");
 const multer = require("multer");
 const path = require("path");
@@ -60,16 +67,35 @@ router.post(
   uploadProfilePicture
 );
 router.post("/user/update", authMiddleware, updateUser);
-router.get("/users-management", authAdminMiddleware, getAllUserAccounts);
-router.get("/users/role", authAdminMiddleware, getUserByRole);
 
+//Admin control account user
+router.get("/patients", authAdminMiddleware, getAllPatients);
+router.get("/staff", authAdminMiddleware, getAllStaffs);
 router.get("/docroraccount", authAdminMiddleware, getAllDoctors);
 router.put("/doctor/:doctorId/status", authAdminMiddleware, updateDoctorStatus);
+router.put("/staff/:staffId/status", authAdminMiddleware, updateStaffStatus);
 
-router.get("/blogs", authAdminMiddleware, getAllBlogs); 
-router.post("/blogs", authAdminMiddleware, createBlog); 
-router.put("/blogs/:id", authAdminMiddleware, updateBlog); 
+//Blog
+router.get("/blogs", getAllBlogs);
+router.post("/blogs", authAdminMiddleware, createBlog);
+router.put("/blogs/:id", authAdminMiddleware, updateBlog);
 router.delete("/blogs/:id", authAdminMiddleware, deleteBlog);
-router.post("/blogs/upload", authAdminMiddleware, uploadMulter.single("image"), uploadImage);
+router.post(
+  "/blogs/upload",
+  authAdminMiddleware,
+  uploadMulter.fields([
+    { name: "mainImage", maxCount: 1 },
+    { name: "contentImages", maxCount: 10 }, 
+  ]),
+  uploadImage
+);
+router.get("/categories", getAllCategories);
+router.post("/categories", authAdminMiddleware, createCategory);
+router.put("/categories/:id", authAdminMiddleware, updateCategory);
+router.delete("/categories/:id", authAdminMiddleware, deleteCategory);
+router.get("/blogs/slug/:slug", getBlogBySlug);
+router.get("/blogs/top-viewed", getTopViewedBlogs);
+router.post("/blogs/slug/:slug/views", incrementBlogViews);
+
 
 module.exports = router;
