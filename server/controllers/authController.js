@@ -6,12 +6,6 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const multer = require('multer');
 const path = require('path');
-const User = require("../models/User");
-const Doctor = require("../models/Doctor");
-const jwt = require("jsonwebtoken");
-const bcrypt = require("bcrypt");
-const multer = require("multer");
-const path = require("path");
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
