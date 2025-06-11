@@ -1,12 +1,18 @@
 /********** Root & Fonts **********/
 :root {
-    --primary: #06A3DA; /* Bright blue for primary actions */
-    --secondary: #F57E57; /* Warm coral for accents */
-    --light: #EEF9FF; /* Light blue background */
-    --dark: #091E3E; /* Deep navy for text and contrast */
+    --primary: #06A3DA;
+    /* Bright blue for primary actions */
+    --secondary: #F57E57;
+    /* Warm coral for accents */
+    --light: #EEF9FF;
+    /* Light blue background */
+    --dark: #091E3E;
+    /* Deep navy for text and contrast */
     --white: #fff;
-    --gray: #6c757d; /* Muted gray for secondary text */
-    --light-blue: #E6F0FA; /* Light blue for doctor cards */
+    --gray: #6c757d;
+    /* Muted gray for secondary text */
+    --light-blue: #E6F0FA;
+    /* Light blue for doctor cards */
 }
 
 /* Reset cơ bản */
@@ -16,7 +22,8 @@
     box-sizing: border-box;
 }
 
-body, html {
+body,
+html {
     margin: 0;
     padding: 0;
     font-family: 'Jost', sans-serif;
@@ -32,19 +39,25 @@ img {
 }
 
 /********** Typography **********/
-h1, h2, .font-weight-bold {
+h1,
+h2,
+.font-weight-bold {
     font-weight: 700 !important;
     margin: 0 0 20px 0;
     color: var(--dark);
 }
 
-h3, h4, .font-weight-semi-bold {
+h3,
+h4,
+.font-weight-semi-bold {
     font-weight: 600 !important;
     margin: 0 0 15px 0;
     color: var(--dark);
 }
 
-h5, h6, .font-weight-medium {
+h5,
+h6,
+.font-weight-medium {
     font-weight: 500 !important;
     margin: 0 0 10px 0;
     color: var(--dark);
@@ -101,20 +114,36 @@ p {
     color: var(--white);
 }
 
-.btn-square, .btn-sm-square, .btn-lg-square {
+.btn-square,
+.btn-sm-square,
+.btn-lg-square {
     padding-left: 0;
     padding-right: 0;
     text-align: center;
 }
 
-.btn-square { width: 36px; height: 36px; }
-.btn-sm-square { width: 28px; height: 28px; }
-.btn-lg-square { width: 46px; height: 46px; }
+.btn-square {
+    width: 36px;
+    height: 36px;
+}
+
+.btn-sm-square {
+    width: 28px;
+    height: 28px;
+}
+
+.btn-lg-square {
+    width: 46px;
+    height: 46px;
+}
 
 /********** Spinner **********/
 #spinner {
     position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     background: rgba(255, 255, 255, 0.7);
     display: flex;
     justify-content: center;
@@ -205,6 +234,7 @@ p {
         flex-direction: column;
         padding: 0 1rem;
     }
+
     .navbar-light .navbar-nav .nav-link {
         padding: 10px 0;
     }
@@ -252,55 +282,55 @@ p {
 
 /* Custom Doctors Carousel */
 .doctors-carousel {
-  position: relative;
-  overflow: hidden;
+    position: relative;
+    overflow: hidden;
 }
 
 .doctors-carousel-inner {
-  display: flex;
-  transition: transform 0.5s ease-in-out;
+    display: flex;
+    transition: transform 0.5s ease-in-out;
 }
 
 .doctors-carousel .col-lg-3 {
-  flex: 0 0 25%;
-  max-width: 25%;
+    flex: 0 0 25%;
+    max-width: 25%;
 }
 
 /* Carousel controls */
 .carousel-control-prev,
 .carousel-control-next {
-  width: 5%;
-  background: none;
-  border: none;
-  opacity: 0.5;
-  transition: opacity 0.2s;
+    width: 5%;
+    background: none;
+    border: none;
+    opacity: 0.5;
+    transition: opacity 0.2s;
 }
 
 .carousel-control-prev:hover,
 .carousel-control-next:hover {
-  opacity: 1;
+    opacity: 1;
 }
 
 .carousel-control-prev-icon,
 .carousel-control-next-icon {
-  background-size: 100% 100%;
-  width: 30px;
-  height: 30px;
+    background-size: 100% 100%;
+    width: 30px;
+    height: 30px;
 }
 
 /* Responsive adjustments */
 @media (max-width: 991.98px) {
-  .doctors-carousel .col-lg-3 {
-    flex: 0 0 50%;
-    max-width: 50%;
-  }
+    .doctors-carousel .col-lg-3 {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
 }
 
 @media (max-width: 575.98px) {
-  .doctors-carousel .col-lg-3 {
-    flex: 0 0 100%;
-    max-width: 100%;
-  }
+    .doctors-carousel .col-lg-3 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
 }
 
 /********** Doctors Section **********/
@@ -398,17 +428,21 @@ p {
     .doctor-card {
         max-width: 200px;
     }
+
     .doctor-image img {
         width: 150px;
         height: 150px;
     }
+
     .tooth-logo {
         width: 40px;
         height: 40px;
     }
+
     .doctor-card h5 {
         font-size: 1rem;
     }
+
     .doctor-card p {
         font-size: 0.85rem;
     }
@@ -418,17 +452,21 @@ p {
     .doctor-card {
         max-width: 180px;
     }
+
     .doctor-image img {
         width: 130px;
         height: 130px;
     }
+
     .tooth-logo {
         width: 35px;
         height: 35px;
     }
+
     .doctor-card h5 {
         font-size: 0.9rem;
     }
+
     .doctor-card p {
         font-size: 0.8rem;
     }
@@ -548,19 +586,79 @@ p {
     font-size: 0.95rem;
     padding: 8px 20px;
 }
-
-/********** Forms **********/
-.form-control {
-    border-radius: 8px;
-    padding: 12px;
-    font-size: 1rem;
-    border: 1px solid #ccc;
-    transition: border-color 0.3s ease;
+.blog-container {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    /* Space between cards */
 }
 
-.form-control:focus {
-    border-color: var(--primary);
-    box-shadow: 0 0 5px rgba(6, 163, 218, 0.3);
+.blog-item {
+    flex: 1 1 calc(33.33% - 13.33px);
+    /* Adjust for 3 columns with gap */
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    /* Ensure full height */
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border-radius: 12px;
+    overflow: hidden;
+    background-color: var(--white);
+}
+
+.blog-item img {
+    width: 100%;
+    height: 220px;
+    /* Fixed height for images */
+    object-fit: cover;
+    border-radius: 12px 12px 0 0;
+}
+
+.blog-item .p-3 {
+    flex-grow: 1;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.blog-item h5 {
+    font-size: 1.25rem;
+    margin-bottom: 10px;
+    color: var(--dark);
+}
+
+.blog-item p {
+    flex-grow: 1;
+    font-size: 0.95rem;
+    color: var(--gray);
+    margin-bottom: 15px;
+}
+
+.blog-item .btn {
+    font-size: 0.95rem;
+    padding: 8px 20px;
+    align-self: flex-start;
+    /* Align button to the left or start */
+}
+
+@media (max-width: 991.98px) {
+    .blog-item {
+        flex: 1 1 calc(50% - 10px);
+        /* 2 columns on medium screens */
+    }
+}
+
+@media (max-width: 575.98px) {
+    .blog-container {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .blog-item {
+        flex: 1 1 100%;
+        /* 1 column on small screens */
+    }
 }
 
 /********** Footer **********/

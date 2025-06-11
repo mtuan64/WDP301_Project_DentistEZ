@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { Container, Row, Col } from "react-bootstrap";
+import { Container, Row, Col, Form, FormControl } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import axios from "axios";
 
-
 const DoctorPage = () => {
   const [doctors, setDoctors] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     const fetchDoctors = async () => {
@@ -19,6 +19,22 @@ const DoctorPage = () => {
 
     fetchDoctors();
   }, []);
+
+  // Handle search input change
+  const handleSearch = (e) => {
+    setSearchQuery(e.target.value);
+  };
+
+  // Filter doctors based on search query
+  const filteredDoctors = doctors.filter((doctor) => {
+    const fullName = doctor.userId?.fullname || "";
+    const specialty = doctor.Specialty || "";
+    const query = searchQuery.toLowerCase();
+    return (
+      fullName.toLowerCase().includes(query) ||
+      specialty.toLowerCase().includes(query)
+    );
+  });
 
   return (
     <>
@@ -72,7 +88,7 @@ const DoctorPage = () => {
               <div className="text-center text-white">
                 <h1 className="display-3 fw-bold">Đội ngũ bác sĩ</h1>
                 <p className="lead mt-3">
-                 Chuyên gia đáng tin cậy cho nụ cười hoàn hảo của bạn
+                  Chuyên gia đáng tin cậy cho nụ cười hoàn hảo của bạn
                 </p>
               </div>
             </div>
@@ -83,6 +99,21 @@ const DoctorPage = () => {
       {/* Team Section */}
       <div className="container-fluid py-5">
         <Container>
+          {/* Search Bar */}
+          <Row className="mb-4">
+            <Col md={6} className="mx-auto">
+              <Form>
+                <FormControl
+                  type="text"
+                  placeholder="Tìm kiếm bác sĩ theo tên hoặc chuyên ngành..."
+                  value={searchQuery}
+                  onChange={handleSearch}
+                  className="shadow-sm"
+                />
+              </Form>
+            </Col>
+          </Row>
+
           <Row className="g-5">
             <Col lg={4} className="wow fadeInUp" data-wow-delay="0.1s">
               <div className="bg-light rounded h-100 p-5">
@@ -113,8 +144,8 @@ const DoctorPage = () => {
               </div>
             </Col>
 
-            {/* Chỉ hiển thị bác sĩ có trạng thái không phải inactive */}
-            {doctors
+            {/* Display filtered doctors */}
+            {filteredDoctors
               .filter((doctor) => doctor.Status !== "inactive")
               .map((doctor, index) => (
                 <Col
@@ -128,11 +159,7 @@ const DoctorPage = () => {
                       <img
                         className="img-fluid rounded-top w-100"
                         src={doctor.ProfileImage}
-                        alt={
-                          doctor.userId
-                            ? doctor.userId.fullname
-                            : "Doctor"
-                        }
+                        alt={doctor.userId ? doctor.userId.fullname : "Doctor"}
                       />
                     </div>
                     <div className="team-text position-relative bg-light text-center rounded-bottom p-4 pt-5">
@@ -155,6 +182,13 @@ const DoctorPage = () => {
                   </div>
                 </Col>
               ))}
+            {/* Display message if no doctors match the search */}
+            {filteredDoctors.filter((doctor) => doctor.Status !== "inactive")
+              .length === 0 && (
+              <Col className="text-center">
+                <p>Không tìm thấy bác sĩ nào phù hợp với tìm kiếm của bạn.</p>
+              </Col>
+            )}
           </Row>
         </Container>
       </div>
