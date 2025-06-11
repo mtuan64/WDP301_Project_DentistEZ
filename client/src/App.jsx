@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-
+import { Routes, Route } from "react-router-dom"; // Không cần BrowserRouter ở đây
 import ServicePage from "./pages/ServicePage";
 import DoctorPage from "./pages/DoctorPage";
 import LoginPage from "./pages/LoginPage";
@@ -18,7 +17,7 @@ import DoctorAccountManagement from "./pages/DoctorAccountManagement";
 import Header from "./components/HeaderComponent";
 import MenuComponent from "./components/MenuComponent";
 import FooterComponent from "./components/FooterComponent";
-import "antd/dist/reset.css"; // hoặc 'antd/dist/antd.css' nếu bạn dùng antd v4
+import "antd/dist/reset.css";
 
 const DRAWER_WIDTH = 240;
 
@@ -26,15 +25,24 @@ const App = () => {
   // State mở/đóng menu
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // Lấy user và role (có thể lấy từ context hoặc localStorage)
-  const user = JSON.parse(localStorage.getItem("user"));
+  // Lấy user và role, xử lý trường hợp null
+  let user = null;
+  try {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      user = JSON.parse(storedUser);
+    }
+  } catch (error) {
+    console.error("Error parsing user from localStorage:", error);
+    localStorage.removeItem("user"); // Xóa dữ liệu không hợp lệ
+  }
   const role = user?.role || "patient";
 
   // Hàm toggle menu
   const toggleMenu = () => setMenuOpen((open) => !open);
 
   return (
-    <Router>
+    <div> {/* Không cần BrowserRouter vì đã có trong main.jsx */}
       {/* Header luôn hiện trên mọi trang */}
       <Header onMenuClick={toggleMenu} menuOpen={menuOpen} />
 
@@ -75,7 +83,7 @@ const App = () => {
 
       {/* Footer luôn hiện trên mọi trang */}
       <FooterComponent />
-    </Router>
+    </div>
   );
 };
 

@@ -9,6 +9,7 @@ const {
   uploadProfilePicture,
   updateUser,
   upload,
+  logoutUser
 } = require("../controllers/authController");
 const {
   getAllDoctors,
@@ -58,6 +59,7 @@ const uploadMulter = multer({
 
 router.post("/register", registerUser);
 router.post("/login", loginUser);
+router.post('/logout', authMiddleware, logoutUser);
 router.get("/doctor", getAllDoctors);
 router.get("/doctor/:doctorId", getDoctorById);
 router.post(

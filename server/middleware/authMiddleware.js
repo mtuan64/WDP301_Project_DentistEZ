@@ -2,12 +2,32 @@ const jwt = require('jsonwebtoken');
 const dotenv = require("dotenv");
 dotenv.config();
 
+// Danh sách đen để lưu token đã logout (thay bằng Redis trong production)
+const tokenBlacklist = [];
+
+// Hàm kiểm tra token trong blacklist
+const isTokenBlacklisted = (token) => {
+  return tokenBlacklist.includes(token);
+};
+
 const authMiddleware = (req, res, next) => {
   // Extract token from Authorization header
-  const token = req.headers.authorization?.split(' ')[1];
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({
+      message: "Không tìm thấy token hoặc token không hợp lệ",
+      status: "ERROR",
+    });
+  }
   
-  if (!token) {
-    return res.status(401).json({ msg: 'Không có token được cung cấp' });
+  const token = authHeader.split(' ')[1];
+
+  // Check if token is blacklisted
+  if (isTokenBlacklisted(token)) {
+    return res.status(401).json({
+      message: "Token đã bị thu hồi. Vui lòng đăng nhập lại.",
+      status: "ERROR",
+    });
   }
 
   try {
@@ -17,9 +37,17 @@ const authMiddleware = (req, res, next) => {
     next();
   } catch (err) {
     console.error('Xác minh token thất bại:', err);
-    res.status(401).json({ msg: 'Token không hợp lệ' });
+    return res.status(401).json({
+      message: "Token không hợp lệ hoặc đã hết hạn",
+      status: "ERROR",
+    });
   }
 };
+
+// Export tokenBlacklist and isTokenBlacklisted for use in logout
+exports.tokenBlacklist = tokenBlacklist;
+exports.isTokenBlacklisted = isTokenBlacklisted;
+
 const authAdminMiddleware = (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -39,7 +67,6 @@ const authAdminMiddleware = (req, res, next) => {
     }
    
     if (decoded.role === "admin") {
-      
       req.user = decoded;
       next();
     } else {
@@ -50,6 +77,7 @@ const authAdminMiddleware = (req, res, next) => {
     }
   });
 };
+
 const authDentistMiddleware = (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -78,6 +106,7 @@ const authDentistMiddleware = (req, res, next) => {
     }
   });
 };
+
 const authPatientMiddleware = (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -106,6 +135,7 @@ const authPatientMiddleware = (req, res, next) => {
     }
   });
 };
+
 const authStaffMiddleware = (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -135,4 +165,4 @@ const authStaffMiddleware = (req, res, next) => {
   });
 };
 
-module.exports = { authMiddleware, authAdminMiddleware, authDentistMiddleware, authPatientMiddleware, authStaffMiddleware }; 
+module.exports = { authMiddleware, authAdminMiddleware, authDentistMiddleware, authPatientMiddleware, authStaffMiddleware, tokenBlacklist, isTokenBlacklisted };

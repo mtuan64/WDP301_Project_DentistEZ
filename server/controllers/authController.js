@@ -7,10 +7,13 @@ const bcrypt = require('bcrypt');
 const multer = require('multer');
 const path = require('path');
 
+// Danh sách đen để lưu token đã logout (thay bằng Redis trong production)
+const tokenBlacklist = [];
+
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/'); // Ensure this folder exists
+    cb(null, 'uploads/');
   },
   filename: (req, file, cb) => {
     cb(null, `${Date.now()}-${file.originalname}`);
@@ -29,7 +32,6 @@ const upload = multer({
   },
 });
 
-
 exports.registerUser = async (req, res, next) => {
   try {
     const {
@@ -41,19 +43,16 @@ exports.registerUser = async (req, res, next) => {
       address,
       dob,
       gender,
-      role // có thể không truyền => sẽ là undefined
+      role
     } = req.body;
 
-    // Kiểm tra trùng email hoặc username
     const existingUser = await User.findOne({ $or: [{ email }, { username }] });
     if (existingUser) {
       return res.status(400).json({ msg: 'Người dùng đã tồn tại!' });
     }
 
-    // Mã hóa mật khẩu
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Tạo user, nếu không có role thì mặc định là "patient"
     const newUser = new User({
       username,
       password: hashedPassword,
@@ -68,7 +67,6 @@ exports.registerUser = async (req, res, next) => {
 
     const savedUser = await newUser.save();
 
-    // Tùy theo role mà tạo bản ghi tương ứng
     switch (newUser.role) {
       case 'patient':
         await new Patient({ userId: savedUser._id }).save();
@@ -102,33 +100,28 @@ exports.loginUser = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
-    // Kiểm tra đầu vào
     if (!email || !password) {
       return res.status(400).json({ msg: 'Vui lòng nhập đầy đủ email và mật khẩu.' });
     }
 
-    // Tìm user theo email
     const user = await User.findOne({ email });
 
     if (!user) {
       return res.status(404).json({ msg: 'Người dùng không tồn tại.' });
     }
 
-    // Kiểm tra mật khẩu
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
       return res.status(401).json({ msg: 'Mật khẩu không đúng.' });
     }
 
-    // Tạo JWT token
     const token = jwt.sign(
       { userId: user._id, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: '20h' }
     );
 
-    // Trả về token và thông tin user
     res.status(200).json({
       msg: 'Đăng nhập thành công.',
       token,
@@ -151,12 +144,9 @@ exports.loginUser = async (req, res, next) => {
   }
 };
 
-
-
-
 exports.uploadProfilePicture = async (req, res, next) => {
   try {
-    const userId = req.user.userId; // From authMiddleware
+    const userId = req.user.userId;
     const file = req.file;
 
     if (!file) {
@@ -186,21 +176,18 @@ exports.uploadProfilePicture = async (req, res, next) => {
 
 exports.updateUser = async (req, res, next) => {
   try {
-    const userId = req.user.userId; // From authMiddleware
+    const userId = req.user.userId;
     const { fullname, email, phone, address, dateOfBirth, gender, profilePicture } = req.body;
 
-    // Validate required fields
     if (!fullname || !email) {
       return res.status(400).json({ msg: 'Fullname and email are required' });
     }
 
-    // Check if email is already taken by another user
     const existingUser = await User.findOne({ email, _id: { $ne: userId } });
     if (existingUser) {
       return res.status(400).json({ msg: 'Email already in use' });
     }
 
-    // Update user
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       {
@@ -240,21 +227,16 @@ exports.updateUser = async (req, res, next) => {
   }
 };
 
-// Get all user accounts
 exports.getAllUserAccounts = async (req, res) => {
   try {
-    // Ensure only admin can access this endpoint
     if (req.user.role !== 'admin') {
       return res.status(403).json({ msg: 'Access denied. Admin role required.' });
     }
 
-    // Extract query parameters for pagination, filtering, and sorting
     const { page = 1, limit = 10, search, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
 
-    // Build query object
     const query = {};
     if (search) {
-      // Search by username, fullname, or email (case-insensitive)
       query.$or = [
         { username: { $regex: search, $options: 'i' } },
         { fullname: { $regex: search, $options: 'i' } },
@@ -262,27 +244,22 @@ exports.getAllUserAccounts = async (req, res) => {
       ];
     }
 
-    // Calculate pagination values
     const pageNum = parseInt(page);
     const limitNum = parseInt(limit);
     const skip = (pageNum - 1) * limitNum;
 
-    // Define sort options
     const sortOptions = {};
     sortOptions[sortBy] = sortOrder === 'desc' ? -1 : 1;
 
-    // Fetch users from database, excluding password field
     const users = await User.find(query)
-      .select('-password') // Exclude password field
+      .select('-password')
       .sort(sortOptions)
       .skip(skip)
       .limit(limitNum)
-      .lean(); // Convert to plain JavaScript object for better performance
+      .lean();
 
-    // Get total count for pagination metadata
     const totalUsers = await User.countDocuments(query);
 
-    // Prepare response
     const response = {
       success: true,
       data: users,
@@ -301,38 +278,30 @@ exports.getAllUserAccounts = async (req, res) => {
   }
 };
 
-// Get users by role
 exports.getUserByRole = async (req, res) => {
   try {
-    // Ensure only admin can access this endpoint
     if (req.user.role !== 'admin') {
       return res.status(403).json({ msg: 'Access denied. Admin role required.' });
     }
 
-    // Extract query parameters for pagination and role filtering
     const { page = 1, limit = 10, role } = req.query;
 
-    // Validate role parameter
     if (!role || !['patient', 'doctor', 'staff', 'admin'].includes(role)) {
       return res.status(400).json({ msg: 'Invalid or missing role parameter' });
     }
 
-    // Calculate pagination values
     const pageNum = parseInt(page);
     const limitNum = parseInt(limit);
     const skip = (pageNum - 1) * limitNum;
 
-    // Fetch users by role, excluding password field
     const users = await User.find({ role })
-      .select('-password') // Exclude password field
+      .select('-password')
       .skip(skip)
       .limit(limitNum)
-      .lean(); // Convert to plain JavaScript object for better performance
+      .lean();
 
-    // Get total count for pagination metadata
     const totalUsers = await User.countDocuments({ role });
 
-    // Prepare response
     const response = {
       success: true,
       data: users,
@@ -349,6 +318,29 @@ exports.getUserByRole = async (req, res) => {
     console.error('Error fetching users by role:', error);
     res.status(500).json({ msg: 'Server error', error: error.message });
   }
+};
+
+// Hàm logout
+exports.logoutUser = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      return res.status(400).json({ msg: 'No token provided' });
+    }
+
+    // Thêm token vào blacklist
+    tokenBlacklist.push(token);
+
+    res.status(200).json({ msg: 'Logged out successfully' });
+  } catch (error) {
+    console.error('Error during logout:', error);
+    res.status(500).json({ msg: 'Failed to logout' });
+  }
+};
+
+// Hàm kiểm tra token trong blacklist (dùng trong middleware)
+exports.isTokenBlacklisted = (token) => {
+  return tokenBlacklist.includes(token);
 };
 
 // Export multer upload for use in routes
