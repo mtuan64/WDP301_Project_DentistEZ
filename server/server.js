@@ -5,7 +5,7 @@ const path = require("path");
 const connectDB = require("./config/db");
 const cors = require("cors");
 const cloudinary = require("cloudinary").v2;
-require("dotenv").config();
+const chatboxController = require("./controllers/chat/chatboxController");
 
 const app = express();
 
@@ -37,6 +37,7 @@ app.get("/", (req, res) => {
 
 // Routes
 app.use("/api", require("./routes/authRoute"));
+app.use("/api/chat", require("./routes/chatRoute"));
 
 // 404 handler
 app.use((req, res, next) => {
@@ -54,7 +55,8 @@ app.use((err, req, res, next) => {
 
 // Start server
 const PORT = process.env.PORT || 9999;
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   connectDB(); // kết nối DB khi server đã sẵn sàng
   console.log(`Server is running on port ${PORT}`);
+  chatboxController.initializeSocket(server);
 });

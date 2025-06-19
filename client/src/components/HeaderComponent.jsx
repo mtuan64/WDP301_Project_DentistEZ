@@ -9,6 +9,18 @@ const Header = ({ onMenuClick }) => {
   const navigate = useNavigate(); // 👈 Khởi tạo navigate
 
   const handleLogout = () => {
+    console.log("User ID before logout:", user?.id); // Log kiểm tra
+
+    // Xóa TẤT CẢ các key chatMessages
+    Object.keys(localStorage).forEach((key) => {
+      if (key.startsWith("chatMessages_")) {
+        localStorage.removeItem(key);
+      }
+    });
+
+    // Xóa session AI nếu có
+    localStorage.removeItem("aiSessionId");
+
     logout();           // Gọi hàm logout từ context
     navigate("/");      // Sau đó điều hướng về trang Home
   };

@@ -18,6 +18,7 @@ import DoctorAccountManagement from "./pages/DoctorAccountManagement";
 import Header from "./components/HeaderComponent";
 import MenuComponent from "./components/MenuComponent";
 import FooterComponent from "./components/FooterComponent";
+import Chatbox from "./components/Chatbox";
 import "antd/dist/reset.css"; // hoặc 'antd/dist/antd.css' nếu bạn dùng antd v4
 import ForgotPasswordPage from "./pages/ForgotPassword";
 import VerifyOtpPage from "./pages/VerifyOtp";
@@ -82,6 +83,7 @@ const App = () => {
 
       {/* Footer luôn hiện trên mọi trang */}
       <FooterComponent />
+      <Chatbox />
     </Router>
   );
 };
