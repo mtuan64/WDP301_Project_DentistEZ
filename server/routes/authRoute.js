@@ -1,17 +1,21 @@
 const express = require("express");
 const router = express.Router();
-const { authMiddleware, authAdminMiddleware } = require("../middleware/authMiddleware");
+const {
+  authMiddleware,
+  authAdminMiddleware,
+} = require("../middleware/authMiddleware");
 const {
   registerUser,
   loginUser,
   uploadProfilePicture,
   updateUser,
   upload,
+  googleLogin,
 } = require("../controllers/authController");
 const {
   getAllDoctors,
   getDoctorById,
-  updateDoctorStatus
+  updateDoctorStatus,
 } = require("../controllers/doctorController");
 const {
   getAllBlogs,
@@ -27,7 +31,11 @@ const {
 } = require("../controllers/blogController");
 const multer = require("multer");
 const path = require("path");
-const { requestPasswordReset, verifyOTP, resetPassword } = require("../controllers/otpController");
+const {
+  requestPasswordReset,
+  verifyOTP,
+  resetPassword,
+} = require("../controllers/otpController");
 
 // Configure multer for file uploads (used for profile pictures and blog images)
 const storage = multer.diskStorage({
@@ -53,15 +61,13 @@ const uploadMulter = multer({
   },
 });
 
-
 // Authentication
 router.post("/register", registerUser);
 router.post("/login", loginUser);
-router.post('/reset-pass', requestPasswordReset);
-router.post('/verify', verifyOTP);
-router.post('/confirm-reset', resetPassword);
-
-
+router.post("/reset-pass", requestPasswordReset);
+router.post("/verify", verifyOTP);
+router.post("/confirm-reset", resetPassword);
+router.post("/gg-login", googleLogin);
 
 // Doctor
 router.get("/doctor", getAllDoctors);
@@ -87,7 +93,7 @@ router.post(
   authAdminMiddleware,
   uploadMulter.fields([
     { name: "mainImage", maxCount: 1 },
-    { name: "contentImages", maxCount: 10 }, 
+    { name: "contentImages", maxCount: 10 },
   ]),
   uploadImage
 );
