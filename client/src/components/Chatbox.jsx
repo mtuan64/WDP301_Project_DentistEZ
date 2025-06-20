@@ -4,6 +4,8 @@ import axios from "axios";
 import { useAuth } from "../context/authContext";
 import io from "socket.io-client";
 import { MdMessage } from "react-icons/md";
+
+
 const socket = io("http://localhost:9999");
 
 const Chatbox = () => {
@@ -14,20 +16,23 @@ const Chatbox = () => {
   const [selectedChat, setSelectedChat] = useState(null);
   const [chatNotifications, setChatNotifications] = useState({});
   const [lastReadTimestamps, setLastReadTimestamps] = useState({});
-  const messagesEndRef = useRef(null);
 
   useEffect(() => {
+
     messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
   }, [selectedChat]);
-
+  
   const messages = React.useMemo(() => {
     if (!selectedChat) return [];
     const roomId = selectedChat.roomId;
     return roomId && messageMap[roomId] ? messageMap[roomId] : [];
   }, [selectedChat?.roomId, messageMap]);
+  
 
   const [patients, setPatients] = useState([]);
+  const messagesEndRef = useRef(null);
 
+  // Danh sách các tùy chọn chat
   const chatOptions = [
     {
       id: "1",
@@ -66,55 +71,73 @@ const Chatbox = () => {
     });
   }
 
+  // Load tin nhắn khi chọn chat
+  // Load tin nhắn khi chọn chat
   useEffect(() => {
-    if (!user) return;
-    const loadAllMessages = async () => {
-      const allMessages = {};
-      const allNotifications = {};
-      for (const chat of chatOptions) {
-        let newMessages = [];
-        if (chat.type === "ai") {
-          const savedMessages = localStorage.getItem(
-            `chatMessages_${chat.roomId}`
+    if (!user || !selectedChat) return;
+
+    const loadMessages = async () => {
+      let newMessages = [];
+
+      if (selectedChat.type === "ai") {
+        // Load tin nhắn AI từ localStorage
+        const savedMessages = localStorage.getItem(
+          `chatMessages_${selectedChat.roomId}`
+        );
+        newMessages = savedMessages ? JSON.parse(savedMessages) : [];
+      } else {
+        // Load tin nhắn giữa người với người từ database
+        try {
+          const userId = user.role === "patient" ? user.id : selectedChat.id;
+          const response = await axios.get(
+            `http://localhost:9999/api/chat/messages?userId=${userId}`
           );
-          newMessages = savedMessages ? JSON.parse(savedMessages) : [];
-        } else {
-          try {
-            const userId = user.role === "patient" ? user.id : chat.id;
-            const response = await axios.get(
-              `http://localhost:9999/api/chat/messages?userId=${userId}`
-            );
-            newMessages = response.data.map((msg) => ({
-              text: msg.message,
-              sender:
-                msg.senderId._id.toString() === user.id.toString()
-                  ? "user"
-                  : msg.senderId.fullname,
-              timestamp: new Date(msg.timestamp).toLocaleTimeString("en-US", {
-                timeZone: "Asia/Ho_Chi_Minh",
-              }),
-              timestampRaw: msg.timestamp,
-            }));
-          } catch (error) {
-            console.error("Error fetching messages:", error);
-            newMessages = [];
-          }
+
+          newMessages = response.data.map((msg) => ({
+            text: msg.message,
+            sender:
+              msg.senderId._id.toString() === user.id.toString()
+                ? "user"
+                : msg.senderId.fullname,
+            timestamp: new Date(msg.timestamp).toLocaleTimeString("en-US", {
+              timeZone: "Asia/Ho_Chi_Minh",
+            }),
+            timestampRaw: msg.timestamp,
+          }));
+          
+        } catch (error) {
+          console.error("Error fetching messages:", error);
+          newMessages = [];
         }
-        allMessages[chat.roomId] = newMessages;
-        const lastRead = lastReadTimestamps[chat.roomId] || 0;
+      }
+
+      // Gán tin nhắn vào messageMap cho room hiện tại
+      setMessageMap((prev) => ({
+        ...prev,
+        [selectedChat.roomId]: newMessages,
+      }));
+
+      // ✅ Đoạn thay thế ở đây: tính số tin chưa đọc
+      if (selectedChat.type !== "ai") {
+        const lastRead = lastReadTimestamps[selectedChat.roomId] || 0;
+
         const unreadCount = newMessages.filter(
           (msg) =>
             msg.sender !== "user" &&
             new Date(msg.timestampRaw).getTime() > lastRead
         ).length;
-        allNotifications[chat.roomId] = unreadCount;
-      }
-      setMessageMap(allMessages);
-      setChatNotifications(allNotifications);
-    };
-    loadAllMessages();
-  }, [user]);
 
+        setChatNotifications((prev) => ({
+          ...prev,
+          [selectedChat.roomId]: unreadCount,
+        }));
+      }
+    };
+
+    loadMessages();
+  }, [user, selectedChat]);
+
+  // Lưu tin nhắn AI vào localStorage khi có thay đổi
   useEffect(() => {
     if (
       !user ||
@@ -123,26 +146,34 @@ const Chatbox = () => {
       !selectedChat.roomId
     )
       return;
+
     const aiMessages = messageMap[selectedChat.roomId] || [];
     if (aiMessages.length === 0) return;
+
     localStorage.setItem(
       `chatMessages_${selectedChat.roomId}`,
       JSON.stringify(aiMessages)
     );
   }, [messageMap, user, selectedChat]);
 
+  // Xử lý Socket.IO cho chat người với người
   useEffect(() => {
     if (!user) return;
+
     socket.emit("joinRoom", {
       userId: user.id?.toString() || "unknown",
       role: user.role,
     });
+
     const handleUpdatePatients = (patientList) => {
       setPatients(patientList);
       console.log("Updated patients:", patientList);
     };
+
     const handleReceiveMessage = (data) => {
-      const roomId = data.roomId;
+      const roomId = data.roomId.toString();
+      const currentChatRoomId = selectedChat?.roomId?.toString() || "";
+
       const newMessage = {
         text: data.message,
         sender:
@@ -150,31 +181,48 @@ const Chatbox = () => {
         timestamp: new Date(data.timestamp).toLocaleTimeString("en-US", {
           timeZone: "Asia/Ho_Chi_Minh",
         }),
+        timestampRaw: data.timestamp,
       };
+
+      // ✅ Thêm vào message map
       setMessageMap((prev) => ({
         ...prev,
         [roomId]: [...(prev[roomId] || []), newMessage],
       }));
-      if (!selectedChat || selectedChat.roomId !== roomId) {
+
+      // ✅ Tăng badge nếu đang KHÔNG mở đúng khung chat
+      if (roomId !== currentChatRoomId) {
         setChatNotifications((prev) => ({
           ...prev,
           [roomId]: (prev[roomId] || 0) + 1,
         }));
       }
-    };
 
+      // ✅ Cập nhật lastReadTimestamps nếu đang mở đúng phòng
+      if (roomId === currentChatRoomId) {
+        setLastReadTimestamps((prev) => ({
+          ...prev,
+          [roomId]: Date.now(),
+        }));
+      }
+    };
+    
+    
     socket.on("updatePatients", handleUpdatePatients);
     socket.on("receiveMessage", handleReceiveMessage);
+
     return () => {
       socket.off("updatePatients", handleUpdatePatients);
       socket.off("receiveMessage", handleReceiveMessage);
     };
   }, [user, selectedChat]);
 
+  // Tự động cuộn xuống tin nhắn mới nhất
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Gửi tin nhắn
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || !selectedChat || !user) {
       console.error("Cannot send message:", {
@@ -184,14 +232,18 @@ const Chatbox = () => {
       });
       return;
     }
+
     const timestamp = new Date().toLocaleTimeString("en-US", {
       timeZone: "Asia/Ho_Chi_Minh",
     });
+
     const userMessage = {
       text: inputMessage,
       sender: "user",
       timestamp,
     };
+
+    // Cập nhật messageMap theo roomId
     setMessageMap((prev) => ({
       ...prev,
       [selectedChat.roomId]: [
@@ -199,8 +251,11 @@ const Chatbox = () => {
         userMessage,
       ],
     }));
+
     setInputMessage("");
+
     if (selectedChat.type === "ai") {
+      // Gửi tin nhắn đến AI
       try {
         const response = await axios.post(
           "http://localhost:9999/api/chat/chatwithai",
@@ -212,8 +267,10 @@ const Chatbox = () => {
             headers: { "Content-Type": "application/json" },
           }
         );
+
         let formattedReply = response.data.reply.replace(/\*\*/g, "<br>");
         formattedReply = formattedReply.replace(/\*/g, "");
+
         const aiMessage = {
           text: formattedReply,
           sender: "ai",
@@ -221,6 +278,7 @@ const Chatbox = () => {
             timeZone: "Asia/Ho_Chi_Minh",
           }),
         };
+
         setMessageMap((prev) => ({
           ...prev,
           [selectedChat.roomId]: [
@@ -249,10 +307,12 @@ const Chatbox = () => {
         }));
       }
     } else {
+      // Gửi tin nhắn giữa người với người qua socket
       const roomId =
         user.role === "patient" ? `chat-${user.id}` : `chat-${selectedChat.id}`;
       const receiverId =
         selectedChat.role === "patient" ? selectedChat.id : null;
+
       socket.emit("sendMessage", {
         senderId: user.id?.toString() || "unknown",
         senderName: user.fullname,
@@ -267,7 +327,7 @@ const Chatbox = () => {
   if (!user) {
     return <div>Loading user data...</div>;
   }
-
+ 
   return (
     <div className="chat-container">
       {!isOpen && (
@@ -280,6 +340,7 @@ const Chatbox = () => {
           )}
         </button>
       )}
+
       {isOpen && (
         <div className="chat-box">
           <button className="close-button" onClick={() => setIsOpen(false)}>
@@ -305,7 +366,7 @@ const Chatbox = () => {
                     }));
                     setLastReadTimestamps((prev) => ({
                       ...prev,
-                      [chat.roomId]: Date.now(),
+                      [chat.roomId]: Date.now(), // lưu thời gian mở chat
                     }));
                   }}
                 >
