@@ -55,7 +55,9 @@ module.exports.initializeSocket = (server) => {
       }
     });
 
-    socket.on("sendMessage", async ({ senderId, senderName, role, message, receiverId }) => {
+    socket.on(
+      "sendMessage",
+      async ({ senderId, senderName, role, message, receiverId }) => {
         try {
           if (!senderId || !mongoose.isValidObjectId(senderId)) {
             return socket.emit("error", { message: "Invalid sender ID" });
@@ -63,33 +65,32 @@ module.exports.initializeSocket = (server) => {
           if (!message || !role) {
             return socket.emit("error", { message: "Missing fields" });
           }
-      
+
           let roomId;
-          let targetReceiverId = receiverId && mongoose.isValidObjectId(receiverId) ? receiverId : null;
-      
+          let targetReceiverId =
+            receiverId && mongoose.isValidObjectId(receiverId)
+              ? receiverId
+              : null;
+
           if (role === "patient") {
-            // ➤ Patient gửi tin nhắn → gửi cho staff (roomId theo chính nó)
             roomId = `chat-${senderId}`;
-      
             const newMessage = new Chat({
               senderId,
-              receiverId: null, // không xác định staff cụ thể
+              receiverId: null, // Không xác định staff cụ thể
               message,
               roomId,
             });
             await newMessage.save();
-      
+
             activePatients.add(senderId.toString());
-      
             const patients = await User.find({
               _id: { $in: Array.from(activePatients) },
               role: "patient",
             }).select("_id fullname");
-      
-            // Cập nhật danh sách patient cho tất cả staff
+
             io.emit("updatePatients", patients);
-      
-            // ✅ Gửi message cho staff, KHÔNG gửi lại chính patient
+
+            // Gửi tin nhắn cho staff, không gửi lại cho patient
             socket.to(roomId).emit("receiveMessage", {
               senderId,
               senderName,
@@ -98,15 +99,12 @@ module.exports.initializeSocket = (server) => {
               receiverId: null,
               timestamp: new Date(),
             });
-      
           } else if (role === "staff") {
-            // ➤ Staff gửi tin → chỉ gửi cho patient cụ thể
             if (!receiverId || !mongoose.isValidObjectId(receiverId)) {
               return socket.emit("error", { message: "Invalid receiver ID" });
             }
-      
+
             roomId = `chat-${receiverId}`;
-      
             const newMessage = new Chat({
               senderId,
               receiverId: targetReceiverId,
@@ -114,8 +112,8 @@ module.exports.initializeSocket = (server) => {
               roomId,
             });
             await newMessage.save();
-      
-            // ✅ Gửi message cho patient, KHÔNG gửi lại chính staff
+
+            // Gửi tin nhắn cho patient, không gửi lại cho staff
             socket.to(roomId).emit("receiveMessage", {
               senderId,
               senderName,
@@ -125,7 +123,6 @@ module.exports.initializeSocket = (server) => {
               timestamp: new Date(),
             });
           }
-      
         } catch (error) {
           console.error("Send message error:", error.message);
           socket.emit("error", {
@@ -133,9 +130,8 @@ module.exports.initializeSocket = (server) => {
             error: error.message,
           });
         }
-      });
-      
-      
+      }
+    );
 
     socket.on("disconnect", () => {
       console.log("Client disconnected:", socket.id);
@@ -178,7 +174,7 @@ module.exports.sendMessage = async (req, res) => {
     if (role === "patient") {
       roomId = `chat-${senderId}`;
       const newMessage = new Chat({
-        senderId: senderId,
+        senderId,
         receiverId: targetReceiverId,
         message,
         roomId,
@@ -213,7 +209,7 @@ module.exports.sendMessage = async (req, res) => {
       }
       roomId = `chat-${receiverId}`;
       const newMessage = new Chat({
-        senderId: senderId,
+        senderId,
         receiverId: targetReceiverId,
         message,
         roomId,

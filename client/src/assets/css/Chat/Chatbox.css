@@ -8,20 +8,18 @@
   }
   
   .chat-toggle {
-    background-color: #0084ff;
-    color: white;
-    border: none;
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    cursor: pointer;
-    font-size: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
     position: relative;
-    overflow: hidden;
+  background-color: rgb(66, 138, 226);
+  border: none;
+  cursor: pointer;
+  font-size: 2rem;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   }
   
   .chat-toggle:hover {
@@ -303,3 +301,33 @@
     font-size: 14px;
     text-align: center;
   }
+
+  .notification-badge {
+    background-color: red;
+    color: white;
+    border-radius: 50%;
+    font-size: 0.75rem;
+    padding: 2px 6px;
+    font-weight: bold;
+    margin-left: 8px;
+  }
+
+  .notification-badge.toggle-badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background-color: red;
+    color: white;
+    font-size: 0.75rem;
+    padding: 2px 6px;
+    border-radius: 50%;
+    font-weight: bold;
+    box-shadow: 0 0 0 2px white;
+  }
+  
+  .chat-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+  
