@@ -37,10 +37,10 @@ const Chatbox = () => {
     {
       id: "1",
       type: "ai",
-      name: "AI Assistant",
+      name: "DentistAI",
       avatar: "🤖",
       lastMessage: "How can I help you?",
-      timestamp: "08:06 PM",
+      timestamp: "",
       roomId: `ai-session-${user?.id}`,
     },
   ];
@@ -71,7 +71,6 @@ const Chatbox = () => {
     });
   }
 
-  // Load tin nhắn khi chọn chat
   // Load tin nhắn khi chọn chat
   useEffect(() => {
     if (!user || !selectedChat) return;
