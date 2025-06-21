@@ -29,6 +29,8 @@ const {
   getTopViewedBlogs,
   incrementBlogViews
 } = require("../controllers/blogController");
+const chatbotController = require("../controllers/chat/chatbotController");
+const chatboxController = require("../controllers/chat/chatboxController");
 const multer = require("multer");
 const path = require("path");
 const { requestPasswordReset, verifyOTP, resetPassword } = require("../controllers/otpController");
@@ -107,5 +109,9 @@ router.get("/blogs/slug/:slug", getBlogBySlug);
 router.get("/blogs/top-viewed", getTopViewedBlogs);
 router.post("/blogs/slug/:slug/views", incrementBlogViews);
 
+//Chat
+router.post("/chat/chatwithai", chatbotController.chatWithAI);
+router.get("/chat/messages", chatboxController.getMessages);
+router.post("/chat/send", chatboxController.sendMessage);
 
 module.exports = router;

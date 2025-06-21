@@ -37,7 +37,6 @@ app.get("/", (req, res) => {
 
 // Routes
 app.use("/api", require("./routes/authRoute"));
-app.use("/api/chat", require("./routes/chatRoute"));
 
 // 404 handler
 app.use((req, res, next) => {
