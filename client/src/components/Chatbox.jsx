@@ -18,15 +18,16 @@ const Chatbox = () => {
   const [lastReadTimestamps, setLastReadTimestamps] = useState({});
 
   useEffect(() => {
-
     messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
   }, [selectedChat]);
+  
   
   const messages = React.useMemo(() => {
     if (!selectedChat) return [];
     const roomId = selectedChat.roomId;
     return roomId && messageMap[roomId] ? messageMap[roomId] : [];
-  }, [selectedChat?.roomId, messageMap]);
+  }, [selectedChat, messageMap]);
+  
   
 
   const [patients, setPatients] = useState([]);
@@ -103,7 +104,6 @@ const Chatbox = () => {
             }),
             timestampRaw: msg.timestamp,
           }));
-          
         } catch (error) {
           console.error("Error fetching messages:", error);
           newMessages = [];
@@ -134,7 +134,7 @@ const Chatbox = () => {
     };
 
     loadMessages();
-  }, [user, selectedChat]);
+  }, [user, selectedChat, lastReadTimestamps, setChatNotifications]);
 
   // Lưu tin nhắn AI vào localStorage khi có thay đổi
   useEffect(() => {
