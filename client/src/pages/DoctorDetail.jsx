@@ -56,7 +56,7 @@ const DoctorDetail = () => {
   return (
     <>
       {/* Topbar */}
-      <div className="bg-light py-2 px-5 d-none d-lg-block">
+      {/* <div className="bg-light py-2 px-5 d-none d-lg-block">
         <Row className="align-items-center justify-content-between">
           <Col md={6} className="text-start">
             <small>
@@ -75,7 +75,7 @@ const DoctorDetail = () => {
             </small>
           </Col>
         </Row>
-      </div>
+      </div> */}
 
       
 

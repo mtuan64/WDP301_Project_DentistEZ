@@ -369,7 +369,7 @@ const AppointmentPage = () => {
   return (
     <>
 
-      <div className="bg-light py-3 px-5 d-none d-lg-block border-bottom shadow-sm">
+      {/* <div className="bg-light py-3 px-5 d-none d-lg-block border-bottom shadow-sm">
         <Row className="align-items-center justify-content-between">
           <Col md={6} className="text-start">
             <small className="text-muted">
@@ -388,7 +388,7 @@ const AppointmentPage = () => {
             </small>
           </Col>
         </Row>
-      </div>
+      </div> */}
 
       <div id="heroCarousel" className="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="4000">
         <div className="carousel-inner">

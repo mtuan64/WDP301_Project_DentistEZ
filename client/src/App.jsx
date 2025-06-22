@@ -4,6 +4,9 @@ import ServicePage from "./pages/ServicePage";
 import DoctorPage from "./pages/DoctorPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+import ForgotPasswordPage from "./pages/ForgotPassword"
+import VerifyOtpPage from "./pages/VerifyOtp";
+import ResetPasswordPage from "./pages/ResetPassword"
 import DoctorDetail from "./pages/DoctorDetail";
 import AboutPage from "./pages/AboutPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -15,9 +18,11 @@ import UserListPage from "./pages/UserListManage";
 import AppointmentPage from "./pages/AppointmentPage";
 import DoctorAccountManagement from "./pages/DoctorAccountManagement";
 import Header from "./components/HeaderComponent";
+import Topbar from "./components/Topbar";
 import MenuComponent from "./components/MenuComponent";
 import FooterComponent from "./components/FooterComponent";
-import "antd/dist/reset.css";
+import StaticPage from "./pages/StatisticPage";
+import "antd/dist/reset.css"; // hoặc 'antd/dist/antd.css' nếu bạn dùng antd v4
 
 const DRAWER_WIDTH = 240;
 
@@ -43,6 +48,7 @@ const App = () => {
 
   return (
     <div> {/* Không cần BrowserRouter vì đã có trong main.jsx */}
+    <Topbar />
       {/* Header luôn hiện trên mọi trang */}
       <Header onMenuClick={toggleMenu} menuOpen={menuOpen} />
 
@@ -78,6 +84,10 @@ const App = () => {
           <Route path="/blog" element={<BlogPage />} />
           <Route path="/blog/:slug" element={<BlogDetail />} />
           <Route path="/doctoraccount" element={<DoctorAccountManagement />} />
+          <Route path="/statistic" element={<StaticPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/verify-otp" element={<VerifyOtpPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
         </Routes>
       </div>
 

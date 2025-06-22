@@ -1,0 +1,263 @@
+/* StaticPage.css */
+
+/* Existing styles remain unchanged */
+.static-dashboard {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.page-title {
+  margin-bottom: 20px;
+  font-size: 24px;
+  color: #333;
+  font-weight: bold;
+}
+
+.total-count {
+  font-size: 16px;
+  font-weight: 500;
+  color: #444;
+  margin-bottom: 20px;
+}
+
+/* Table Styling */
+.MuiTableContainer-root {
+  max-width: 100%;
+  overflow-x: auto;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.MuiTable-root {
+  width: 100%;
+  background-color: #fff;
+}
+
+.MuiTableHead-root .MuiTableCell-root {
+  background-color: #f5f5f5; /* Light gray background */
+  font-weight: bold;
+  color: #000; /* Black text */
+  font-size: 14px;
+  padding: 10px;
+}
+
+.MuiTableCell-root {
+  font-size: 14px;
+  padding: 10px;
+  color: #444;
+  border-top: 1px solid #e0e0e0;
+}
+
+.MuiTableRow-root:hover {
+  background-color: #fafafa;
+  transition: background-color 0.15s ease;
+}
+
+/* Tabs Styling */
+.MuiTabs-root {
+  margin-bottom: 20px;
+}
+
+.MuiTab-root {
+  color: #444;
+  font-size: 14px;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.Mui-selected {
+  color: #06A3DA;
+  font-weight: bold;
+}
+
+.MuiTabs-indicator {
+  background-color: #06A3DA;
+  height: 2px;
+}
+
+/* Button Styling */
+.MuiButton-root {
+  margin: 0 5px;
+}
+
+/* Filters and Loading (for potential future use) */
+.filters {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.filters .MuiFormControl-root {
+  background-color: #fff;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+/* Activity Status Section */
+.activity-dashboard {
+  display: flex;
+  gap: 20px;
+}
+
+.activity-section,
+.upcoming-section {
+  flex: 1;
+}
+
+.activity-section h2,
+.upcoming-section h2 {
+  font-size: 20px;
+  color: #333;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+.activity-section .MuiSelect-root {
+  margin-bottom: 20px;
+  min-width: 120px;
+}
+
+.calendar {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+  margin-bottom: 20px;
+  padding: 10px;
+  background-color: #f9f9f9;
+  border-radius: 5px;
+}
+
+.calendar-day-header {
+  font-weight: bold;
+  text-align: center;
+  color: #666;
+  padding: 5px;
+}
+
+.calendar-day {
+  text-align: center;
+  padding: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.calendar-day:hover {
+  background-color: #e0f7fa;
+  border-radius: 50%;
+}
+
+.calendar-day.today {
+  background-color: #06A3DA;
+  color: #fff;
+  border-radius: 50%;
+  font-weight: bold;
+}
+
+.appointment-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  margin-bottom: 10px;
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+}
+
+.appointment-card:hover {
+  transform: translateY(-2px);
+}
+
+.appointment-icon {
+  margin-right: 10px;
+  font-size: 20px;
+}
+
+.appointment-card div:nth-child(2) {
+  flex-grow: 1;
+}
+
+.appointment-card div:nth-child(2) div {
+  color: #444;
+}
+
+.appointment-card div:nth-child(2) div:nth-child(2) {
+  color: #888;
+  font-size: 12px;
+}
+
+.today-marker {
+  text-align: right;
+  font-size: 14px;
+  color: #666;
+  margin-top: 10px;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .static-dashboard {
+    padding: 16px;
+  }
+
+  .page-title {
+    font-size: 20px;
+    margin-bottom: 16px;
+  }
+
+  .total-count {
+    font-size: 14px;
+    margin-bottom: 16px;
+  }
+
+  .MuiTableCell-root {
+    font-size: 12px;
+    padding: 8px;
+  }
+
+  .activity-dashboard {
+    flex-direction: column;
+  }
+
+  .activity-section,
+  .upcoming-section {
+    width: 100%;
+  }
+
+  .calendar {
+    padding: 5px;
+  }
+
+  .appointment-card {
+    padding: 8px;
+  }
+}
+
+@media (max-width: 640px) {
+  .MuiTable-root {
+    table-layout: fixed;
+  }
+
+  .MuiTableCell-root {
+    word-wrap: break-word;
+  }
+
+  .appointment-card {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .appointment-icon {
+    margin-right: 0;
+    margin-bottom: 5px;
+  }
+
+  .today-marker {
+    text-align: center;
+  }
+}

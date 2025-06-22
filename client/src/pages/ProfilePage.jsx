@@ -12,6 +12,7 @@ const ProfilePage = () => {
     fullname: user?.fullname || "",
     email: user?.email || "",
     phone: user?.phone || "",
+    degree: user?.degree || "",
     address: user?.address || "",
     dateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split("T")[0] : "",
     gender: user?.gender || "",
@@ -35,6 +36,7 @@ const ProfilePage = () => {
       fullname: user?.fullname || "",
       email: user?.email || "",
       phone: user?.phone || "",
+      degree: user?.degree || "",
       address: user?.address || "",
       dateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split("T")[0] : "",
       gender: user?.gender || "",
@@ -228,6 +230,19 @@ const ProfilePage = () => {
                   id="phone"
                   name="phone"
                   value={formData.phone}
+                  onChange={handleInputChange}
+                  className="form-control"
+                />
+              </div>
+              <div className="col-md-6 mb-3">
+                <label htmlFor="phone" className="form-label">
+                  Bằng Cấp
+                </label>
+                <input
+                  type="text"
+                  id="degree"
+                  name="degree"
+                  value={formData.degree}
                   onChange={handleInputChange}
                   className="form-control"
                 />

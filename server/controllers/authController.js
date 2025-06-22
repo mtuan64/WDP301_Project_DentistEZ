@@ -1,11 +1,11 @@
-const User = require('../models/User');
-const Patient = require('../models/Patient');
-const Doctor = require('../models/Doctor');
-const Staff = require('../models/Staff');
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
-const multer = require('multer');
-const path = require('path');
+const User = require("../models/User");
+const Patient = require("../models/Patient");
+const Doctor = require("../models/Doctor");
+const Staff = require("../models/Staff");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
+const multer = require("multer");
+const path = require("path");
 
 // Danh sách đen để lưu token đã logout (thay bằng Redis trong production)
 const tokenBlacklist = [];
@@ -13,12 +13,13 @@ const tokenBlacklist = [];
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/');
+    cb(null, "uploads/"); // Ensure this folder exists
   },
   filename: (req, file, cb) => {
     cb(null, `${Date.now()}-${file.originalname}`);
   },
 });
+
 const upload = multer({
   storage,
   fileFilter: (req, file, cb) => {
@@ -28,27 +29,67 @@ const upload = multer({
     if (extname && mimetype) {
       return cb(null, true);
     }
-    cb(new Error('Only JPEG/PNG images are allowed'));
+    cb(new Error("Only JPEG/PNG images are allowed"));
   },
 });
 
+// Authentication middleware
+const authMiddleware = (req, res, next) => {
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) {
+    return res.status(401).json({ msg: "No token provided" });
+  }
+
+  // Check if token is blacklisted
+  if (tokenBlacklist.includes(token)) {
+    return res.status(401).json({ msg: "Token has been invalidated" });
+  }
+
+  try {
+    if (!process.env.JWT_SECRET) {
+      throw new Error("JWT_SECRET is not defined");
+    }
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded; // Attach userId and role to req
+    next();
+  } catch (err) {
+    console.error("Token verification failed:", err.message);
+    res.status(401).json({ msg: "Invalid token" });
+  }
+};
+
+// Check if doctor's profile is complete
+const isDoctorProfileComplete = (user, doctor) => {
+  return !(
+    !user.fullname ||
+    !user.phone ||
+    !user.address ||
+    !user.dateOfBirth ||
+    !user.gender ||
+    !doctor.Specialty ||
+    !doctor.Degree ||
+    doctor.ExperienceYears == null
+  );
+};
+
 exports.registerUser = async (req, res, next) => {
   try {
-    const {
-      username,
-      password,
-      fullname,
-      email,
-      phone,
-      address,
-      dob,
-      gender,
-      role
-    } = req.body;
+    const { username, password, fullname, email, phone, address, dob, gender, role } = req.body;
 
-    const existingUser = await User.findOne({ $or: [{ email }, { username }] });
+    // Validate required fields
+    if (!username || !password || !fullname || !email) {
+      return res.status(400).json({ msg: "Username, password, fullname, and email are required" });
+    }
+
+    // Validate role
+    const validRoles = ["patient", "doctor", "staff", "admin"];
+    if (role && !validRoles.includes(role)) {
+      return res.status(400).json({ msg: "Invalid role" });
+    }
+
+    const existingUser = await User.findOne({ $or: [{ email }, { username }] }).lean();
     if (existingUser) {
-      return res.status(400).json({ msg: 'Người dùng đã tồn tại!' });
+      return res.status(400).json({ msg: "Người dùng đã tồn tại!" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -62,19 +103,19 @@ exports.registerUser = async (req, res, next) => {
       address,
       dateOfBirth: dob,
       gender,
-      role: role || 'patient'
+      role: role || "patient",
     });
 
     const savedUser = await newUser.save();
 
     switch (newUser.role) {
-      case 'patient':
+      case "patient":
         await new Patient({ userId: savedUser._id }).save();
         break;
-      case 'doctor':
+      case "doctor":
         await new Doctor({ userId: savedUser._id }).save();
         break;
-      case 'staff':
+      case "staff":
         await new Staff({ userId: savedUser._id }).save();
         break;
     }
@@ -91,7 +132,7 @@ exports.registerUser = async (req, res, next) => {
       role: savedUser.role,
     });
   } catch (error) {
-    console.error('Error in registerUser:', error);
+    console.error("Error in registerUser:", error.message);
     next(error);
   }
 };
@@ -101,29 +142,29 @@ exports.loginUser = async (req, res, next) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ msg: 'Vui lòng nhập đầy đủ email và mật khẩu.' });
+      return res.status(400).json({ msg: "Vui lòng nhập đầy đủ email và mật khẩu." });
     }
 
-    const user = await User.findOne({ email });
-
+    const user = await User.findOne({ email }).lean();
     if (!user) {
-      return res.status(404).json({ msg: 'Người dùng không tồn tại.' });
+      return res.status(404).json({ msg: "Người dùng không tồn tại." });
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
-
     if (!isPasswordValid) {
-      return res.status(401).json({ msg: 'Mật khẩu không đúng.' });
+      return res.status(401).json({ msg: "Mật khẩu không đúng." });
     }
 
-    const token = jwt.sign(
-      { userId: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: '20h' }
-    );
+    if (!process.env.JWT_SECRET) {
+      throw new Error("JWT_SECRET is not defined");
+    }
+
+    const token = jwt.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET, {
+      expiresIn: "20h",
+    });
 
     res.status(200).json({
-      msg: 'Đăng nhập thành công.',
+      msg: "Đăng nhập thành công.",
       token,
       user: {
         id: user._id,
@@ -139,10 +180,11 @@ exports.loginUser = async (req, res, next) => {
       },
     });
   } catch (error) {
-    console.error('Lỗi khi đăng nhập:', error);
-    res.status(500).json({ msg: 'Đã có lỗi xảy ra. Vui lòng thử lại sau.' });
+    console.error("Lỗi khi đăng nhập:", error.message);
+    res.status(500).json({ msg: "Đã có lỗi xảy ra. Vui lòng thử lại sau." });
   }
 };
+
 
 exports.uploadProfilePicture = async (req, res, next) => {
   try {
@@ -150,7 +192,7 @@ exports.uploadProfilePicture = async (req, res, next) => {
     const file = req.file;
 
     if (!file) {
-      return res.status(400).json({ msg: 'No file uploaded' });
+      return res.status(400).json({ msg: "No file uploaded" });
     }
 
     const profilePictureUrl = `/uploads/${file.filename}`;
@@ -158,19 +200,19 @@ exports.uploadProfilePicture = async (req, res, next) => {
       userId,
       { profilePicture: profilePictureUrl },
       { new: true, runValidators: true }
-    );
+    ).lean();
 
     if (!user) {
-      return res.status(404).json({ msg: 'User not found' });
+      return res.status(404).json({ msg: "User not found" });
     }
 
     res.status(200).json({
-      msg: 'Profile picture uploaded successfully',
+      msg: "Profile picture uploaded successfully",
       profilePictureUrl,
     });
   } catch (error) {
-    console.error('Error in uploadProfilePicture:', error);
-    res.status(500).json({ msg: 'Failed to upload profile picture' });
+    console.error("Error in uploadProfilePicture:", error.message);
+    res.status(500).json({ msg: "Failed to upload profile picture" });
   }
 };
 
@@ -180,12 +222,12 @@ exports.updateUser = async (req, res, next) => {
     const { fullname, email, phone, address, dateOfBirth, gender, profilePicture } = req.body;
 
     if (!fullname || !email) {
-      return res.status(400).json({ msg: 'Fullname and email are required' });
+      return res.status(400).json({ msg: "Fullname and email are required" });
     }
 
-    const existingUser = await User.findOne({ email, _id: { $ne: userId } });
+    const existingUser = await User.findOne({ email, _id: { $ne: userId } }).lean();
     if (existingUser) {
-      return res.status(400).json({ msg: 'Email already in use' });
+      return res.status(400).json({ msg: "Email already in use" });
     }
 
     const updatedUser = await User.findByIdAndUpdate(
@@ -200,14 +242,14 @@ exports.updateUser = async (req, res, next) => {
         profilePicture,
       },
       { new: true, runValidators: true }
-    );
+    ).lean();
 
     if (!updatedUser) {
-      return res.status(404).json({ msg: 'User not found' });
+      return res.status(404).json({ msg: "User not found" });
     }
 
     res.status(200).json({
-      msg: 'User updated successfully',
+      msg: "User updated successfully",
       user: {
         id: updatedUser._id,
         username: updatedUser.username,
@@ -222,25 +264,25 @@ exports.updateUser = async (req, res, next) => {
       },
     });
   } catch (error) {
-    console.error('Error in updateUser:', error);
-    res.status(500).json({ msg: 'Failed to update user' });
+    console.error("Error in updateUser:", error.message);
+    res.status(500).json({ msg: "Failed to update user" });
   }
 };
 
 exports.getAllUserAccounts = async (req, res) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ msg: 'Access denied. Admin role required.' });
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ msg: "Access denied. Admin role required." });
     }
 
-    const { page = 1, limit = 10, search, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
+    const { page = 1, limit = 10, search, sortBy = "createdAt", sortOrder = "desc" } = req.query;
 
     const query = {};
     if (search) {
       query.$or = [
-        { username: { $regex: search, $options: 'i' } },
-        { fullname: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } },
+        { username: { $regex: search, $options: "i" } },
+        { fullname: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
       ];
     }
 
@@ -249,10 +291,10 @@ exports.getAllUserAccounts = async (req, res) => {
     const skip = (pageNum - 1) * limitNum;
 
     const sortOptions = {};
-    sortOptions[sortBy] = sortOrder === 'desc' ? -1 : 1;
+    sortOptions[sortBy] = sortOrder === "desc" ? -1 : 1;
 
     const users = await User.find(query)
-      .select('-password')
+      .select("-password")
       .sort(sortOptions)
       .skip(skip)
       .limit(limitNum)
@@ -260,7 +302,7 @@ exports.getAllUserAccounts = async (req, res) => {
 
     const totalUsers = await User.countDocuments(query);
 
-    const response = {
+    res.status(200).json({
       success: true,
       data: users,
       pagination: {
@@ -269,25 +311,23 @@ exports.getAllUserAccounts = async (req, res) => {
         totalUsers,
         limit: limitNum,
       },
-    };
-
-    res.status(200).json(response);
+    });
   } catch (error) {
-    console.error('Error fetching all user accounts:', error);
-    res.status(500).json({ msg: 'Server error', error: error.message });
+    console.error("Error fetching all user accounts:", error.message);
+    res.status(500).json({ msg: "Server error", error: error.message });
   }
 };
 
 exports.getUserByRole = async (req, res) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ msg: 'Access denied. Admin role required.' });
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ msg: "Access denied. Admin role required." });
     }
 
     const { page = 1, limit = 10, role } = req.query;
 
-    if (!role || !['patient', 'doctor', 'staff', 'admin'].includes(role)) {
-      return res.status(400).json({ msg: 'Invalid or missing role parameter' });
+    if (!role || !["patient", "doctor", "staff", "admin"].includes(role)) {
+      return res.status(400).json({ msg: "Invalid or missing role parameter" });
     }
 
     const pageNum = parseInt(page);
@@ -295,14 +335,14 @@ exports.getUserByRole = async (req, res) => {
     const skip = (pageNum - 1) * limitNum;
 
     const users = await User.find({ role })
-      .select('-password')
+      .select("-password")
       .skip(skip)
       .limit(limitNum)
       .lean();
 
     const totalUsers = await User.countDocuments({ role });
 
-    const response = {
+    res.status(200).json({
       success: true,
       data: users,
       pagination: {
@@ -311,37 +351,45 @@ exports.getUserByRole = async (req, res) => {
         totalUsers,
         limit: limitNum,
       },
-    };
-
-    res.status(200).json(response);
+    });
   } catch (error) {
-    console.error('Error fetching users by role:', error);
-    res.status(500).json({ msg: 'Server error', error: error.message });
+    console.error("Error fetching users by role:", error.message);
+    res.status(500).json({ msg: "Server error", error: error.message });
   }
 };
 
-// Hàm logout
 exports.logoutUser = async (req, res) => {
   try {
-    const token = req.headers.authorization?.split(' ')[1];
+    const token = req.headers.authorization?.split(" ")[1];
     if (!token) {
-      return res.status(400).json({ msg: 'No token provided' });
+      return res.status(400).json({ msg: "No token provided" });
     }
 
-    // Thêm token vào blacklist
+    // Kiểm tra nếu token đã bị blacklist (dù không cần thiết vì sẽ thêm lại)
+    if (exports.isTokenBlacklisted(token)) {
+      return res.status(401).json({ msg: "Token has already been invalidated" });
+    }
+
+    // Thêm token vào blacklist để invalidate
     tokenBlacklist.push(token);
 
-    res.status(200).json({ msg: 'Logged out successfully' });
+    // Gửi phản hồi thành công để client thực hiện cleanup (xóa localStorage, navigate)
+    res.status(200).json({ 
+      msg: "Logged out successfully", 
+      success: true 
+    });
   } catch (error) {
-    console.error('Error during logout:', error);
-    res.status(500).json({ msg: 'Failed to logout' });
+    console.error("Error during logout:", error.message);
+    res.status(500).json({ msg: "Failed to logout", error: error.message });
   }
 };
 
-// Hàm kiểm tra token trong blacklist (dùng trong middleware)
 exports.isTokenBlacklisted = (token) => {
   return tokenBlacklist.includes(token);
 };
 
 // Export multer upload for use in routes
 exports.upload = upload;
+
+// Export authMiddleware for use in routes
+exports.authMiddleware = authMiddleware;

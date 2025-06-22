@@ -95,7 +95,7 @@ const authDentistMiddleware = (req, res, next) => {
         status: "ERROR",
       });
     }
-    if (decoded.role === "DENTIST") {
+    if (decoded.role === "doctor") {
       req.user = decoded;
       next();
     } else {

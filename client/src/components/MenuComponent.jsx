@@ -13,8 +13,8 @@ const menuByRole = {
   admin: [
     { title: "Home", path: "/", icon: <HomeOutlined /> },
     {
-      title: "Manage Recruitment",
-      path: "/manage-recruitment",
+      title: "Statistic Dashboard",
+      path: "/statistic",
       icon: <FileTextOutlined />,
     },
     { title: "Settings", path: "/settings", icon: <SettingOutlined /> },
