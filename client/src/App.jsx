@@ -1,12 +1,12 @@
 import React, { useState } from "react";
-import { Routes, Route } from "react-router-dom"; // Không cần BrowserRouter ở đây
+import { Routes, Route } from "react-router-dom"; // KHÔNG import BrowserRouter ở đây
 import ServicePage from "./pages/ServicePage";
 import DoctorPage from "./pages/DoctorPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
-import ForgotPasswordPage from "./pages/ForgotPassword"
+import ForgotPasswordPage from "./pages/ForgotPassword";
 import VerifyOtpPage from "./pages/VerifyOtp";
-import ResetPasswordPage from "./pages/ResetPassword"
+import ResetPasswordPage from "./pages/ResetPassword";
 import DoctorDetail from "./pages/DoctorDetail";
 import AboutPage from "./pages/AboutPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -17,20 +17,19 @@ import BlogDetail from "./pages/BlogDetail";
 import UserListPage from "./pages/UserListManage";
 import AppointmentPage from "./pages/AppointmentPage";
 import DoctorAccountManagement from "./pages/DoctorAccountManagement";
+import StaticPage from "./pages/StatisticPage";
 import Header from "./components/HeaderComponent";
 import Topbar from "./components/Topbar";
 import MenuComponent from "./components/MenuComponent";
 import FooterComponent from "./components/FooterComponent";
-import StaticPage from "./pages/StatisticPage";
-import "antd/dist/reset.css"; // hoặc 'antd/dist/antd.css' nếu bạn dùng antd v4
+import Chatbox from "./components/Chatbox";
+import "antd/dist/reset.css";
 
 const DRAWER_WIDTH = 240;
 
 const App = () => {
-  // State mở/đóng menu
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // Lấy user và role, xử lý trường hợp null
   let user = null;
   try {
     const storedUser = localStorage.getItem("user");
@@ -39,20 +38,17 @@ const App = () => {
     }
   } catch (error) {
     console.error("Error parsing user from localStorage:", error);
-    localStorage.removeItem("user"); // Xóa dữ liệu không hợp lệ
+    localStorage.removeItem("user");
   }
+
   const role = user?.role || "patient";
 
-  // Hàm toggle menu
   const toggleMenu = () => setMenuOpen((open) => !open);
 
   return (
-    <div> {/* Không cần BrowserRouter vì đã có trong main.jsx */}
-    <Topbar />
-      {/* Header luôn hiện trên mọi trang */}
+    <div>
+      <Topbar />
       <Header onMenuClick={toggleMenu} menuOpen={menuOpen} />
-
-      {/* Menu Drawer luôn hiện trên mọi trang khi đã đăng nhập */}
       {user && (
         <MenuComponent
           isOpen={menuOpen}
@@ -61,7 +57,6 @@ const App = () => {
         />
       )}
 
-      {/* Main content, dịch sang phải khi menu mở */}
       <div
         style={{
           marginTop: 84,
@@ -91,8 +86,8 @@ const App = () => {
         </Routes>
       </div>
 
-      {/* Footer luôn hiện trên mọi trang */}
       <FooterComponent />
+      <Chatbox />
     </div>
   );
 };
