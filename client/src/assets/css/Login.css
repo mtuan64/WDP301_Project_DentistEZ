@@ -112,7 +112,8 @@
   padding: 12px 20px;
   font-size: 1em;
   cursor: pointer;
-  width: 390px;
+  width: 290px;
+  margin-left: 48px;
 }
 
 .signupLink {
