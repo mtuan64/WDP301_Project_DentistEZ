@@ -1,16 +1,28 @@
 const Blog = require("../models/Blog");
+const CategoryBlog = require("../models/CategoryBlog");
 const cloudinary = require("cloudinary").v2;
 const fs = require("fs").promises;
 const path = require("path");
+const slugify = require("slugify");
 
-const uploadDir = path.join(__dirname, "../uploads");
-fs.mkdir(uploadDir, { recursive: true }).catch((err) =>
-  console.error("Error creating uploads directory:", err)
-);
+const uploadDir = path.join(__dirname, "../Uploads");
+fs.mkdir(uploadDir, { recursive: true })
+  .then(() => console.log("Uploads directory created or exists"))
+  .catch((err) => console.error("Error creating uploads directory:", err));
 
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// Blog Functions
 exports.getAllBlogs = async (req, res) => {
   try {
-    const blogs = await Blog.find().populate("author_id", "fullname email");
+    const blogs = await Blog.find({ status: "active" })
+      .populate("author_id", "fullname email")
+      .populate("categoryId", "name");
     res.json(blogs);
   } catch (error) {
     console.error("Error fetching blogs:", error);
@@ -18,15 +30,138 @@ exports.getAllBlogs = async (req, res) => {
   }
 };
 
+exports.getAllBlogsForAdmin = async (req, res) => {
+  try {
+    const { page = 1, limit = 5, categoryId, search } = req.query;
+    const query = {};
+
+    // Filter by category if provided
+    if (categoryId) {
+      query.categoryId = categoryId;
+    }
+
+    // Search by title if provided
+    if (search) {
+      query.title = { $regex: search, $options: "i" }; // Case-insensitive search
+    }
+
+    // Pagination
+    const pageNumber = parseInt(page);
+    const pageSize = parseInt(limit);
+    const skip = (pageNumber - 1) * pageSize;
+
+    // Fetch blogs (both active and inactive) with pagination
+    const blogs = await Blog.find(query)
+      .populate("author_id", "fullname email")
+      .populate("categoryId", "name")
+      .skip(skip)
+      .limit(pageSize);
+
+    // Get total count for pagination
+    const totalBlogs = await Blog.countDocuments(query);
+
+    res.json({
+      blogs,
+      totalBlogs,
+      totalPages: Math.ceil(totalBlogs / pageSize),
+      currentPage: pageNumber,
+    });
+  } catch (error) {
+    console.error("Error fetching blogs for admin:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.getBlogBySlug = async (req, res) => {
+  try {
+    const { slug } = req.params;
+    const blog = await Blog.findOne({ slug, status: "active" })
+      .populate("author_id", "fullname email")
+      .populate("categoryId", "name");
+    if (!blog) {
+      return res.status(404).json({ message: "Blog not found or inactive" });
+    }
+    res.json(blog);
+  } catch (error) {
+    console.error("Error fetching blog by slug:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 exports.createBlog = async (req, res) => {
   try {
-    const { title, content, image } = req.body;
+    const { title, content, categoryId, status } = req.body;
     const author_id = req.user.userId;
-    const newBlog = new Blog({ title, content, author_id, image });
+    if (!title || !categoryId) {
+      return res
+        .status(400)
+        .json({ message: "Title and categoryId are required" });
+    }
+    if (!Array.isArray(content) || content.length === 0) {
+      return res.status(400).json({ message: "Content array is required" });
+    }
+    if (status && !["active", "inactive"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status value" });
+    }
+    // Validate category is active
+    const category = await CategoryBlog.findById(categoryId);
+    if (!category || category.status !== "active") {
+      return res
+        .status(400)
+        .json({ message: "Category is invalid or inactive" });
+    }
+    const slug = slugify(title, { lower: true, strict: true, locale: "vi" });
+    let mainImageUrl = req.body.image || "";
+    if (req.files && req.files.mainImage) {
+      const result = await cloudinary.uploader.upload(
+        req.files.mainImage[0].path,
+        { folder: "blog_images" }
+      );
+      mainImageUrl = result.secure_url;
+      await fs.unlink(req.files.mainImage[0].path);
+    }
+    const processedContent = await Promise.all(
+      content.map(async (item, index) => {
+        if (item.type === "image" && req.files && req.files.contentImages) {
+          const contentImage = req.files.contentImages.find(
+            (file) => file.fieldname === `contentImages[${index}]`
+          );
+          if (contentImage) {
+            const result = await cloudinary.uploader.upload(contentImage.path, {
+              folder: "blog_images",
+            });
+            await fs.unlink(contentImage.path);
+            return { ...item, url: result.secure_url };
+          }
+        }
+        return {
+          ...item,
+          bold: item.bold || false,
+          italic: item.italic || false,
+          fontSize: item.fontSize || "medium",
+        };
+      })
+    );
+    const newBlog = new Blog({
+      title,
+      content: processedContent,
+      author_id,
+      image: mainImageUrl,
+      slug,
+      categoryId,
+      status: status || "active",
+    });
     await newBlog.save();
     res.status(201).json(newBlog);
   } catch (error) {
     console.error("Error creating blog:", error);
+    if (req.files) {
+      await Promise.all(
+        Object.values(req.files)
+          .flat()
+          .map((file) => fs.unlink(file.path).catch(console.error))
+      );
+    }
     res.status(400).json({ message: error.message });
   }
 };
@@ -34,10 +169,70 @@ exports.createBlog = async (req, res) => {
 exports.updateBlog = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, content, image } = req.body;
+    const { title, content, categoryId, status } = req.body;
+    if (!title || !categoryId) {
+      return res
+        .state(400)
+        .json({ message: "Title and categoryId are required" });
+    }
+    if (!Array.isArray(content) || content.length === 0) {
+      return res.status(400).json({ message: "Content array is required" });
+    }
+    if (status && !["active", "inactive"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status value" });
+    }
+    // Validate category is active
+    const category = await CategoryBlog.findById(categoryId);
+    if (!category || category.status !== "active") {
+      return res
+        .status(400)
+        .json({ message: "Category is invalid or inactive" });
+    }
+    const slug = title
+      ? slugify(title, { lower: true, strict: true, locale: "vi" })
+      : undefined;
+    let mainImageUrl = req.body.image;
+    if (req.files && req.files.mainImage) {
+      const result = await cloudinary.uploader.upload(
+        req.files.mainImage[0].path,
+        { folder: "blog_images" }
+      );
+      mainImageUrl = result.secure_url;
+      await fs.unlink(req.files.mainImage[0].path);
+    }
+    const processedContent = await Promise.all(
+      content.map(async (item, index) => {
+        if (item.type === "image" && req.files && req.files.contentImages) {
+          const contentImage = req.files.contentImages.find(
+            (file) => file.fieldname === `contentImages[${index}]`
+          );
+          if (contentImage) {
+            const result = await cloudinary.uploader.upload(contentImage.path, {
+              folder: "blog_images",
+            });
+            await fs.unlink(contentImage.path);
+            return { ...item, url: result.secure_url };
+          }
+        }
+        return {
+          ...item,
+          bold: item.bold || false,
+          italic: item.italic || false,
+          fontSize: item.fontSize || "medium",
+        };
+      })
+    );
     const updatedBlog = await Blog.findByIdAndUpdate(
       id,
-      { title, content, image, updatedAt: Date.now() },
+      {
+        title,
+        content: processedContent,
+        image: mainImageUrl,
+        slug,
+        categoryId,
+        status: status || undefined,
+        updatedAt: Date.now(),
+      },
       { new: true }
     );
     if (!updatedBlog) {
@@ -46,6 +241,13 @@ exports.updateBlog = async (req, res) => {
     res.json(updatedBlog);
   } catch (error) {
     console.error("Error updating blog:", error);
+    if (req.files) {
+      await Promise.all(
+        Object.values(req.files)
+          .flat()
+          .map((file) => fs.unlink(file.path).catch(console.error))
+      );
+    }
     res.status(400).json({ message: error.message });
   }
 };
@@ -53,11 +255,20 @@ exports.updateBlog = async (req, res) => {
 exports.deleteBlog = async (req, res) => {
   try {
     const { id } = req.params;
-    const deletedBlog = await Blog.findByIdAndDelete(id);
-    if (!deletedBlog) {
+    const blog = await Blog.findById(id);
+    if (!blog) {
       return res.status(404).json({ message: "Blog not found" });
     }
-    res.json({ message: "Blog deleted successfully" });
+    if (blog.status === "active") {
+      // Soft delete: set status to inactive
+      blog.status = "inactive";
+      await blog.save();
+      res.json({ message: "Blog set to inactive", blog });
+    } else {
+      // Permanent delete
+      await Blog.findByIdAndDelete(id);
+      res.json({ message: "Blog permanently deleted" });
+    }
   } catch (error) {
     console.error("Error deleting blog:", error);
     res.status(500).json({ message: error.message });
@@ -66,26 +277,189 @@ exports.deleteBlog = async (req, res) => {
 
 exports.uploadImage = async (req, res) => {
   try {
-    const file = req.file; // File uploaded via multer
-    console.log("File received:", file);
-    if (!file) {
-      return res.status(400).json({ message: "No image file provided" });
+    const files = req.files;
+    if (!files || Object.keys(files).length === 0) {
+      return res.status(400).json({ message: "No image files provided" });
     }
-    // Upload file to Cloudinary
-    const result = await cloudinary.uploader.upload(file.path, {
-      folder: "blog_images",
-    });
-    console.log("Cloudinary upload result:", result);
-    // Delete local file after upload
-    await fs.unlink(file.path).catch((err) => {
-      console.error("Error deleting local file:", err);
-    });
-    res.status(200).json({ url: result.secure_url });
+    const uploadResults = await Promise.all(
+      Object.entries(files).flatMap(([fieldName, fileArray]) =>
+        fileArray.map(async (file) => {
+          const result = await cloudinary.uploader.upload(file.path, {
+            folder: "blog_images",
+          });
+          await fs.unlink(file.path);
+          return result.secure_url;
+        })
+      )
+    );
+    res.status(200).json({ urls: uploadResults });
   } catch (error) {
     console.error("Cloudinary upload error:", error.message, error.stack);
+    if (req.files) {
+      await Promise.all(
+        Object.values(req.files)
+          .flat()
+          .map((file) => fs.unlink(file.path).catch(console.error))
+      );
+    }
     res.status(500).json({
-      message: "Failed to upload image to Cloudinary",
+      message: "Failed to upload images to Cloudinary",
       error: error.message,
     });
+  }
+};
+
+// Category Functions
+exports.getAllCategories = async (req, res) => {
+  try {
+    const categories = await CategoryBlog.find({ status: "active" });
+    res.json(categories);
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.getAllCategoriesForAdmin = async (req, res) => {
+  try {
+    const { page = 1, limit = 5, status, search } = req.query;
+    const query = {};
+
+    // Filter by status if provided
+    if (status) {
+      query.status = status;
+    }
+
+    // Search by name if provided
+    if (search) {
+      query.name = { $regex: search, $options: "i" }; // Case-insensitive search
+    }
+
+    // Pagination
+    const pageNumber = parseInt(page);
+    const pageSize = parseInt(limit);
+    const skip = (pageNumber - 1) * pageSize;
+
+    // Fetch categories (both active and inactive) with pagination
+    const categories = await CategoryBlog.find(query)
+      .skip(skip)
+      .limit(pageSize);
+
+    // Get total count for pagination
+    const totalCategories = await CategoryBlog.countDocuments(query);
+
+    res.json({
+      categories,
+      totalCategories,
+      totalPages: Math.ceil(totalCategories / pageSize),
+      currentPage: pageNumber,
+    });
+  } catch (error) {
+    console.error("Error fetching categories for admin:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.createCategory = async (req, res) => {
+  try {
+    const { name, status } = req.body;
+    if (!name) {
+      return res.status(400).json({ message: "Category name is required" });
+    }
+    if (status && !["active", "inactive"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status value" });
+    }
+    const newCategory = new CategoryBlog({ name, status: status || "active" });
+    await newCategory.save();
+    res.status(201).json(newCategory);
+  } catch (error) {
+    console.error("Error creating category:", error);
+    res.status(400).json({ message: error.message });
+  }
+};
+
+exports.updateCategory = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, status } = req.body;
+    if (!name) {
+      return res.status(400).json({ message: "Category name is required" });
+    }
+    if (status && !["active", "inactive"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status value" });
+    }
+    const updatedCategory = await CategoryBlog.findByIdAndUpdate(
+      id,
+      { name, status: status || "active" },
+      { new: true }
+    );
+    if (!updatedCategory) {
+      return res.status(404).json({ message: "Category not found" });
+    }
+    // If category is set to inactive, inactivate associated blogs
+    if (status === "inactive") {
+      await Blog.updateMany({ categoryId: id }, { status: "inactive" });
+    }
+    res.json(updatedCategory);
+  } catch (error) {
+    console.error("Error updating category:", error);
+    res.status(400).json({ message: error.message });
+  }
+};
+
+exports.deleteCategory = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const category = await CategoryBlog.findById(id);
+    if (!category) {
+      return res.status(404).json({ message: "Category not found" });
+    }
+    if (category.status === "active") {
+      // Soft delete: set category and associated blogs to inactive
+      category.status = "inactive";
+      await category.save();
+      await Blog.updateMany({ categoryId: id }, { status: "inactive" });
+      res.json({
+        message: "Category and associated blogs set to inactive",
+        category,
+      });
+    } else {
+      // Permanent delete
+      await CategoryBlog.findByIdAndDelete(id);
+      res.json({ message: "Category permanently deleted" });
+    }
+  } catch (error) {
+    console.error("Error deleting category:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.getTopViewedBlogs = async (req, res) => {
+  try {
+    const topBlogs = await Blog.find({ status: "active" })
+      .populate("categoryId", "name")
+      .sort({ views: -1 })
+      .limit(5)
+      .select("title content slug image views");
+    res.json(topBlogs);
+  } catch (error) {
+    console.error("Error fetching top viewed blogs:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.incrementBlogViews = async (req, res) => {
+  try {
+    const { slug } = req.params;
+    const blog = await Blog.findOne({ slug, status: "active" });
+    if (!blog) {
+      return res.status(404).json({ message: "Blog not found or inactive" });
+    }
+    blog.views = (blog.views || 0) + 1;
+    await blog.save();
+    res.json({ message: "View count incremented", views: blog.views });
+  } catch (error) {
+    console.error("Error incrementing blog views:", error);
+    res.status(500).json({ message: error.message });
   }
 };

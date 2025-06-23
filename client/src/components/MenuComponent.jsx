@@ -12,11 +12,21 @@ const DRAWER_WIDTH = 240;
 const menuByRole = {
   admin: [
     { title: "Home", path: "/", icon: <HomeOutlined /> },
+
     { title: "Manage Users", path: "/accountmanagement", icon: <TeamOutlined />, },
     { title: "Manage Doctor Account", path: "/doctoraccount", icon: <FileTextOutlined /> },
     { title: "Manage Service", path: "/servicemanagement", icon: <FileTextOutlined />, },
     { title: "Settings", path: "/settings", icon: <SettingOutlined /> },
     { title: "Manage Blogs", path: "/bloglist", icon: <FileTextOutlined /> },
+    {
+      title: "Statistic Dashboard",
+      path: "/statistic",
+      icon: <FileTextOutlined />,
+    },
+    { title: "Settings", path: "/settings", icon: <SettingOutlined /> },
+    { title: "Manage Blogs", path: "admin/blogs", icon: <FileTextOutlined /> },
+    { title: "Manage User", path: "/userlist", icon:  <TeamOutlined /> },
+    { title: "Manage Doctor Account", path: "/doctoraccount", icon: <FileTextOutlined /> },
 
   ],
   doctor: [

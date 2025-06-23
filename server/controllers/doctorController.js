@@ -1,18 +1,23 @@
 const Doctor = require("../models/Doctor");
 const TimeSlot = require("../models/TimeSlot");
 
-exports.getAllDoctors = async (req, res, next) => {
+exports.getAllDoctors = async (req, res) => {
   try {
+
     // Chỉ lấy doctor đã có chuyên ngành
     const doctors = await Doctor.find({Specialty: { $exists: true, $ne: '' }}).populate('userId').populate('clinic_id','clinic_name');
 
+
     res.status(200).json({
       success: true,
-      data: doctors
+      data: doctors,
     });
   } catch (error) {
     console.error("Error in getAllDoctors:", error);
-    next(error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 };
 
@@ -76,6 +81,7 @@ exports.updateDoctorStatus = async (req, res, next) => {
     console.error("Error in updateDoctorStatus:", error);
     return next(error);
   }
+
 };
 
 // POST /api/doctor/create-schedule
@@ -208,3 +214,6 @@ exports.getScheduleByWeek = async (req, res) => {
     });
   }
 };
+
+};
+

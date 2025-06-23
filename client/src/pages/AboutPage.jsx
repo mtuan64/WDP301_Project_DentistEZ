@@ -8,7 +8,7 @@ const AboutPage = () => {
   return (
     <>
       {/* Topbar */}
-      <div className="bg-light py-3 px-5 d-none d-lg-block border-bottom shadow-sm">
+      {/* <div className="bg-light py-3 px-5 d-none d-lg-block border-bottom shadow-sm">
         <Row className="align-items-center justify-content-between">
           <Col md={6} className="text-start">
             <small className="text-muted">
@@ -27,7 +27,7 @@ const AboutPage = () => {
             </small>
           </Col>
         </Row>
-      </div>
+      </div> */}
 
       
 
@@ -250,7 +250,6 @@ const AboutPage = () => {
         </section>
       </div>
 
-      <FooterComponent />
     </>
   );
 };

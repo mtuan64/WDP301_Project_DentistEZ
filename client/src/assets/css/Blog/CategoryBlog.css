@@ -1,0 +1,232 @@
+/* CategoryBlog.css */
+.category-blog-page {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+    font-family: "Roboto", Arial, sans-serif;
+  }
+  
+  .category-blog-page h1 {
+    font-size: 24px;
+    margin-bottom: 24px;
+    text-align: center;
+    color: #333;
+    font-weight: 500;
+  }
+  
+  .category-blog-page .MuiTableContainer-root {
+    margin-top: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+  }
+  
+  .category-blog-page .MuiTableCell-root {
+    padding: 12px;
+    word-break: break-word;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 14px;
+  }
+  
+  .category-blog-page .MuiTableCell-root.stt {
+    max-width: 50px;
+    text-align: center;
+    font-weight: 500;
+    color: #333;
+  }
+  
+  .category-blog-page .MuiTableCell-root.name {
+    max-width: 300px;
+  }
+  
+  .category-blog-page .MuiTableCell-root.status {
+    max-width: 120px;
+    text-transform: capitalize;
+  }
+  
+  .category-blog-page .MuiTableCell-root.actions {
+    max-width: 100px;
+    gap: 4px;
+    padding: 10px;
+    text-align: center;
+  }
+  
+  .category-blog-page .MuiTableCell-root.actions .MuiButton-root {
+    padding: 6px;
+    min-width: 40px;
+  }
+  
+  .category-blog-page .MuiButton-root {
+    font-size: 12px;
+    text-transform: none;
+  }
+  
+  /* Filter and Search */
+  .category-blog-page .filter-search-container {
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: #ffffff;
+    padding: 12px 16px;
+    border-radius: 8px;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+    transition: box-shadow 0.3s ease;
+  }
+  
+  .category-blog-page .filter-search-container:hover {
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  }
+  
+  .category-blog-page .filter-search-container .MuiFormControl-root {
+    min-width: 200px;
+  }
+  
+  .category-blog-page .filter-search-container .MuiTextField-root {
+    flex-grow: 1;
+  }
+  
+  .category-blog-page .filter-search-container .MuiInputBase-root {
+    border-radius: 6px;
+    background-color: #f5f5f5;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+    min-width: 350px;
+  }
+  
+  .category-blog-page .filter-search-container .MuiInputBase-root:hover {
+    background-color: #e8f0fe;
+  }
+  
+  .category-blog-page .filter-search-container .MuiInputBase-root fieldset {
+    border-color: #e0e0e0;
+  }
+  
+  .category-blog-page .filter-search-container .Mui-focused fieldset {
+    border-color: #1976d2 !important;
+  }
+  
+  .category-blog-page .filter-search-container .MuiInputBase-input {
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+  
+  .category-blog-page .filter-search-container .MuiSvgIcon-root {
+    color: #1976d2;
+  }
+  
+  .category-blog-page .filter-search-container .MuiInputAdornment-root {
+    margin-right: 8px;
+  }
+  
+  .category-blog-page .filter-search-container .MuiSelect-select {
+    padding-right: 32px !important;
+    display: flex;
+    align-items: center;
+  }
+  
+  /* Modal Add/Edit/Delete */
+  .category-blog-page .MuiDialog-paper {
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    max-height: 90vh;
+    max-width: 400px;
+    width: 100%;
+    margin: 16px;
+    z-index: 1300;
+  }
+  
+  .category-blog-page .MuiDialogTitle-root {
+    padding: 16px 24px;
+    font-size: 18px;
+    font-weight: 500;
+    color: #333;
+    border-bottom: 1px solid #e0e0e0;
+    background-color: #f5f5f5;
+  }
+  
+  .category-blog-page .MuiDialogContent-root {
+    padding: 24px;
+    overflow-y: auto;
+  }
+  
+  .category-blog-page .form-field {
+    margin-bottom: 16px;
+  }
+  
+  .category-blog-page .form-field .MuiInputBase-root {
+    border-radius: 6px;
+    background-color: #fafafa;
+  }
+  
+  .category-blog-page .form-field .MuiInputBase-root:hover {
+    background-color: #f0f0f0;
+  }
+  
+  .category-blog-page .MuiDialogActions-root {
+    padding: 16px 24px;
+    border-top: 1px solid #e0e0e0;
+    gap: 12px;
+  }
+  
+  .category-blog-page .MuiDialogActions-root .MuiButton-root {
+    padding: 8px 16px;
+    font-size: 14px;
+  }
+  
+  .category-blog-page .custom-loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1400;
+  }
+  
+  .category-blog-page .notification-dialog .MuiDialog-paper {
+    padding: 16px;
+    border-radius: 8px;
+    z-index: 1300;
+  }
+  
+  .category-blog-page .notification-dialog.success .MuiSvgIcon-root {
+    color: #4caf50;
+    font-size: 40px;
+    margin-bottom: 8px;
+  }
+  
+  .category-blog-page .notification-dialog.error .MuiSvgIcon-root {
+    color: #f44336;
+    font-size: 40px;
+    margin-bottom: 8px;
+  }
+  
+  .category-blog-page .notification-dialog .MuiDialogContentText-root {
+    color: #333;
+    font-size: 14px;
+    text-align: center;
+  }
+  
+  .category-blog-page .pagination-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 24px;
+  }
+  
+  .category-blog-page .showing-info {
+    font-size: 14px;
+    color: #666;
+  }
+  
+  .category-blog-page .status.active {
+    color: #4caf50;
+    font-weight: bold;
+  }
+  
+  .category-blog-page .status.inactive {
+    color: #9b3232;
+  }

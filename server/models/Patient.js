@@ -1,3 +1,4 @@
+
 const mongoose = require('mongoose');
 
 const PatientSchema = new mongoose.Schema({
@@ -11,3 +12,4 @@ const PatientSchema = new mongoose.Schema({
 },{timestamps: true, collection: 'patients' });
 
 module.exports = mongoose.model('Patient', PatientSchema);
+

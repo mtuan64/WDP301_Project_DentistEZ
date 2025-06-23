@@ -1,12 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom'; // Sử dụng để điều hướng
-import HeaderComponent from "../components/HeaderComponent";
-import FooterComponent from "../components/FooterComponent";
-import MilestoneSection from "../components/MilestoneSection";
-import { Row, Col } from "react-bootstrap";
+import { useNavigate } from 'react-router-dom';
+import { Container, Row, Col, Button, Spinner } from "react-bootstrap";
 import Flatpickr from "react-flatpickr";
 import "flatpickr/dist/themes/material_green.css";
-import "../assets/css/AppointmentPage.css";
 import axios from "axios";
 
 const AppointmentPage = () => {
@@ -19,6 +15,7 @@ const AppointmentPage = () => {
   const [doctorData, setDoctorData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   const serviceData = [
     { id: "service1", title: "Tư Vấn", price: "500.000 VNĐ" },
@@ -45,78 +42,123 @@ const AppointmentPage = () => {
     { id: "confirm", title: "Xác Nhận", desc: "Đặt lịch hoàn tất" }
   ];
 
-  useEffect(() => {
-    const fetchDoctors = async () => {
-      try {
-        setLoading(true);
-        console.log("Đang lấy danh sách bác sĩ từ API...");
-        const response = await axios.get("http://localhost:9999/api/doctor");
-        console.log("Phản hồi API:", response.data);
+  const fetchDoctors = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      console.log("Đang lấy danh sách bác sĩ từ API...");
+      const response = await axios.get("http://localhost:9999/api/doctor");
+      console.log("Phản hồi API:", response.data);
 
-        if (!response.data.success) {
-          throw new Error("Lỗi API: " + (response.data.message || "Lỗi không xác định"));
-        }
-
-        const formattedData = response.data.data
-          .filter(doctor => doctor.Status === 'active')
-          .map(doctor => ({
-            id: doctor._id,
-            name: doctor.userId?.fullname || 'Không xác định',
-            specialty: doctor.Specialty || 'N/A',
-            experienceYears: doctor.ExperienceYears || 0,
-            profileImage: doctor.ProfileImage || null
-          }));
-
-        setDoctorData(formattedData);
-        setLoading(false);
-      } catch (err) {
-        console.error("Lỗi khi lấy danh sách bác sĩ:", err);
-        setError("Không thể tải danh sách bác sĩ. Vui lòng kiểm tra console để biết chi tiết.");
-        setLoading(false);
+      // Handle API response more robustly
+      if (!response.data || !Array.isArray(response.data.data)) {
+        throw new Error("Dữ liệu bác sĩ không hợp lệ");
       }
-    };
 
+      const formattedData = response.data.data
+        .filter(doctor => doctor.Status === 'active')
+        .map(doctor => ({
+          id: doctor._id,
+          name: doctor.userId?.fullname || 'Không xác định',
+          specialty: doctor.Specialty || 'N/A',
+          experienceYears: doctor.ExperienceYears || 0,
+          profileImage: doctor.ProfileImage || null
+        }));
+
+      setDoctorData(formattedData);
+      setLoading(false);
+    } catch (err) {
+      console.error("Lỗi khi lấy danh sách bác sĩ:", err);
+      setError(err.message || "Không thể tải danh sách bác sĩ. Vui lòng kiểm tra kết nối hoặc thử lại.");
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchDoctors();
   }, []);
+
+  const handleConfirm = async () => {
+    try {
+      const appointmentData = {
+        doctorId: selectedDoctor,
+        serviceId: selectedService,
+        date: selectedDate,
+        time: selectedTime,
+        paymentMethod: selectedPayment
+      };
+
+      // Placeholder API call to submit appointment
+      const response = await axios.post("http://localhost:9999/api/appointment", appointmentData, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`
+        }
+      });
+
+      if (response.data.success) {
+        setStep("confirm");
+      } else {
+        throw new Error(response.data.message || "Không thể đặt lịch hẹn");
+      }
+    } catch (err) {
+      console.error("Lỗi khi đặt lịch hẹn:", err);
+      setError(err.message || "Đã xảy ra lỗi khi đặt lịch hẹn. Vui lòng thử lại.");
+      setStep("payment"); // Stay on payment step to show error
+    }
+  };
 
   const renderStepContent = () => {
     switch (step) {
       case "doctor":
         if (loading) {
-          return <div className="text-center p-4">Đang tải danh sách bác sĩ...</div>;
+          return (
+            <div className="text-center p-5">
+              <Spinner animation="border" variant="primary" />
+              <p className="mt-2 text-muted">Đang tải danh sách bác sĩ...</p>
+            </div>
+          );
         }
         if (error) {
-          return <div className="text-center p-4 text-danger">Lỗi: {error}</div>;
+          return (
+            <div className="text-center p-5 bg-white rounded shadow-sm">
+              <p className="text-danger mb-3">{error}</p>
+              <Button
+                variant="primary"
+                onClick={fetchDoctors}
+              >
+                Thử Lại
+              </Button>
+            </div>
+          );
         }
         return (
           <div className="p-4 bg-white rounded shadow-sm">
             <h3 className="text-primary fw-bold mb-4">Chọn Bác Sĩ</h3>
             <Row>
               {doctorData.length === 0 ? (
-                <Col className="text-center">Không có bác sĩ nào hoạt động</Col>
+                <Col className="text-center text-muted">Không có bác sĩ nào hoạt động</Col>
               ) : (
                 doctorData.map((doctor) => (
-                  <Col key={doctor.id} xs={12} sm={6} md={4} lg={4} className="mb-4">
+                  <Col key={doctor.id} xs={12} sm={6} md={4} lg={3} className="mb-4">
                     <label
-                      className={`doctor-card ${selectedDoctor === doctor.id ? 'selected' : ''}`}
+                      className={`doctor-card p-3 rounded border ${selectedDoctor === doctor.id ? 'border-primary bg-light' : 'border-secondary'}`}
                       onClick={() => setSelectedDoctor(doctor.id)}
                     >
                       <input type="radio" name="doctor" className="d-none" />
-                      <div className="doctor-image-container">
+                      <div className="doctor-image-container mb-3">
                         {doctor.profileImage ? (
                           <img
                             src={doctor.profileImage}
                             alt={doctor.name}
-                            className="doctor-image"
+                            className="doctor-image img-fluid rounded-circle"
                           />
                         ) : (
                           <div
-                            className="doctor-image"
+                            className="doctor-image rounded-circle d-flex align-items-center justify-content-center"
                             style={{
+                              width: '80px',
+                              height: '80px',
                               backgroundColor: '#e0e0e0',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
                               fontSize: '1.5rem',
                               color: '#6c757d'
                             }}
@@ -125,22 +167,24 @@ const AppointmentPage = () => {
                           </div>
                         )}
                       </div>
-                      <h5 className="doctor-name">{doctor.name}</h5>
-                      <p className="doctor-specialty">{doctor.specialty}</p>
-                      <p className="doctor-experience">{doctor.experienceYears} năm kinh nghiệm</p>
+                      <h5 className="doctor-name text-dark fw-semibold mb-1">{doctor.name}</h5>
+                      <p className="doctor-specialty text-muted small mb-1">{doctor.specialty}</p>
+                      <p className="doctor-experience text-muted small">
+                        {doctor.experienceYears} năm kinh nghiệm
+                      </p>
                     </label>
                   </Col>
                 ))
               )}
             </Row>
             <div className="text-end mt-4">
-              <button
-                className="btn btn-primary"
+              <Button
+                variant="primary"
                 onClick={() => setStep("service")}
                 disabled={!selectedDoctor}
               >
                 Tiếp Theo
-              </button>
+              </Button>
             </div>
           </div>
         );
@@ -163,19 +207,19 @@ const AppointmentPage = () => {
               ))}
             </Row>
             <div className="d-flex justify-content-between mt-4">
-              <button
-                className="btn btn-outline-secondary"
+              <Button
+                variant="outline-secondary"
                 onClick={() => setStep("doctor")}
               >
                 Quay Lại
-              </button>
-              <button
-                className="btn btn-primary"
+              </Button>
+              <Button
+                variant="primary"
                 onClick={() => setStep("datetime")}
                 disabled={!selectedService}
               >
                 Tiếp Theo
-              </button>
+              </Button>
             </div>
           </div>
         );
@@ -194,31 +238,32 @@ const AppointmentPage = () => {
               <Col md={6}>
                 <div className="d-flex flex-wrap gap-2">
                   {timeSlots.map((time) => (
-                    <button
+                    <Button
                       key={time}
-                      className={`btn btn-outline-primary btn-sm ${selectedTime === time ? 'btn-primary text-white' : ''}`}
+                      variant={selectedTime === time ? 'primary' : 'outline-primary'}
+                      size="sm"
                       onClick={() => setSelectedTime(time)}
                     >
                       {time}
-                    </button>
+                    </Button>
                   ))}
                 </div>
               </Col>
             </Row>
             <div className="d-flex justify-content-between mt-4">
-              <button
-                className="btn btn-outline-secondary"
+              <Button
+                variant="outline-secondary"
                 onClick={() => setStep("service")}
               >
                 Quay Lại
-              </button>
-              <button
-                className="btn btn-primary"
+              </Button>
+              <Button
+                variant="primary"
                 onClick={() => setStep("payment")}
                 disabled={!selectedDate || !selectedTime}
               >
                 Tiếp Theo
-              </button>
+              </Button>
             </div>
           </div>
         );
@@ -226,6 +271,7 @@ const AppointmentPage = () => {
         return (
           <div className="p-4 bg-white rounded shadow-sm">
             <h3 className="text-primary fw-bold mb-4">Chọn Phương Thức Thanh Toán</h3>
+            {error && <p className="text-danger mb-3">{error}</p>}
             <Row>
               <Col md={6}>
                 <h5 className="text-muted mb-3">Chọn Thanh Toán</h5>
@@ -235,7 +281,13 @@ const AppointmentPage = () => {
                     className={`border p-3 mb-2 rounded cursor-pointer hover:bg-light ${selectedPayment === payment.id ? 'border-primary' : ''}`}
                     onClick={() => setSelectedPayment(payment.id)}
                   >
-                    <input type="radio" name="payment" className="me-2" />
+                    <input
+                      type="radio"
+                      name="payment"
+                      className="me-2"
+                      checked={selectedPayment === payment.id}
+                      onChange={() => setSelectedPayment(payment.id)}
+                    />
                     {payment.name}
                   </div>
                 ))}
@@ -245,35 +297,35 @@ const AppointmentPage = () => {
                 <div className="border p-3 rounded">
                   <p className="small">Bác Sĩ: {doctorData.find(d => d.id === selectedDoctor)?.name || "N/A"}</p>
                   <p className="small">Ngày: {selectedDate ? selectedDate.toLocaleDateString('vi-VN') : "N/A"}</p>
-                  <p className="small">Giờ: {selectedTime}</p>
+                  <p className="small">Giờ: {selectedTime || "N/A"}</p>
                   <div className="mt-3 p-3 bg-light rounded">
                     <h6 className="small fw-bold">Dịch Vụ</h6>
                     <div className="d-flex justify-content-between small">
-                      <span>{serviceData.find(s => s.id === selectedService)?.title}</span>
-                      <span>{serviceData.find(s => s.id === selectedService)?.price}</span>
+                      <span>{serviceData.find(s => s.id === selectedService)?.title || "N/A"}</span>
+                      <span>{serviceData.find(s => s.id === selectedService)?.price || "N/A"}</span>
                     </div>
                   </div>
                   <div className="mt-3 d-flex justify-content-between small">
                     <strong>Tổng Chi Phí</strong>
-                    <strong className="text-primary">{serviceData.find(s => s.id === selectedService)?.price}</strong>
+                    <strong className="text-primary">{serviceData.find(s => s.id === selectedService)?.price || "N/A"}</strong>
                   </div>
                 </div>
               </Col>
             </Row>
             <div className="d-flex justify-content-between mt-4">
-              <button
-                className="btn btn-outline-secondary"
+              <Button
+                variant="outline-secondary"
                 onClick={() => setStep("datetime")}
               >
                 Quay Lại
-              </button>
-              <button
-                className="btn btn-primary"
-                onClick={() => setStep("confirm")}
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleConfirm}
                 disabled={!selectedPayment}
               >
                 Xác Nhận
-              </button>
+              </Button>
             </div>
           </div>
         );
@@ -287,15 +339,25 @@ const AppointmentPage = () => {
             <h3 className="text-primary fw-bold mb-3">Đặt Lịch Hẹn Thành Công!</h3>
             <p className="text-muted small">Vui lòng kiểm tra email để xác nhận.</p>
             <div className="mt-4 d-flex justify-content-center gap-3">
-              <button
-                className="btn btn-primary"
-                onClick={() => setStep("doctor")}
+              <Button
+                variant="primary"
+                onClick={() => {
+                  setSelectedDoctor(null);
+                  setSelectedService(null);
+                  setSelectedDate(null);
+                  setSelectedTime(null);
+                  setSelectedPayment(null);
+                  setStep("doctor");
+                }}
               >
                 Đặt Thêm Lịch Hẹn
-              </button>
-              <button className="btn btn-outline-secondary">
-                In Chi Tiết
-              </button>
+              </Button>
+              <Button
+                variant="outline-secondary"
+                onClick={() => navigate('/')}
+              >
+                Về Trang Chủ
+              </Button>
             </div>
           </div>
         );
@@ -306,7 +368,8 @@ const AppointmentPage = () => {
 
   return (
     <>
-      <div className="bg-light py-3 px-5 d-none d-lg-block border-bottom shadow-sm">
+
+      {/* <div className="bg-light py-3 px-5 d-none d-lg-block border-bottom shadow-sm">
         <Row className="align-items-center justify-content-between">
           <Col md={6} className="text-start">
             <small className="text-muted">
@@ -325,9 +388,7 @@ const AppointmentPage = () => {
             </small>
           </Col>
         </Row>
-      </div>
-
-      <HeaderComponent />
+      </div> */}
 
       <div id="heroCarousel" className="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="4000">
         <div className="carousel-inner">
@@ -357,7 +418,7 @@ const AppointmentPage = () => {
         </div>
       </div>
 
-      <div className="container py-5">
+      <Container className="py-5">
         <section className="mb-5">
           <Row className="align-items-start">
             <Col lg={3} className="mb-4 mb-lg-0">
@@ -388,11 +449,8 @@ const AppointmentPage = () => {
             </Col>
           </Row>
         </section>
+      </Container>
 
-        <MilestoneSection />
-      </div>
-
-      <FooterComponent />
     </>
   );
 };

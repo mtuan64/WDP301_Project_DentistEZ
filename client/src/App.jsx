@@ -1,18 +1,31 @@
 import React, { useState } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom"; // KHÔNG import BrowserRouter ở đây
+import ServicePage from "./pages/ServicePage";
 
 import DoctorPage from "./pages/DoctorPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+import ForgotPasswordPage from "./pages/ForgotPassword";
+import VerifyOtpPage from "./pages/VerifyOtp";
+import ResetPasswordPage from "./pages/ResetPassword";
 import DoctorDetail from "./pages/DoctorDetail";
 import AboutPage from "./pages/AboutPage";
 import ProfilePage from "./pages/ProfilePage";
 import HomePage from "./pages/Homepage";
 import BlogListPage from "./pages/BlogListPage";
+import CategoryBlog from "./pages/CategoryBlog"
+import BlogPage from "./pages/BlogPage";
+import BlogDetail from "./pages/BlogDetail";
+import UserListPage from "./pages/UserListManage";
+import AppointmentPage from "./pages/AppointmentPage";
 import DoctorAccountManagement from "./pages/DoctorAccountManagement";
+import StaticPage from "./pages/StatisticPage";
 import Header from "./components/HeaderComponent";
+import Topbar from "./components/Topbar";
 import MenuComponent from "./components/MenuComponent";
+
 import "antd/dist/reset.css"; 
 import AccountManagement from "./pages/AccountManagement";
 import ScheduleManagement from "./pages/ScheduleManagement";
@@ -20,25 +33,35 @@ import ServiceCard from "./pages/ServiceCard ";
 import ServiceDetail from "./pages/ServiceDetail ";
 import ServiceManagement from "./pages/ServiceManagement";
 
+import FooterComponent from "./components/FooterComponent";
+import Chatbox from "./components/Chatbox";
+import "antd/dist/reset.css";
+
+
 const DRAWER_WIDTH = 240;
 
 const App = () => {
-  // State mở/đóng menu
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // Lấy user và role (có thể lấy từ context hoặc localStorage)
-  const user = JSON.parse(localStorage.getItem("user"));
+  let user = null;
+  try {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      user = JSON.parse(storedUser);
+    }
+  } catch (error) {
+    console.error("Error parsing user from localStorage:", error);
+    localStorage.removeItem("user");
+  }
+
   const role = user?.role || "patient";
 
-  // Hàm toggle menu
   const toggleMenu = () => setMenuOpen((open) => !open);
 
   return (
-    <Router>
-      {/* Header luôn hiện trên mọi trang */}
+    <div>
+      <Topbar />
       <Header onMenuClick={toggleMenu} menuOpen={menuOpen} />
-
-      {/* Menu Drawer luôn hiện trên mọi trang khi đã đăng nhập */}
       {user && (
         <MenuComponent
           isOpen={menuOpen}
@@ -47,7 +70,6 @@ const App = () => {
         />
       )}
 
-      {/* Main content, dịch sang phải khi menu mở */}
       <div
         style={{
           marginTop: 84,
@@ -63,17 +85,32 @@ const App = () => {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/myprofile" element={<ProfilePage />} />
+          <Route path="/appointment" element={<AppointmentPage />} />
+          <Route path="/userlist" element={<UserListPage />} />
           <Route path="/doctor/:doctorId" element={<DoctorDetail />} />
-          <Route path="/bloglist" element={<BlogListPage />} />
+          <Route path="admin/blogs" element={<BlogListPage />} />
+          <Route path="/admin/categories" element={<CategoryBlog />} />
+          <Route path="/blog" element={<BlogPage />} />
+          <Route path="/blog/:slug" element={<BlogDetail />} />
           <Route path="/doctoraccount" element={<DoctorAccountManagement />} />
+
           <Route path="/accountmanagement"element={<AccountManagement />} />
           <Route path="/doctor/schedule" element={<ScheduleManagement />} />
           <Route path="/services" element={<ServiceCard />} />
           <Route path="/service-detail/:id" element={<ServiceDetail />} />
           <Route path="/servicemanagement" element={<ServiceManagement />}/>
+
+          <Route path="/statistic" element={<StaticPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/verify-otp" element={<VerifyOtpPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+
         </Routes>
       </div>
-    </Router>
+
+      <FooterComponent />
+      <Chatbox />
+    </div>
   );
 };
 

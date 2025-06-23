@@ -1,3 +1,4 @@
+
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
@@ -7,15 +8,31 @@ const Service = require('../models/Service');
 const ServiceOption = require('../models/ServiceOption');
 const TimeSlot = require('../models/TimeSlot');
 
+const User = require("../models/User");
+const Patient = require("../models/Patient");
+const Doctor = require("../models/Doctor");
+const Staff = require("../models/Staff");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
+const multer = require("multer");
+const path = require("path");
+const { OAuth2Client } = require("google-auth-library");
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+// Danh sách đen để lưu token đã logout (thay bằng Redis trong production)
+const tokenBlacklist = [];
+
+
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/'); // Ensure this folder exists
+    cb(null, "uploads/"); // Ensure this folder exists
   },
   filename: (req, file, cb) => {
     cb(null, `${Date.now()}-${file.originalname}`);
   },
 });
+
 const upload = multer({
   storage,
   fileFilter: (req, file, cb) => {
@@ -25,37 +42,71 @@ const upload = multer({
     if (extname && mimetype) {
       return cb(null, true);
     }
-    cb(new Error('Only JPEG/PNG images are allowed'));
+    cb(new Error("Only JPEG/PNG images are allowed"));
   },
 });
 
+// Authentication middleware
+const authMiddleware = (req, res, next) => {
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) {
+    return res.status(401).json({ msg: "No token provided" });
+  }
 
+  // Check if token is blacklisted
+  if (tokenBlacklist.includes(token)) {
+    return res.status(401).json({ msg: "Token has been invalidated" });
+  }
 
+  try {
+    if (!process.env.JWT_SECRET) {
+      throw new Error("JWT_SECRET is not defined");
+    }
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded; // Attach userId and role to req
+    next();
+  } catch (err) {
+    console.error("Token verification failed:", err.message);
+    res.status(401).json({ msg: "Invalid token" });
+  }
+};
+
+// Check if doctor's profile is complete
+const isDoctorProfileComplete = (user, doctor) => {
+  return !(
+    !user.fullname ||
+    !user.phone ||
+    !user.address ||
+    !user.dateOfBirth ||
+    !user.gender ||
+    !doctor.Specialty ||
+    !doctor.Degree ||
+    doctor.ExperienceYears == null
+  );
+};
 
 exports.registerUser = async (req, res, next) => {
   try {
-    const {
-      username,
-      password,
-      fullname,
-      email,
-      phone,
-      address,
-      dob,
-      gender,
-      role,
-    } = req.body;
+    const { username, password, fullname, email, phone, address, dob, gender, role } = req.body;
 
-    // Check if email or username already exists
-    const existingUser = await User.findOne({ $or: [{ email }, { username }] });
-    if (existingUser) {
-      return res.status(400).json({ msg: 'Người dùng đã tồn tại!' });
+    // Validate required fields
+    if (!username || !password || !fullname || !email) {
+      return res.status(400).json({ msg: "Username, password, fullname, and email are required" });
     }
 
-    // Hash password
+    // Validate role
+    const validRoles = ["patient", "doctor", "staff", "admin"];
+    if (role && !validRoles.includes(role)) {
+      return res.status(400).json({ msg: "Invalid role" });
+    }
+
+    const existingUser = await User.findOne({ $or: [{ email }, { username }] }).lean();
+    if (existingUser) {
+      return res.status(400).json({ msg: "Người dùng đã tồn tại!" });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create new user
     const newUser = new User({
       username,
       password: hashedPassword,
@@ -65,24 +116,36 @@ exports.registerUser = async (req, res, next) => {
       address,
       dateOfBirth: dob,
       gender,
-      role,
+      role: role || "patient",
     });
 
-    await newUser.save();
+    const savedUser = await newUser.save();
+
+    switch (newUser.role) {
+      case "patient":
+        await new Patient({ userId: savedUser._id }).save();
+        break;
+      case "doctor":
+        await new Doctor({ userId: savedUser._id }).save();
+        break;
+      case "staff":
+        await new Staff({ userId: savedUser._id }).save();
+        break;
+    }
 
     res.status(201).json({
-      id: newUser._id,
-      username: newUser.username,
-      fullname: newUser.fullname,
-      email: newUser.email,
-      phone: newUser.phone,
-      address: newUser.address,
-      dateOfBirth: newUser.dateOfBirth,
-      gender: newUser.gender,
-      role: newUser.role,
+      id: savedUser._id,
+      username: savedUser.username,
+      fullname: savedUser.fullname,
+      email: savedUser.email,
+      phone: savedUser.phone,
+      address: savedUser.address,
+      dateOfBirth: savedUser.dateOfBirth,
+      gender: savedUser.gender,
+      role: savedUser.role,
     });
   } catch (error) {
-    console.error('Error in registerUser:', error);
+    console.error("Error in registerUser:", error.message);
     next(error);
   }
 };
@@ -91,35 +154,32 @@ exports.loginUser = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
-    // Kiểm tra đầu vào
     if (!email || !password) {
-      return res.status(400).json({ msg: 'Vui lòng nhập đầy đủ email và mật khẩu.' });
+      return res
+        .status(400)
+        .json({ msg: "Vui lòng nhập đầy đủ email và mật khẩu." });
     }
 
-    // Tìm user theo email
-    const user = await User.findOne({ email });
-
+    const user = await User.findOne({ email }).lean();
     if (!user) {
-      return res.status(404).json({ msg: 'Người dùng không tồn tại.' });
+      return res.status(404).json({ msg: "Người dùng không tồn tại." });
     }
 
-    // Kiểm tra mật khẩu
     const isPasswordValid = await bcrypt.compare(password, user.password);
-
     if (!isPasswordValid) {
-      return res.status(401).json({ msg: 'Mật khẩu không đúng.' });
+      return res.status(401).json({ msg: "Mật khẩu không đúng." });
     }
 
-    // Tạo JWT token
-    const token = jwt.sign(
-      { userId: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: '20h' }
-    );
+    if (!process.env.JWT_SECRET) {
+      throw new Error("JWT_SECRET is not defined");
+    }
 
-    // Trả về token và thông tin user
+    const token = jwt.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET, {
+      expiresIn: "20h",
+    });
+
     res.status(200).json({
-      msg: 'Đăng nhập thành công.',
+      msg: "Đăng nhập thành công.",
       token,
       user: {
         id: user._id,
@@ -135,19 +195,64 @@ exports.loginUser = async (req, res, next) => {
       },
     });
   } catch (error) {
-    console.error('Lỗi khi đăng nhập:', error);
-    res.status(500).json({ msg: 'Đã có lỗi xảy ra. Vui lòng thử lại sau.' });
+    console.error("Lỗi khi đăng nhập:", error.message);
+    res.status(500).json({ msg: "Đã có lỗi xảy ra. Vui lòng thử lại sau." });
   }
 };
 
+exports.googleLogin = async (req, res) => {
+  const { token } = req.body;
+
+  try {
+    // Xác thực token Google gửi lên
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    const { email, name, picture } = payload;
+
+    // Kiểm tra user đã tồn tại chưa
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      // Nếu chưa — tạo mới user với role patient mặc định
+      user = await User.create({
+        username: email.split("@")[0],
+        fullname: name,
+        email,
+        isGoogleAccount: true,
+        profilePicture: picture,
+      });
+    }
+
+    // Tạo token JWT cho app của bạn
+    const appToken = jwt.sign(
+      { userId: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "20h" }
+    );
+
+    res.status(200).json({
+      msg: "Đăng nhập Google thành công!",
+      token: appToken,
+      user,
+    });
+
+  } catch (err) {
+    console.error("Google login error:", err);
+    res.status(500).json({ msg: "Xác thực Google thất bại." });
+  }
+};
 
 exports.uploadProfilePicture = async (req, res, next) => {
   try {
-    const userId = req.user.userId; // From authMiddleware
+    const userId = req.user.userId;
     const file = req.file;
 
     if (!file) {
-      return res.status(400).json({ msg: 'No file uploaded' });
+      return res.status(400).json({ msg: "No file uploaded" });
     }
 
     const profilePictureUrl = `/uploads/${file.filename}`;
@@ -155,39 +260,36 @@ exports.uploadProfilePicture = async (req, res, next) => {
       userId,
       { profilePicture: profilePictureUrl },
       { new: true, runValidators: true }
-    );
+    ).lean();
 
     if (!user) {
-      return res.status(404).json({ msg: 'User not found' });
+      return res.status(404).json({ msg: "User not found" });
     }
 
     res.status(200).json({
-      msg: 'Profile picture uploaded successfully',
+      msg: "Profile picture uploaded successfully",
       profilePictureUrl,
     });
   } catch (error) {
-    console.error('Error in uploadProfilePicture:', error);
-    res.status(500).json({ msg: 'Failed to upload profile picture' });
+    console.error("Error in uploadProfilePicture:", error.message);
+    res.status(500).json({ msg: "Failed to upload profile picture" });
   }
 };
 
 exports.updateUser = async (req, res, next) => {
   try {
-    const userId = req.user.userId; // From authMiddleware
+    const userId = req.user.userId;
     const { fullname, email, phone, address, dateOfBirth, gender, profilePicture } = req.body;
 
-    // Validate required fields
     if (!fullname || !email) {
-      return res.status(400).json({ msg: 'Fullname and email are required' });
+      return res.status(400).json({ msg: "Fullname and email are required" });
     }
 
-    // Check if email is already taken by another user
-    const existingUser = await User.findOne({ email, _id: { $ne: userId } });
+    const existingUser = await User.findOne({ email, _id: { $ne: userId } }).lean();
     if (existingUser) {
-      return res.status(400).json({ msg: 'Email already in use' });
+      return res.status(400).json({ msg: "Email already in use" });
     }
 
-    // Update user
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       {
@@ -200,14 +302,14 @@ exports.updateUser = async (req, res, next) => {
         profilePicture,
       },
       { new: true, runValidators: true }
-    );
+    ).lean();
 
     if (!updatedUser) {
-      return res.status(404).json({ msg: 'User not found' });
+      return res.status(404).json({ msg: "User not found" });
     }
 
     res.status(200).json({
-      msg: 'User updated successfully',
+      msg: "User updated successfully",
       user: {
         id: updatedUser._id,
         username: updatedUser.username,
@@ -222,10 +324,100 @@ exports.updateUser = async (req, res, next) => {
       },
     });
   } catch (error) {
-    console.error('Error in updateUser:', error);
-    res.status(500).json({ msg: 'Failed to update user' });
+    console.error("Error in updateUser:", error.message);
+    res.status(500).json({ msg: "Failed to update user" });
   }
 };
+
+exports.getAllUserAccounts = async (req, res) => {
+  try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ msg: "Access denied. Admin role required." });
+    }
+
+    const { page = 1, limit = 10, search, sortBy = "createdAt", sortOrder = "desc" } = req.query;
+
+    const query = {};
+    if (search) {
+      query.$or = [
+        { username: { $regex: search, $options: "i" } },
+        { fullname: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
+
+    const sortOptions = {};
+    sortOptions[sortBy] = sortOrder === "desc" ? -1 : 1;
+
+    const users = await User.find(query)
+      .select("-password")
+      .sort(sortOptions)
+      .skip(skip)
+      .limit(limitNum)
+      .lean();
+
+    const totalUsers = await User.countDocuments(query);
+
+    res.status(200).json({
+      success: true,
+      data: users,
+      pagination: {
+        currentPage: pageNum,
+        totalPages: Math.ceil(totalUsers / limitNum),
+        totalUsers,
+        limit: limitNum,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching all user accounts:", error.message);
+    res.status(500).json({ msg: "Server error", error: error.message });
+  }
+};
+
+exports.getUserByRole = async (req, res) => {
+  try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ msg: "Access denied. Admin role required." });
+    }
+
+    const { page = 1, limit = 10, role } = req.query;
+
+    if (!role || !["patient", "doctor", "staff", "admin"].includes(role)) {
+      return res.status(400).json({ msg: "Invalid or missing role parameter" });
+    }
+
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
+
+    const users = await User.find({ role })
+      .select("-password")
+      .skip(skip)
+      .limit(limitNum)
+      .lean();
+
+    const totalUsers = await User.countDocuments({ role });
+
+    res.status(200).json({
+      success: true,
+      data: users,
+      pagination: {
+        currentPage: pageNum,
+        totalPages: Math.ceil(totalUsers / limitNum),
+        totalUsers,
+        limit: limitNum,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching users by role:", error.message);
+    res.status(500).json({ msg: "Server error", error: error.message });
+  }
+};
+
 
 exports.getServiceDetail = async(req,res)=>{
   try {
@@ -269,5 +461,40 @@ exports.getServiceDetail = async(req,res)=>{
   }
 };
 
+
+exports.logoutUser = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) {
+      return res.status(400).json({ msg: "No token provided" });
+    }
+
+    // Kiểm tra nếu token đã bị blacklist (dù không cần thiết vì sẽ thêm lại)
+    if (exports.isTokenBlacklisted(token)) {
+      return res.status(401).json({ msg: "Token has already been invalidated" });
+    }
+
+    // Thêm token vào blacklist để invalidate
+    tokenBlacklist.push(token);
+
+    // Gửi phản hồi thành công để client thực hiện cleanup (xóa localStorage, navigate)
+    res.status(200).json({ 
+      msg: "Logged out successfully", 
+      success: true 
+    });
+  } catch (error) {
+    console.error("Error during logout:", error.message);
+    res.status(500).json({ msg: "Failed to logout", error: error.message });
+  }
+};
+
+exports.isTokenBlacklisted = (token) => {
+  return tokenBlacklist.includes(token);
+};
+
+
 // Export multer upload for use in routes
 exports.upload = upload;
+
+// Export authMiddleware for use in routes
+exports.authMiddleware = authMiddleware;

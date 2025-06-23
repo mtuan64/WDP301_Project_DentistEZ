@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import {
   Table,
@@ -15,159 +15,294 @@ import {
   DialogContent,
   DialogTitle,
   DialogContentText,
+  MenuItem,
+  Select,
+  InputLabel,
+  FormControl,
+  FormControlLabel,
+  Checkbox,
+  Box,
+  IconButton,
+  CircularProgress,
+  Pagination,
+  Typography,
+  InputAdornment,
 } from "@mui/material";
-import "../assets/css/BlogListPage.css";
-import { useNavigate } from "react-router-dom";
+import AddIcon from "@mui/icons-material/Add";
+import CategoryIcon from "@mui/icons-material/Category";
+import RemoveIcon from "@mui/icons-material/Remove";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import AddIcon from "@mui/icons-material/Add";
+import FilterAltIcon from "@mui/icons-material/FilterAlt";
+import SearchIcon from "@mui/icons-material/Search";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import ErrorIcon from "@mui/icons-material/Error";
+import { useNavigate } from "react-router-dom";
+import "../assets/css/Blog/BlogListPage.css";
 
 const BlogListPage = () => {
   const [blogs, setBlogs] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [editingBlog, setEditingBlog] = useState(null);
   const [newBlog, setNewBlog] = useState({
     title: "",
-    content: "",
-    image: "",
+    content: [],
+    image: null,
+    imagePreview: null,
+    categoryId: "",
+    status: "active",
   });
-  const [openEdit, setOpenEdit] = useState(false);
-  const [openAdd, setOpenAdd] = useState(false);
-  const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false);
-  const [imageFile, setImageFile] = useState(null);
+  const [openEditBlog, setOpenEditBlog] = useState(false);
+  const [openAddBlog, setOpenAddBlog] = useState(false);
+  const [openDeleteBlogDialog, setOpenDeleteBlogDialog] = useState(false);
+  const [imageFiles, setImageFiles] = useState({
+    mainImage: null,
+    contentImages: {},
+  });
+  const [imagePreviews, setImagePreviews] = useState({
+    mainImage: null,
+    contentImages: {},
+  });
   const [blogToDelete, setBlogToDelete] = useState(null);
+  const [deleteBlogType, setDeleteBlogType] = useState("soft");
+  const [loading, setLoading] = useState(false);
+  const [notification, setNotification] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
+  const [filterCategory, setFilterCategory] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalBlogs, setTotalBlogs] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const pageSize = 5;
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
+  const isAdmin = () => {
     const user = JSON.parse(localStorage.getItem("user"));
+    return user && user.role === "admin";
+  };
 
-    if (!token || !user || user.role !== "admin") {
-      navigate("/");
+  // Fetch blogs from API (memoized with useCallback)
+  const fetchBlogs = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get(
+        "http://localhost:9999/api/admin/blogs",
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          params: {
+            page: currentPage,
+            limit: pageSize,
+            categoryId: filterCategory,
+            search: searchQuery,
+          },
+        }
+      );
+      setBlogs(response.data.blogs);
+      setTotalBlogs(response.data.totalBlogs);
+      setTotalPages(response.data.totalPages);
+      setCurrentPage(response.data.currentPage);
+    } catch (error) {
+      setNotification({
+        open: true,
+        message: `Failed to fetch blogs: ${
+          error.response?.data?.message || error.message
+        }`,
+        severity: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage, filterCategory, searchQuery]);
+
+  // Fetch categories for filter dropdown (memoized with useCallback)
+  const fetchCategories = useCallback(async () => {
+    try {
+      const response = await axios.get("http://localhost:9999/api/categories", {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      setCategories(response.data);
+    } catch (error) {
+      setNotification({
+        open: true,
+        message: `Failed to fetch categories: ${
+          error.response?.data?.message || error.message
+        }`,
+        severity: "error",
+      });
+    }
+  }, []);
+
+  // Fetch data on mount and when dependencies change
+  useEffect(() => {
+    if (!isAdmin()) return;
+    fetchBlogs();
+    fetchCategories();
+  }, [fetchBlogs, fetchCategories]);
+  // Clean up image previews
+  useEffect(() => {
+    return () => {
+      if (newBlog.imagePreview) URL.revokeObjectURL(newBlog.imagePreview);
+      Object.values(imagePreviews.contentImages).forEach((url) => {
+        if (url) URL.revokeObjectURL(url);
+      });
+      if (editingBlog?.imagePreview)
+        URL.revokeObjectURL(editingBlog.imagePreview);
+    };
+  }, [newBlog.imagePreview, imagePreviews.contentImages, editingBlog]);
+
+  // Handle image uploads
+  const handleUploadImages = async (files) => {
+    if (!isAdmin()) {
+      setNotification({
+        open: true,
+        message: "Admin access required to upload images.",
+        severity: "error",
+      });
+      return [];
+    }
+    const formData = new FormData();
+    const totalImages =
+      (files.mainImage ? 1 : 0) + Object.keys(files.contentImages).length;
+    if (totalImages === 0) return [];
+    if (totalImages > 10) {
+      setNotification({
+        open: true,
+        message:
+          "Cannot upload more than 10 images (main image + content images).",
+        severity: "error",
+      });
+      return [];
+    }
+    if (files.mainImage) formData.append("mainImage", files.mainImage);
+    Object.values(files.contentImages).forEach((file) => {
+      if (file) formData.append("contentImages", file);
+    });
+    try {
+      const response = await axios.post(
+        "http://localhost:9999/api/blogs/upload",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      console.log("Image upload response:", response.data);
+      return response.data.urls || [];
+    } catch (error) {
+      setNotification({
+        open: true,
+        message: `Failed to upload images: ${
+          error.response?.data?.message || error.message
+        }`,
+        severity: "error",
+      });
+      return [];
+    }
+  };
+
+  // Validate blog data
+  const validateBlog = (blog) => {
+    if (!blog.title.trim()) {
+      setNotification({
+        open: true,
+        message: "Please enter a title.",
+        severity: "error",
+      });
+      return false;
+    }
+    if (!blog.categoryId) {
+      setNotification({
+        open: true,
+        message: "Please select a category.",
+        severity: "error",
+      });
+      return false;
+    }
+    const selectedCategory = categories.find(
+      (cat) => cat._id === blog.categoryId
+    );
+    if (!selectedCategory || selectedCategory.status !== "active") {
+      setNotification({
+        open: true,
+        message: "Selected category is inactive or invalid.",
+        severity: "error",
+      });
+      return false;
+    }
+    if (!blog.content.length) {
+      setNotification({
+        open: true,
+        message: "Please add at least one content item.",
+        severity: "error",
+      });
+      return false;
+    }
+    if (!["active", "inactive"].includes(blog.status)) {
+      setNotification({
+        open: true,
+        message: "Invalid status selected.",
+        severity: "error",
+      });
+      return false;
+    }
+    return true;
+  };
+
+  // Handle add blog
+  const handleAddBlog = async () => {
+    if (!isAdmin()) {
+      setNotification({
+        open: true,
+        message: "Admin access required to add blogs.",
+        severity: "error",
+      });
       return;
     }
-
-    console.log("User role:", user.role);
-    console.log("Token:", token);
-
-    fetchBlogs();
-  }, [navigate]);
-
-  const fetchBlogs = async () => {
-    try {
-      const response = await axios.get("http://localhost:9999/api/blogs", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
-      setBlogs(response.data);
-    } catch (error) {
-      console.error("Error fetching blogs:", error);
-      alert("Failed to fetch blogs: " + error.message);
-    }
-  };
-
-  const handleUpdateBlog = async () => {
-    try {
-      let updatedBlog = { ...editingBlog };
-      if (imageFile) {
-        if (
-          !["image/jpeg", "image/jpg", "image/png"].includes(imageFile.type)
-        ) {
-          alert("Please select a JPEG or PNG image.");
-          return;
-        }
-        const formData = new FormData();
-        formData.append("image", imageFile);
-        console.log("Uploading image for update:");
-        for (let pair of formData.entries()) {
-          console.log(`${pair[0]}: ${pair[1]}`);
-        }
-        const uploadResponse = await axios.post(
-          "http://localhost:9999/api/blogs/upload",
-          formData,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
-        updatedBlog.image = uploadResponse.data.url;
-      }
-      const response = await axios.put(
-        `http://localhost:9999/api/blogs/${editingBlog._id}`,
-        {
-          title: updatedBlog.title,
-          content: updatedBlog.content,
-          image: updatedBlog.image,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
-      setBlogs(
-        blogs.map((blog) =>
-          blog._id === editingBlog._id ? response.data : blog
-        )
-      );
-      setEditingBlog(null);
-      setOpenEdit(false);
-      setImageFile(null);
-    } catch (error) {
-      console.error("Error updating blog:", error);
-      alert("Failed to update blog: " + error.message);
-    }
-  };
-
-  const handleDeleteBlog = async () => {
-    try {
-      await axios.delete(
-        `http://localhost:9999/api/blogs/${blogToDelete._id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
-      setBlogs(blogs.filter((blog) => blog._id !== blogToDelete._id));
-      setOpenDeleteConfirm(false);
-      setBlogToDelete(null);
-    } catch (error) {
-      console.error("Error deleting blog:", error);
-      alert("Failed to delete blog: " + error.message);
-    }
-  };
-
-  const handleAddBlog = async () => {
+    setLoading(true);
     try {
       let blogToAdd = { ...newBlog };
-      if (imageFile) {
+      if (!validateBlog(blogToAdd)) {
+        setLoading(false);
+        return;
+      }
+      console.log("Adding blog with data:", blogToAdd);
+      const imageContentItems = newBlog.content.filter(
+        (item) => item.type === "image"
+      );
+      const uploadedContentImages = Object.keys(
+        imageFiles.contentImages
+      ).length;
+      if (
+        imageContentItems.length > 0 ||
+        uploadedContentImages > 0 ||
+        imageFiles.mainImage
+      ) {
+        const uploadedUrls = await handleUploadImages(imageFiles);
         if (
-          !["image/jpeg", "image/jpg", "image/png"].includes(imageFile.type)
+          uploadedUrls.length === 0 &&
+          (uploadedContentImages > 0 || imageFiles.mainImage)
         ) {
-          alert("Please select a JPEG or PNG image.");
+          setLoading(false);
           return;
         }
-        const formData = new FormData();
-        formData.append("image", imageFile);
-        console.log("Uploading image for add:");
-        for (let pair of formData.entries()) {
-          console.log(`${pair[0]}: ${pair[1]}`);
+        let urlIndex = 0;
+        if (imageFiles.mainImage && uploadedUrls.length > urlIndex) {
+          blogToAdd.image = uploadedUrls[urlIndex++];
         }
-        const uploadResponse = await axios.post(
-          "http://localhost:9999/api/blogs/upload",
-          formData,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
+        let contentImageIndices = Object.keys(imageFiles.contentImages).map(
+          Number
         );
-        blogToAdd.image = uploadResponse.data.url;
-      } else {
-        alert("Please select an image to upload.");
-        return;
+        blogToAdd.content = newBlog.content.map((item, index) => {
+          if (item.type === "image" && contentImageIndices.includes(index)) {
+            const newUrl = uploadedUrls[urlIndex++] || "";
+            return { ...item, url: newUrl };
+          }
+          return item;
+        });
       }
       const response = await axios.post(
         "http://localhost:9999/api/blogs",
@@ -175,218 +310,1120 @@ const BlogListPage = () => {
           title: blogToAdd.title,
           content: blogToAdd.content,
           image: blogToAdd.image,
+          categoryId: blogToAdd.categoryId,
+          status: blogToAdd.status,
         },
         {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }
       );
-      setBlogs([...blogs, response.data]);
-      setNewBlog({ title: "", content: "", image: "" });
-      setImageFile(null);
-      setOpenAdd(false);
+      console.log("Add blog response:", response.data);
+      if (currentPage === 1) {
+        setBlogs([response.data, ...blogs].slice(0, pageSize));
+        setTotalBlogs(totalBlogs + 1);
+        setTotalPages(Math.ceil((totalBlogs + 1) / pageSize));
+      }
+      setNewBlog({
+        title: "",
+        content: [],
+        image: null,
+        imagePreview: null,
+        categoryId: "",
+        status: "active",
+      });
+      setImageFiles({ mainImage: null, contentImages: {} });
+      setImagePreviews({ mainImage: null, contentImages: {} });
+      setOpenAddBlog(false);
+      setNotification({
+        open: true,
+        message: "Blog added successfully!",
+        severity: "success",
+      });
     } catch (error) {
-      console.error("Error adding blog:", error);
-      alert("Failed to add blog: " + error.message);
+      setNotification({
+        open: true,
+        message: `Failed to add blog: ${
+          error.response?.data?.message || error.message
+        }`,
+        severity: "error",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleOpenEdit = (blog) => {
+  // Handle update blog
+  const handleUpdateBlog = async () => {
+    if (!isAdmin()) {
+      setNotification({
+        open: true,
+        message: "Admin access required to update blogs.",
+        severity: "error",
+      });
+      return;
+    }
+    setLoading(true);
+    try {
+      let updatedBlog = { ...editingBlog };
+      if (!validateBlog(updatedBlog)) {
+        setLoading(false);
+        return;
+      }
+      console.log("Updating blog with data:", updatedBlog);
+      const imageContentItems = updatedBlog.content.filter(
+        (item) => item.type === "image"
+      );
+      const uploadedContentImages = Object.keys(
+        imageFiles.contentImages
+      ).length;
+      if (
+        imageContentItems.length > 0 ||
+        uploadedContentImages > 0 ||
+        imageFiles.mainImage
+      ) {
+        const uploadedUrls = await handleUploadImages(imageFiles);
+        if (
+          uploadedUrls.length === 0 &&
+          (uploadedContentImages > 0 || imageFiles.mainImage)
+        ) {
+          setLoading(false);
+          return;
+        }
+        let urlIndex = 0;
+        if (imageFiles.mainImage && uploadedUrls.length > urlIndex) {
+          updatedBlog.image = uploadedUrls[urlIndex++];
+        }
+        let contentImageIndices = Object.keys(imageFiles.contentImages).map(
+          Number
+        );
+        updatedBlog.content = updatedBlog.content.map((item, index) => {
+          if (item.type === "image" && contentImageIndices.includes(index)) {
+            const newUrl = uploadedUrls[urlIndex++] || item.url;
+            return { ...item, url: newUrl };
+          }
+          return item;
+        });
+      }
+      const response = await axios.put(
+        `http://localhost:9999/api/blogs/${editingBlog._id}`,
+        {
+          title: updatedBlog.title,
+          content: updatedBlog.content,
+          image: updatedBlog.image,
+          categoryId: updatedBlog.categoryId,
+          status: updatedBlog.status,
+        },
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        }
+      );
+      console.log("Update blog response:", response.data);
+      setBlogs(
+        blogs.map((blog) =>
+          blog._id === editingBlog._id ? response.data : blog
+        )
+      );
+      setEditingBlog(null);
+      setImageFiles({ mainImage: null, contentImages: {} });
+      setImagePreviews({ mainImage: null, contentImages: {} });
+      setOpenEditBlog(false);
+      setNotification({
+        open: true,
+        message: "Blog updated successfully!",
+        severity: "success",
+      });
+    } catch (error) {
+      setNotification({
+        open: true,
+        message: `Failed to update blog: ${
+          error.response?.data?.message || error.message
+        }`,
+        severity: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle delete blog
+  const handleDeleteBlog = async () => {
+    if (!isAdmin()) {
+      setNotification({
+        open: true,
+        message: "Admin access required to delete blogs.",
+        severity: "error",
+      });
+      return;
+    }
+    setLoading(true);
+    try {
+      const response = await axios.delete(
+        `http://localhost:9999/api/blogs/${blogToDelete._id}`,
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          params: { permanent: deleteBlogType === "permanent" },
+        }
+      );
+      console.log("Delete blog response:", response.data);
+      if (deleteBlogType === "soft") {
+        setBlogs(
+          blogs.map((blog) =>
+            blog._id === blogToDelete._id
+              ? { ...blog, status: "inactive" }
+              : blog
+          )
+        );
+      } else {
+        setBlogs(blogs.filter((blog) => blog._id !== blogToDelete._id));
+        setTotalBlogs(totalBlogs - 1);
+        setTotalPages(Math.ceil((totalBlogs - 1) / pageSize));
+        if (blogs.length === 1 && currentPage > 1) {
+          setCurrentPage(currentPage - 1);
+        }
+      }
+      setOpenDeleteBlogDialog(false);
+      setBlogToDelete(null);
+      setNotification({
+        open: true,
+        message: response.data.message,
+        severity: "success",
+      });
+    } catch (error) {
+      setNotification({
+        open: true,
+        message: `Failed to delete blog: ${
+          error.response?.data?.message || error.message
+        }`,
+        severity: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle modal open/close
+  const handleOpenEditBlog = (blog) => {
+    if (!isAdmin()) {
+      setNotification({
+        open: true,
+        message: "Admin access required to edit blogs.",
+        severity: "error",
+      });
+      return;
+    }
     setEditingBlog({
       _id: blog._id,
       title: blog.title,
-      content: blog.content,
+      content: blog.content || [],
       image: blog.image,
+      imagePreview: blog.image,
+      categoryId: blog.categoryId?._id || blog.categoryId,
+      status: blog.status || "active",
     });
-    setOpenEdit(true);
+    setOpenEditBlog(true);
   };
 
-  const handleCloseEdit = () => {
-    setOpenEdit(false);
+  const handleCloseEditBlog = () => {
+    setOpenEditBlog(false);
     setEditingBlog(null);
-    setImageFile(null);
+    setImageFiles({ mainImage: null, contentImages: {} });
+    setImagePreviews({ mainImage: null, contentImages: {} });
   };
 
-  const handleOpenAdd = () => {
-    setOpenAdd(true);
+  const handleOpenAddBlog = () => {
+    if (!isAdmin()) {
+      setNotification({
+        open: true,
+        message: "Admin access required to add blogs.",
+        severity: "error",
+      });
+      return;
+    }
+    setNewBlog({
+      title: "",
+      content: [],
+      image: null,
+      imagePreview: null,
+      categoryId: "",
+      status: "active",
+    });
+    setImageFiles({ mainImage: null, contentImages: {} });
+    setImagePreviews({ mainImage: null, contentImages: {} });
+    setOpenAddBlog(true);
   };
 
-  const handleCloseAdd = () => {
-    setOpenAdd(false);
-    setNewBlog({ title: "", content: "", image: "" });
-    setImageFile(null);
+  const handleCloseAddBlog = () => {
+    setOpenAddBlog(false);
+    setNewBlog({
+      title: "",
+      content: [],
+      image: null,
+      imagePreview: null,
+      categoryId: "",
+      status: "active",
+    });
+    setImageFiles({ mainImage: null, contentImages: {} });
+    setImagePreviews({ mainImage: null, contentImages: {} });
   };
 
-  const handleOpenDeleteConfirm = (blog) => {
+  const handleOpenDeleteBlogDialog = (blog) => {
+    if (!isAdmin()) {
+      setNotification({
+        open: true,
+        message: "Admin access required to delete blogs.",
+        severity: "error",
+      });
+      return;
+    }
     setBlogToDelete(blog);
-    setOpenDeleteConfirm(true);
+    setDeleteBlogType(blog.status === "active" ? "soft" : "permanent");
+    setOpenDeleteBlogDialog(true);
   };
 
-  const handleCloseDeleteConfirm = () => {
-    setOpenDeleteConfirm(false);
+  const handleCloseDeleteBlogDialog = () => {
+    setOpenDeleteBlogDialog(false);
     setBlogToDelete(null);
+    setDeleteBlogType("soft");
+  };
+
+  // Handle content item changes
+  const handleAddContentItem = () => {
+    const targetState = openEditBlog ? setEditingBlog : setNewBlog;
+    targetState((prev) => ({
+      ...prev,
+      content: [
+        ...prev.content,
+        {
+          type: "paragraph",
+          text: "",
+          url: "",
+          bold: false,
+          italic: false,
+          fontSize: "medium",
+        },
+      ],
+    }));
+  };
+
+  const handleRemoveContentItem = (index) => {
+    const targetState = openEditBlog ? setEditingBlog : setNewBlog;
+    targetState((prev) => ({
+      ...prev,
+      content: prev.content.filter((_, i) => i !== index),
+    }));
+    setImageFiles((prev) => {
+      const newContentImages = { ...prev.contentImages };
+      delete newContentImages[index];
+      return { ...prev, contentImages: newContentImages };
+    });
+    setImagePreviews((prev) => {
+      const newContentPreviews = { ...prev.contentImages };
+      delete newContentPreviews[index];
+      return { ...prev, contentImages: newContentPreviews };
+    });
+  };
+
+  const handleContentChange = (index, field, value) => {
+    const targetState = openEditBlog ? setEditingBlog : setNewBlog;
+    targetState((prev) => ({
+      ...prev,
+      content: prev.content.map((item, i) =>
+        i === index ? { ...item, [field]: value } : item
+      ),
+    }));
+  };
+
+  const handleImageChange = (index, file) => {
+    if (file) {
+      const previewUrl = URL.createObjectURL(file);
+      setImageFiles((prev) => ({
+        ...prev,
+        contentImages: { ...prev.contentImages, [index]: file },
+      }));
+      setImagePreviews((prev) => ({
+        ...prev,
+        contentImages: { ...prev.contentImages, [index]: previewUrl },
+      }));
+      const targetState = openEditBlog ? setEditingBlog : setNewBlog;
+      targetState((prev) => ({
+        ...prev,
+        content: prev.content.map((item, i) =>
+          i === index ? { ...item, url: previewUrl } : item
+        ),
+      }));
+    }
+  };
+
+  const handleMainImageChange = (file) => {
+    if (file) {
+      const previewUrl = URL.createObjectURL(file);
+      setImageFiles((prev) => ({ ...prev, mainImage: file }));
+      setImagePreviews((prev) => ({ ...prev, mainImage: previewUrl }));
+      const targetState = openEditBlog ? setEditingBlog : setNewBlog;
+      targetState((prev) => ({
+        ...prev,
+        image: previewUrl,
+        imagePreview: previewUrl,
+      }));
+    }
+  };
+
+  const handleCloseNotification = () => {
+    setNotification({ open: false, message: "", severity: "success" });
+  };
+
+  const handlePageChange = (event, value) => {
+    setCurrentPage(value);
   };
 
   return (
     <div className="blog-list-page">
-      <h1>Blog List</h1>
-      <Button
-        variant="contained"
-        color="primary"
-        startIcon={<AddIcon />}
-        onClick={handleOpenAdd}
+      <h1>Blog Management</h1>
+      <Box className="filter-search-container">
+        <FormControl sx={{ minWidth: 200 }}>
+          <InputLabel id="filter-category-label">Filter by Category</InputLabel>
+          <Select
+            labelId="filter-category-label"
+            value={filterCategory}
+            label="Filter by Category"
+            onChange={(e) => {
+              setFilterCategory(e.target.value);
+              setCurrentPage(1);
+            }}
+            startAdornment={
+              <InputAdornment position="start">
+                <FilterAltIcon />
+              </InputAdornment>
+            }
+          >
+            <MenuItem value="">
+              <em>All Categories</em>
+            </MenuItem>
+            {categories
+              .filter((category) => category.status === "active")
+              .map((category) => (
+                <MenuItem key={category._id} value={category._id}>
+                  {category.name}
+                </MenuItem>
+              ))}
+          </Select>
+        </FormControl>
+        <TextField
+          label="Search by Title"
+          variant="outlined"
+          value={searchQuery}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            setCurrentPage(1);
+          }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon />
+              </InputAdornment>
+            ),
+          }}
+          sx={{ flexGrow: 1 }}
+        />
+      </Box>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          my: 2,
+        }}
       >
-        Add Blog
-      </Button>
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Title</TableCell>
-              <TableCell>Content</TableCell>
-              <TableCell>Image</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {blogs.map((blog) => (
-              <TableRow key={blog._id}>
-                <TableCell>{blog.title}</TableCell>
-                <TableCell>{blog.content}</TableCell>
-                <TableCell>
-                  {blog.image && (
-                    <img
-                      src={blog.image}
-                      alt={blog.title}
-                      style={{ width: "50px" }}
-                    />
-                  )}
-                </TableCell>
-                <TableCell>
-                  <Button
-                    color="primary"
-                    onClick={() => handleOpenEdit(blog)}
-                    startIcon={<EditIcon />}
-                  />
-                  <Button
-                    color="secondary"
-                    onClick={() => handleOpenDeleteConfirm(blog)}
-                    startIcon={<DeleteIcon />}
-                  />
-                </TableCell>
+        <Typography className="showing-info">
+          Showing {blogs.length} / {totalBlogs} Blogs
+        </Typography>
+        {isAdmin() && (
+          <Box sx={{ display: "flex", gap: 2 }}>
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<AddIcon />}
+              onClick={handleOpenAddBlog}
+              disabled={loading}
+            >
+              Add Blog
+            </Button>
+            <Button
+              variant="contained"
+              color="primary"
+              className="navigation-button"
+              startIcon={<CategoryIcon />}
+              onClick={() => {
+                console.log("Navigating to /admin/categories");
+                navigate("/admin/categories");
+              }}
+              disabled={loading}
+            >
+              Go to CategoryBlog
+            </Button>
+          </Box>
+        )}
+      </Box>
+      {loading ? (
+        <Box sx={{ display: "flex", justifyContent: "center", my: 4 }}>
+          <CircularProgress />
+        </Box>
+      ) : blogs.length === 0 ? (
+        <Typography sx={{ textAlign: "center", my: 4 }}>
+          No blogs found.
+        </Typography>
+      ) : (
+        <TableContainer component={Paper}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell className="stt"></TableCell>
+                <TableCell className="title">Title</TableCell>
+                <TableCell className="content">Content</TableCell>
+                <TableCell>Image</TableCell>
+                <TableCell className="category">Category</TableCell>
+                <TableCell className="slug">Slug</TableCell>
+                <TableCell className="status">Status</TableCell>
+                {isAdmin() && (
+                  <TableCell className="actions">Actions</TableCell>
+                )}
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      {/* Edit Dialog */}
-      <Dialog open={openEdit} onClose={handleCloseEdit}>
-        <DialogTitle>Edit Blog</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Title"
-            type="text"
-            fullWidth
-            value={editingBlog?.title || ""}
-            onChange={(e) =>
-              setEditingBlog({ ...editingBlog, title: e.target.value })
-            }
+            </TableHead>
+            <TableBody>
+              {blogs.map((blog, index) => {
+                const categoryIdValue = blog.categoryId?._id || blog.categoryId;
+                const categoryName =
+                  blog.categoryId?.name ||
+                  categories.find((cat) => cat._id === categoryIdValue)?.name ||
+                  "N/A";
+                return (
+                  <TableRow key={blog._id}>
+                    <TableCell className="stt">
+                      {(currentPage - 1) * pageSize + index + 1}
+                    </TableCell>
+                    <TableCell className="title">{blog.title}</TableCell>
+                    <TableCell className="content">
+                      {blog.content
+                        ?.map(
+                          (item) =>
+                            `${item.type}: ${item.text || item.url || "N/A"}`
+                        )
+                        .join(", ") || "N/A"}
+                    </TableCell>
+                    <TableCell>
+                      {blog.image && (
+                        <img
+                          src={blog.image}
+                          alt={blog.title}
+                          style={{ width: "50px" }}
+                        />
+                      )}
+                    </TableCell>
+                    <TableCell className="category">{categoryName}</TableCell>
+                    <TableCell className="slug">{blog.slug}</TableCell>
+                    <TableCell
+                      className={`status ${blog.status.toLowerCase()}`}
+                    >
+                      {blog.status}
+                    </TableCell>
+                    {isAdmin() && (
+                      <TableCell className="actions">
+                        <Button
+                          color="primary"
+                          onClick={() => handleOpenEditBlog(blog)}
+                          startIcon={<EditIcon />}
+                          disabled={loading}
+                        />
+                        <Button
+                          color="secondary"
+                          onClick={() => handleOpenDeleteBlogDialog(blog)}
+                          startIcon={<DeleteIcon />}
+                          disabled={loading}
+                        />
+                      </TableCell>
+                    )}
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
+      {totalPages > 1 && (
+        <Box className="pagination-container">
+          <Pagination
+            count={totalPages}
+            page={currentPage}
+            onChange={handlePageChange}
+            color="primary"
+            showFirstButton
+            showLastButton
           />
-          <TextField
-            margin="dense"
-            label="Content"
-            type="text"
-            fullWidth
-            multiline
-            rows={4}
-            value={editingBlog?.content || ""}
-            onChange={(e) =>
-              setEditingBlog({ ...editingBlog, content: e.target.value })
-            }
-          />
-          <input
-            type="file"
-            accept="image/jpeg,image/jpg,image/png"
-            onChange={(e) => {
-              const file = e.target.files[0];
-              console.log("Selected file for edit:", file);
-              setImageFile(file);
-            }}
-          />
+        </Box>
+      )}
+      <Dialog
+        open={openAddBlog}
+        onClose={handleCloseEditBlog}
+        maxWidth="md"
+        fullWidth
+        className="blog-dialog"
+        PaperProps={{
+          sx: {
+            maxHeight: "70vh",
+          },
+        }}
+        sx={{ zIndex: 1300 }}
+      >
+        <DialogTitle>Add New Blog</DialogTitle>
+        <DialogContent
+          sx={{
+            maxHeight: "70vh",
+            overflowY: "auto",
+            padding: "24px",
+          }}
+        >
+          {loading && (
+            <div className="custom-loading-overlay">
+              <CircularProgress />
+            </div>
+          )}
+          <Box className="blog-form">
+            <TextField
+              sx={{ mt: 2 }}
+              autoFocus
+              label="Title"
+              variant="outlined"
+              fullWidth
+              value={newBlog.title}
+              onChange={(e) =>
+                setNewBlog({ ...newBlog, title: e.target.value })
+              }
+              className="form-field"
+            />
+            <Box className="content-section">
+              <Typography variant="subtitle1" gutterBottom>
+                Content
+              </Typography>
+              {newBlog.content.map((item, index) => (
+                <Box key={index} className="content-item">
+                  <FormControl fullWidth className="form-field">
+                    <InputLabel>Type</InputLabel>
+                    <Select
+                      value={item.type}
+                      label="Type"
+                      onChange={(e) =>
+                        handleContentChange(index, "type", e.target.value)
+                      }
+                    >
+                      <MenuItem value="paragraph">Paragraph</MenuItem>
+                      <MenuItem value="bullet">Bullet</MenuItem>
+                      <MenuItem value="image">Image</MenuItem>
+                    </Select>
+                  </FormControl>
+                  {item.type !== "image" ? (
+                    <>
+                      <TextField
+                        label="Text"
+                        variant="outlined"
+                        fullWidth
+                        multiline
+                        rows={3}
+                        value={item.text || ""}
+                        onChange={(e) =>
+                          handleContentChange(index, "text", e.target.value)
+                        }
+                        className="form-field"
+                      />
+                      <Box className="content-options">
+                        <FormControlLabel
+                          control={
+                            <Checkbox
+                              checked={item.bold || false}
+                              onChange={(e) =>
+                                handleContentChange(
+                                  index,
+                                  "bold",
+                                  e.target.checked
+                                )
+                              }
+                            />
+                          }
+                          label="Bold"
+                        />
+                        <FormControlLabel
+                          control={
+                            <Checkbox
+                              checked={item.italic || false}
+                              onChange={(e) =>
+                                handleContentChange(
+                                  index,
+                                  "italic",
+                                  e.target.checked
+                                )
+                              }
+                            />
+                          }
+                          label="Italic"
+                        />
+                        <FormControl className="font-size-select">
+                          <InputLabel>Font Size</InputLabel>
+                          <Select
+                            value={item.fontSize || "medium"}
+                            label="Font Size"
+                            onChange={(e) =>
+                              handleContentChange(
+                                index,
+                                "fontSize",
+                                e.target.value
+                              )
+                            }
+                          >
+                            <MenuItem value="small">Small</MenuItem>
+                            <MenuItem value="medium">Medium</MenuItem>
+                            <MenuItem value="large">Large</MenuItem>
+                          </Select>
+                        </FormControl>
+                      </Box>
+                    </>
+                  ) : (
+                    <Box className="image-upload">
+                      <Button
+                        variant="outlined"
+                        component="label"
+                        className="upload-button"
+                      >
+                        Upload Image
+                        <input
+                          type="file"
+                          hidden
+                          accept="image/jpeg,image/jpg,image/png"
+                          onChange={(e) =>
+                            handleImageChange(index, e.target.files[0])
+                          }
+                        />
+                      </Button>
+                      {(item.url || imagePreviews.contentImages[index]) && (
+                        <img
+                          src={imagePreviews.contentImages[index] || item.url}
+                          alt={`Content ${index}`}
+                          className="preview-image"
+                        />
+                      )}
+                    </Box>
+                  )}
+                  <Box className="content-actions">
+                    <IconButton
+                      color="secondary"
+                      onClick={() => handleRemoveContentItem(index)}
+                    >
+                      <RemoveIcon />
+                    </IconButton>
+                    <IconButton color="primary" onClick={handleAddContentItem}>
+                      <AddIcon />
+                    </IconButton>
+                  </Box>
+                </Box>
+              ))}
+              {!newBlog.content.length && (
+                <Button
+                  variant="outlined"
+                  startIcon={<AddIcon />}
+                  onClick={handleAddContentItem}
+                  className="add-content-button"
+                >
+                  Add Content
+                </Button>
+              )}
+            </Box>
+            <FormControl fullWidth className="form-field">
+              <InputLabel>Category</InputLabel>
+              <Select
+                value={newBlog.categoryId}
+                label="Category"
+                onChange={(e) =>
+                  setNewBlog({ ...newBlog, categoryId: e.target.value })
+                }
+              >
+                <MenuItem value="">
+                  <em>Select a category</em>
+                </MenuItem>
+                {categories
+                  .filter((category) => category.status === "active")
+                  .map((category) => (
+                    <MenuItem key={category._id} value={category._id}>
+                      {category.name}
+                    </MenuItem>
+                  ))}
+              </Select>
+            </FormControl>
+            <FormControl fullWidth className="form-field">
+              <InputLabel>Status</InputLabel>
+              <Select
+                value={newBlog.status}
+                label="Status"
+                onChange={(e) => {
+                  console.log("New blog status changed to:", e.target.value);
+                  setNewBlog({ ...newBlog, status: e.target.value });
+                }}
+              >
+                <MenuItem value="active">Active</MenuItem>
+                <MenuItem value="inactive">Inactive</MenuItem>
+              </Select>
+            </FormControl>
+            <Box className="image-upload">
+              <Typography variant="subtitle1" gutterBottom>
+                Main Image
+              </Typography>
+              <Button
+                variant="outlined"
+                component="label"
+                className="upload-button"
+              >
+                Upload Main Image
+                <input
+                  type="file"
+                  hidden
+                  accept="image/jpeg,image/jpg,image/png"
+                  onChange={(e) => handleMainImageChange(e.target.files[0])}
+                />
+              </Button>
+              {(newBlog.image || imagePreviews.mainImage) && (
+                <img
+                  src={imagePreviews.mainImage || newBlog.image}
+                  alt="Main Image"
+                  className="preview-image"
+                />
+              )}
+            </Box>
+          </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseEdit} color="primary">
+          <Button onClick={handleCloseAddBlog} disabled={loading}>
             Cancel
           </Button>
-          <Button onClick={handleUpdateBlog} color="primary">
-            Update
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleAddBlog}
+            disabled={loading}
+          >
+            Add Blog
           </Button>
         </DialogActions>
       </Dialog>
-
-      {/* Add Dialog */}
-      <Dialog open={openAdd} onClose={handleCloseAdd}>
-        <DialogTitle>Add Blog</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Title"
-            type="text"
-            fullWidth
-            value={newBlog.title}
-            onChange={(e) => setNewBlog({ ...newBlog, title: e.target.value })}
-          />
-          <TextField
-            margin="dense"
-            label="Content"
-            type="text"
-            fullWidth
-            multiline
-            rows={4}
-            value={newBlog.content}
-            onChange={(e) =>
-              setNewBlog({ ...newBlog, content: e.target.value })
-            }
-          />
-          <input
-            type="file"
-            accept="image/jpeg,image/jpg,image/png"
-            onChange={(e) => {
-              const file = e.target.files[0];
-              console.log("Selected file for add:", file);
-              setImageFile(file);
-            }}
-          />
+      <Dialog
+        open={openEditBlog}
+        onClose={handleCloseEditBlog}
+        maxWidth="md"
+        fullWidth
+        className="blog-dialog"
+        PaperProps={{
+          sx: {
+            maxHeight: "70vh",
+            display: "flex",
+            flexDirection: "column",
+          },
+        }}
+        sx={{ zIndex: 1300 }}
+      >
+        <DialogTitle
+          sx={{
+            padding: "10px 24px",
+            minHeight: "60px",
+            display: "flex",
+            alignItems: "center",
+          }}
+        >
+          Edit Blog
+        </DialogTitle>
+        <DialogContent
+          sx={{
+            padding: "20px 24px",
+            paddingTop: "80px",
+            maxHeight: "70vh",
+            overflowY: "auto",
+          }}
+        >
+          {loading && (
+            <div className="custom-loading-overlay">
+              <CircularProgress />
+            </div>
+          )}
+          <Box className="blog-form">
+            <TextField
+              sx={{ mt: 2 }}
+              autoFocus
+              label="Title"
+              variant="outlined"
+              fullWidth
+              value={editingBlog?.title || ""}
+              onChange={(e) =>
+                setEditingBlog({ ...editingBlog, title: e.target.value })
+              }
+              className="form-field"
+            />
+            <Box className="content-section">
+              <Typography variant="subtitle1" gutterBottom>
+                Content
+              </Typography>
+              {editingBlog?.content.map((item, index) => (
+                <Box key={index} className="content-item">
+                  <FormControl fullWidth className="form-field">
+                    <InputLabel>Type</InputLabel>
+                    <Select
+                      value={item.type}
+                      label="Type"
+                      onChange={(e) =>
+                        handleContentChange(index, "type", e.target.value)
+                      }
+                    >
+                      <MenuItem value="paragraph">Paragraph</MenuItem>
+                      <MenuItem value="bullet">Bullet</MenuItem>
+                      <MenuItem value="image">Image</MenuItem>
+                    </Select>
+                  </FormControl>
+                  {item.type !== "image" ? (
+                    <>
+                      <TextField
+                        label="Text"
+                        variant="outlined"
+                        fullWidth
+                        multiline
+                        rows={3}
+                        value={item.text || ""}
+                        onChange={(e) =>
+                          handleContentChange(index, "text", e.target.value)
+                        }
+                        className="form-field"
+                      />
+                      <Box className="content-options">
+                        <FormControlLabel
+                          control={
+                            <Checkbox
+                              checked={item.bold || false}
+                              onChange={(e) =>
+                                handleContentChange(
+                                  index,
+                                  "bold",
+                                  e.target.checked
+                                )
+                              }
+                            />
+                          }
+                          label="Bold"
+                        />
+                        <FormControlLabel
+                          control={
+                            <Checkbox
+                              checked={item.italic || false}
+                              onChange={(e) =>
+                                handleContentChange(
+                                  index,
+                                  "italic",
+                                  e.target.checked
+                                )
+                              }
+                            />
+                          }
+                          label="Italic"
+                        />
+                        <FormControl className="font-size-select">
+                          <InputLabel>Font Size</InputLabel>
+                          <Select
+                            value={item.fontSize || "medium"}
+                            label="Font Size"
+                            onChange={(e) =>
+                              handleContentChange(
+                                index,
+                                "fontSize",
+                                e.target.value
+                              )
+                            }
+                          >
+                            <MenuItem value="small">Small</MenuItem>
+                            <MenuItem value="medium">Medium</MenuItem>
+                            <MenuItem value="large">Large</MenuItem>
+                          </Select>
+                        </FormControl>
+                      </Box>
+                    </>
+                  ) : (
+                    <Box className="image-upload">
+                      <Button
+                        variant="outlined"
+                        component="label"
+                        className="upload-button"
+                      >
+                        Upload Image
+                        <input
+                          type="file"
+                          hidden
+                          accept="image/jpeg,image/jpg,image/png"
+                          onChange={(e) =>
+                            handleImageChange(index, e.target.files[0])
+                          }
+                        />
+                      </Button>
+                      {(item.url || imagePreviews.contentImages[index]) && (
+                        <img
+                          src={imagePreviews.contentImages[index] || item.url}
+                          alt={`Content ${index}`}
+                          className="preview-image"
+                        />
+                      )}
+                    </Box>
+                  )}
+                  <Box className="content-actions">
+                    <IconButton
+                      color="secondary"
+                      onClick={() => handleRemoveContentItem(index)}
+                    >
+                      <RemoveIcon />
+                    </IconButton>
+                    <IconButton color="primary" onClick={handleAddContentItem}>
+                      <AddIcon />
+                    </IconButton>
+                  </Box>
+                </Box>
+              ))}
+              {!editingBlog?.content.length && (
+                <Button
+                  variant="outlined"
+                  startIcon={<AddIcon />}
+                  onClick={handleAddContentItem}
+                  className="add-content-button"
+                >
+                  Add Content
+                </Button>
+              )}
+            </Box>
+            <FormControl fullWidth className="form-field">
+              <InputLabel>Category</InputLabel>
+              <Select
+                value={editingBlog?.categoryId || ""}
+                label="Category"
+                onChange={(e) =>
+                  setEditingBlog({ ...editingBlog, categoryId: e.target.value })
+                }
+              >
+                <MenuItem value="">
+                  <em>Select a category</em>
+                </MenuItem>
+                {categories
+                  .filter((category) => category.status === "active")
+                  .map((category) => (
+                    <MenuItem key={category._id} value={category._id}>
+                      {category.name}
+                    </MenuItem>
+                  ))}
+              </Select>
+            </FormControl>
+            <FormControl fullWidth className="form-field">
+              <InputLabel>Status</InputLabel>
+              <Select
+                value={editingBlog?.status || "active"}
+                label="Status"
+                onChange={(e) => {
+                  console.log(
+                    "Editing blog status changed to:",
+                    e.target.value
+                  );
+                  setEditingBlog({ ...editingBlog, status: e.target.value });
+                }}
+              >
+                <MenuItem value="active">Active</MenuItem>
+                <MenuItem value="inactive">Inactive</MenuItem>
+              </Select>
+            </FormControl>
+            <Box className="image-upload">
+              <Typography variant="subtitle1" gutterBottom>
+                Main Image
+              </Typography>
+              <Button
+                variant="outlined"
+                component="label"
+                className="upload-button"
+              >
+                Upload Main Image
+                <input
+                  type="file"
+                  hidden
+                  accept="image/jpeg,image/jpg,image/png"
+                  onChange={(e) => handleMainImageChange(e.target.files[0])}
+                />
+              </Button>
+              {(editingBlog?.image || imagePreviews.mainImage) && (
+                <img
+                  src={imagePreviews.mainImage || editingBlog.image}
+                  alt="Main Image"
+                  className="preview-image"
+                />
+              )}
+            </Box>
+          </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseAdd} color="primary">
+          <Button onClick={handleCloseEditBlog} disabled={loading}>
             Cancel
           </Button>
-          <Button onClick={handleAddBlog} color="primary">
-            Add
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleUpdateBlog}
+            disabled={loading}
+          >
+            Update Blog
           </Button>
         </DialogActions>
       </Dialog>
-
-      {/* Delete Confirm Dialog */}
-      <Dialog open={openDeleteConfirm} onClose={handleCloseDeleteConfirm}>
+      <Dialog
+        open={openDeleteBlogDialog}
+        onClose={handleCloseDeleteBlogDialog}
+        maxWidth="xs"
+        fullWidth
+        sx={{ zIndex: 1300 }}
+      >
         <DialogTitle>Delete Blog</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Are you sure you want to delete this blog?
+            {deleteBlogType === "soft"
+              ? "After deletion, the blog's status will be set to inactive."
+              : "Are you sure you want to permanently delete this blog?"}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDeleteConfirm} color="primary">
+          <Button onClick={handleCloseDeleteBlogDialog} disabled={loading}>
             Cancel
           </Button>
-          <Button onClick={handleDeleteBlog} color="secondary">
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleDeleteBlog}
+            disabled={loading}
+          >
             Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={notification.open}
+        onClose={handleCloseNotification}
+        maxWidth="xs"
+        fullWidth
+        className={`notification-dialog ${notification.severity}`}
+        sx={{ zIndex: 1300 }}
+      >
+        <DialogContent sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          {notification.severity === "success" ? (
+            <CheckCircleIcon />
+          ) : (
+            <ErrorIcon />
+          )}
+          <DialogContentText>{notification.message}</DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseNotification} color="primary">
+            Close
           </Button>
         </DialogActions>
       </Dialog>
