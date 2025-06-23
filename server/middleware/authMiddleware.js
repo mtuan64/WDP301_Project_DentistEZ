@@ -100,7 +100,7 @@ const authDentistMiddleware = (req, res, next) => {
       next();
     } else {
       return res.status(403).json({
-        message: "Bạn không có quyền truy cập (chỉ dành cho DENTIST)",
+        message: "Bạn không có quyền truy cập (chỉ dành cho Dotor)",
         status: "ERROR",
       });
     }

@@ -1,3 +1,13 @@
+
+const User = require('../models/User');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
+const multer = require('multer');
+const path = require('path');
+const Service = require('../models/Service');
+const ServiceOption = require('../models/ServiceOption');
+const TimeSlot = require('../models/TimeSlot');
+
 const User = require("../models/User");
 const Patient = require("../models/Patient");
 const Doctor = require("../models/Doctor");
@@ -11,6 +21,7 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Danh sách đen để lưu token đã logout (thay bằng Redis trong production)
 const tokenBlacklist = [];
+
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -407,6 +418,50 @@ exports.getUserByRole = async (req, res) => {
   }
 };
 
+
+exports.getServiceDetail = async(req,res)=>{
+  try {
+    const {id}= req.params;
+    
+    const services = await Service.find({_id:id})
+      .populate({
+        path: 'doctorId',
+        populate: {
+          path: 'userId',
+          select: 'fullname email'
+        }
+      })
+      .populate('clinicId', 'clinic_name description');
+
+    // Lấy options và timeslots cho từng service
+    const servicesWithOptionsAndSlots = await Promise.all(
+      services.map(async (sv) => {
+        // Lấy options nhỏ
+        const options = await ServiceOption.find({ serviceId: sv._id });
+
+        // Lấy timeslots của bác sĩ thuộc service này
+        let timeslots = [];
+        if (sv.doctorId._id) {
+          timeslots = await TimeSlot.find({doctorId: sv.doctorId._id}); 
+        }
+
+        return { ...sv.toObject(), options, timeslots };
+      })
+    );
+
+    res.status(200).json({
+      success: true,
+      data: servicesWithOptionsAndSlots,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+};
+
+
 exports.logoutUser = async (req, res) => {
   try {
     const token = req.headers.authorization?.split(" ")[1];
@@ -436,6 +491,7 @@ exports.logoutUser = async (req, res) => {
 exports.isTokenBlacklisted = (token) => {
   return tokenBlacklist.includes(token);
 };
+
 
 // Export multer upload for use in routes
 exports.upload = upload;

@@ -1,17 +1,16 @@
-// models/Staff.js
+
 const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
 
-const staffSchema = new Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-  },
-  Status: {
-    type: String,
-    enum: ['active', 'inactive'],
-    default: 'active'
-  }
-});
+const StaffSchema = new mongoose.Schema({
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    Status: {
+        type: String,
+        enum: ['active', 'inactive'],
+        default: 'active'
+    },
+    
 
-module.exports = mongoose.model('Staff', staffSchema);
+
+},{timestamps: true});
+module.exports = mongoose.model('Staff', StaffSchema);
+

@@ -7,36 +7,34 @@ const ProfilePage = () => {
   const { user, login } = useAuth();
   const navigate = useNavigate();
 
-  // Initialize form data with all editable fields
   const [formData, setFormData] = useState({
+    username: user?.username || "",
     fullname: user?.fullname || "",
     email: user?.email || "",
     phone: user?.phone || "",
-    degree: user?.degree || "",
     address: user?.address || "",
     dateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split("T")[0] : "",
     gender: user?.gender || "",
   });
+
   const [profilePicture, setProfilePicture] = useState(user?.profilePicture || null);
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // Redirect to login if not authenticated
   useEffect(() => {
     if (!user) {
       navigate("/login");
     }
   }, [user, navigate]);
 
-  // Sync form data with user changes
   useEffect(() => {
     setFormData({
+      username: user?.username || "",
       fullname: user?.fullname || "",
       email: user?.email || "",
       phone: user?.phone || "",
-      degree: user?.degree || "",
       address: user?.address || "",
       dateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split("T")[0] : "",
       gender: user?.gender || "",
@@ -44,22 +42,19 @@ const ProfilePage = () => {
     setProfilePicture(user?.profilePicture || null);
   }, [user]);
 
-  // Handle text input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Handle file selection for profile picture
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
     if (selectedFile) {
       setFile(selectedFile);
-      setProfilePicture(URL.createObjectURL(selectedFile)); // Local preview
+      setProfilePicture(URL.createObjectURL(selectedFile));
     }
   };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -67,44 +62,38 @@ const ProfilePage = () => {
     setSuccess("");
 
     try {
-      // Log the token to debug
-      console.log("Token being sent:", user?.token);
       if (!user?.token) {
         throw new Error("No token found. Please log in again.");
       }
 
-      // Update profile picture if a file is selected
       let updatedProfilePicture = profilePicture;
       if (file) {
-        const formData = new FormData();
-        formData.append("profilePicture", file);
+        const uploadData = new FormData();
+        uploadData.append("profilePicture", file);
 
         const response = await fetch("http://localhost:9999/api/user/upload-profile-picture", {
-          method: "POST", // Reverted to POST
+          method: "POST",
           headers: {
             "Authorization": `Bearer ${user.token}`,
           },
-          body: formData,
+          body: uploadData,
         });
 
         const data = await response.json();
         if (!response.ok) {
-          console.log("Profile picture upload error:", data); // Debug log
           throw new Error(data.msg || "Failed to upload profile picture");
         }
-        updatedProfilePicture = data.profilePictureUrl; // Backend returns URL
+        updatedProfilePicture = data.profilePictureUrl;
       }
 
-      // Update user details
       const response = await fetch("http://localhost:9999/api/user/update", {
-        method: "POST", // Reverted to POST
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${user.token}`,
         },
         body: JSON.stringify({
-          fullname: formData.fullname,
-          email: formData.email,
+          username: formData.username,
           phone: formData.phone,
           address: formData.address,
           dateOfBirth: formData.dateOfBirth,
@@ -115,7 +104,6 @@ const ProfilePage = () => {
 
       const data = await response.json();
       if (response.ok) {
-        // Update localStorage and auth context
         const updatedUser = {
           ...user,
           ...formData,
@@ -125,9 +113,8 @@ const ProfilePage = () => {
         localStorage.setItem("user", JSON.stringify(updatedUser));
         login(updatedUser);
         setSuccess("Hồ sơ đã được cập nhật thành công!");
-        setFile(null); // Clear file input
+        setFile(null);
       } else {
-        console.log("User update error:", data); // Debug log
         throw new Error(data.msg || "Không thể cập nhật hồ sơ");
       }
     } catch (err) {
@@ -170,21 +157,20 @@ const ProfilePage = () => {
           <form onSubmit={handleSubmit}>
             <div className="row">
               <div className="col-md-6 mb-3">
-                <label htmlFor="username" className="form-label">
-                  Tên Người Dùng
-                </label>
+                <label htmlFor="username" className="form-label">Tên Người Dùng</label>
                 <input
                   type="text"
                   id="username"
-                  value={user?.username || ""}
+                  name="username"
+                  value={formData.username}
+                  onChange={handleInputChange}
                   className="form-control"
-                  disabled
+                  required
                 />
               </div>
+
               <div className="col-md-6 mb-3">
-                <label htmlFor="role" className="form-label">
-                  Vai Trò
-                </label>
+                <label htmlFor="role" className="form-label">Vai Trò</label>
                 <input
                   type="text"
                   id="role"
@@ -193,38 +179,33 @@ const ProfilePage = () => {
                   disabled
                 />
               </div>
+
               <div className="col-md-6 mb-3">
-                <label htmlFor="fullname" className="form-label">
-                  Họ và Tên
-                </label>
+                <label htmlFor="fullname" className="form-label">Họ và Tên</label>
                 <input
                   type="text"
                   id="fullname"
                   name="fullname"
                   value={formData.fullname}
-                  onChange={handleInputChange}
                   className="form-control"
-                  required
+                  disabled
                 />
               </div>
+
               <div className="col-md-6 mb-3">
-                <label htmlFor="email" className="form-label">
-                  Email
-                </label>
+                <label htmlFor="email" className="form-label">Email</label>
                 <input
                   type="email"
                   id="email"
                   name="email"
                   value={formData.email}
-                  onChange={handleInputChange}
                   className="form-control"
-                  required
+                  disabled
                 />
               </div>
+
               <div className="col-md-6 mb-3">
-                <label htmlFor="phone" className="form-label">
-                  Số Điện Thoại
-                </label>
+                <label htmlFor="phone" className="form-label">Số Điện Thoại</label>
                 <input
                   type="text"
                   id="phone"
@@ -234,23 +215,9 @@ const ProfilePage = () => {
                   className="form-control"
                 />
               </div>
+
               <div className="col-md-6 mb-3">
-                <label htmlFor="phone" className="form-label">
-                  Bằng Cấp
-                </label>
-                <input
-                  type="text"
-                  id="degree"
-                  name="degree"
-                  value={formData.degree}
-                  onChange={handleInputChange}
-                  className="form-control"
-                />
-              </div>
-              <div className="col-md-6 mb-3">
-                <label htmlFor="address" className="form-label">
-                  Địa Chỉ
-                </label>
+                <label htmlFor="address" className="form-label">Địa Chỉ</label>
                 <input
                   type="text"
                   id="address"
@@ -260,10 +227,9 @@ const ProfilePage = () => {
                   className="form-control"
                 />
               </div>
+
               <div className="col-md-6 mb-3">
-                <label htmlFor="dateOfBirth" className="form-label">
-                  Ngày Sinh
-                </label>
+                <label htmlFor="dateOfBirth" className="form-label">Ngày Sinh</label>
                 <input
                   type="date"
                   id="dateOfBirth"
@@ -273,10 +239,9 @@ const ProfilePage = () => {
                   className="form-control"
                 />
               </div>
+
               <div className="col-md-6 mb-3">
-                <label htmlFor="gender" className="form-label">
-                  Giới Tính
-                </label>
+                <label htmlFor="gender" className="form-label">Giới Tính</label>
                 <select
                   id="gender"
                   name="gender"
@@ -291,6 +256,7 @@ const ProfilePage = () => {
                 </select>
               </div>
             </div>
+
             <button type="submit" className="btn btn-primary mt-3" disabled={loading}>
               {loading ? "Đang Lưu..." : "Lưu Thay Đổi"}
             </button>

@@ -1,6 +1,9 @@
 import React, { useState } from "react";
+
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Routes, Route } from "react-router-dom"; // KHÔNG import BrowserRouter ở đây
 import ServicePage from "./pages/ServicePage";
+
 import DoctorPage from "./pages/DoctorPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
@@ -22,9 +25,18 @@ import StaticPage from "./pages/StatisticPage";
 import Header from "./components/HeaderComponent";
 import Topbar from "./components/Topbar";
 import MenuComponent from "./components/MenuComponent";
+
+import "antd/dist/reset.css"; 
+import AccountManagement from "./pages/AccountManagement";
+import ScheduleManagement from "./pages/ScheduleManagement";
+import ServiceCard from "./pages/ServiceCard ";
+import ServiceDetail from "./pages/ServiceDetail ";
+import ServiceManagement from "./pages/ServiceManagement";
+
 import FooterComponent from "./components/FooterComponent";
 import Chatbox from "./components/Chatbox";
 import "antd/dist/reset.css";
+
 
 const DRAWER_WIDTH = 240;
 
@@ -67,7 +79,7 @@ const App = () => {
       >
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/services" element={<ServicePage />} />
+          
           <Route path="/doctor" element={<DoctorPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
@@ -81,10 +93,18 @@ const App = () => {
           <Route path="/blog" element={<BlogPage />} />
           <Route path="/blog/:slug" element={<BlogDetail />} />
           <Route path="/doctoraccount" element={<DoctorAccountManagement />} />
+
+          <Route path="/accountmanagement"element={<AccountManagement />} />
+          <Route path="/doctor/schedule" element={<ScheduleManagement />} />
+          <Route path="/services" element={<ServiceCard />} />
+          <Route path="/service-detail/:id" element={<ServiceDetail />} />
+          <Route path="/servicemanagement" element={<ServiceManagement />}/>
+
           <Route path="/statistic" element={<StaticPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/verify-otp" element={<VerifyOtpPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
+
         </Routes>
       </div>
 
