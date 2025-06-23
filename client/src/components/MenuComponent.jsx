@@ -23,10 +23,8 @@ const menuByRole = {
       path: "/statistic",
       icon: <FileTextOutlined />,
     },
-    { title: "Settings", path: "/settings", icon: <SettingOutlined /> },
-    { title: "Manage Blogs", path: "admin/blogs", icon: <FileTextOutlined /> },
-    { title: "Manage User", path: "/userlist", icon:  <TeamOutlined /> },
-    { title: "Manage Doctor Account", path: "/doctoraccount", icon: <FileTextOutlined /> },
+    
+    
 
   ],
   doctor: [
