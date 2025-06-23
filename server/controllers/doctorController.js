@@ -215,5 +215,5 @@ exports.getScheduleByWeek = async (req, res) => {
   }
 };
 
-};
+
 

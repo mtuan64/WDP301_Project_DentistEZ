@@ -1,6 +1,5 @@
 
 const User = require('../models/User');
-const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const multer = require('multer');
 const path = require('path');
@@ -8,14 +7,11 @@ const Service = require('../models/Service');
 const ServiceOption = require('../models/ServiceOption');
 const TimeSlot = require('../models/TimeSlot');
 
-const User = require("../models/User");
+
 const Patient = require("../models/Patient");
 const Doctor = require("../models/Doctor");
 const Staff = require("../models/Staff");
 const jwt = require("jsonwebtoken");
-const bcrypt = require("bcrypt");
-const multer = require("multer");
-const path = require("path");
 const { OAuth2Client } = require("google-auth-library");
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
