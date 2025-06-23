@@ -1,7 +1,6 @@
 import React from 'react';
 import axios from 'axios';
 import { Row, Col } from 'react-bootstrap';
-import Footer from '../components/FooterComponent';
 import { Link } from 'react-router-dom';
 
 
@@ -322,7 +321,7 @@ const ServiceCard = () => {
 
         )}
       </div>
-      <Footer />
+      
     </div>
   );
 };
