@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
-import ServicePage from "./pages/ServicePage";
+
 import DoctorPage from "./pages/DoctorPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
@@ -13,7 +13,12 @@ import BlogListPage from "./pages/BlogListPage";
 import DoctorAccountManagement from "./pages/DoctorAccountManagement";
 import Header from "./components/HeaderComponent";
 import MenuComponent from "./components/MenuComponent";
-import "antd/dist/reset.css"; // hoặc 'antd/dist/antd.css' nếu bạn dùng antd v4
+import "antd/dist/reset.css"; 
+import AccountManagement from "./pages/AccountManagement";
+import ScheduleManagement from "./pages/ScheduleManagement";
+import ServiceCard from "./pages/ServiceCard ";
+import ServiceDetail from "./pages/ServiceDetail ";
+import ServiceManagement from "./pages/ServiceManagement";
 
 const DRAWER_WIDTH = 240;
 
@@ -52,7 +57,7 @@ const App = () => {
       >
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/services" element={<ServicePage />} />
+          
           <Route path="/doctor" element={<DoctorPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
@@ -61,6 +66,11 @@ const App = () => {
           <Route path="/doctor/:doctorId" element={<DoctorDetail />} />
           <Route path="/bloglist" element={<BlogListPage />} />
           <Route path="/doctoraccount" element={<DoctorAccountManagement />} />
+          <Route path="/accountmanagement"element={<AccountManagement />} />
+          <Route path="/doctor/schedule" element={<ScheduleManagement />} />
+          <Route path="/services" element={<ServiceCard />} />
+          <Route path="/service-detail/:id" element={<ServiceDetail />} />
+          <Route path="/servicemanagement" element={<ServiceManagement />}/>
         </Routes>
       </div>
     </Router>
