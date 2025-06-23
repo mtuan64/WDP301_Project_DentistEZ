@@ -17,7 +17,6 @@ const menuByRole = {
     { title: "Manage Doctor Account", path: "/doctoraccount", icon: <FileTextOutlined /> },
     { title: "Manage Service", path: "/servicemanagement", icon: <FileTextOutlined />, },
     { title: "Settings", path: "/settings", icon: <SettingOutlined /> },
-    { title: "Manage Blogs", path: "/bloglist", icon: <FileTextOutlined /> },
     {
       title: "Statistic Dashboard",
       path: "/statistic",
