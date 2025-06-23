@@ -67,12 +67,12 @@ const authDentistMiddleware = (req, res, next) => {
         status: "ERROR",
       });
     }
-    if (decoded.role === "DENTIST") {
+    if (decoded.role === "doctor") {
       req.user = decoded;
       next();
     } else {
       return res.status(403).json({
-        message: "Bạn không có quyền truy cập (chỉ dành cho DENTIST)",
+        message: "Bạn không có quyền truy cập (chỉ dành cho Dotor)",
         status: "ERROR",
       });
     }

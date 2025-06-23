@@ -1,16 +1,10 @@
 // models/Doctor.js
 const mongoose = require('mongoose');
 
+
 const doctorSchema = new mongoose.Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-  clinic_id: {
-    type: Number,
-    required: true
-  },
+  userId: {type: mongoose.Schema.Types.ObjectId,ref: 'User',required: true},
+  clinic_id: {type:mongoose.Schema.Types.ObjectId,ref: 'Clinic',required: true},
   Specialty: {
     type: String,
     
