@@ -3,7 +3,7 @@ import "../assets/css/Chat/Chatbox.css";
 import axios from "axios";
 import { useAuth } from "../context/authContext";
 import io from "socket.io-client";
-import { MdMessage } from "react-icons/md";
+import { BsChatDots } from "react-icons/bs";
 
 
 const socket = io("http://localhost:9999");
@@ -331,7 +331,7 @@ const Chatbox = () => {
     <div className="chat-container">
       {!isOpen && (
         <button onClick={() => setIsOpen(true)} className="chat-toggle">
-          <span className="chat-icon">💬</span>
+          <BsChatDots className="chat-icon" /> {/* Sử dụng BsChatDots */}
           {Object.values(chatNotifications).reduce((a, b) => a + b, 0) > 0 && (
             <span className="notification-badge toggle-badge">
               {Object.values(chatNotifications).reduce((a, b) => a + b, 0)}

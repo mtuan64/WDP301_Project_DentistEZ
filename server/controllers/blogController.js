@@ -4,6 +4,7 @@ const cloudinary = require("cloudinary").v2;
 const fs = require("fs").promises;
 const path = require("path");
 const slugify = require("slugify");
+
 const uploadDir = path.join(__dirname, "../Uploads");
 fs.mkdir(uploadDir, { recursive: true })
   .then(() => console.log("Uploads directory created or exists"))
@@ -19,7 +20,7 @@ cloudinary.config({
 // Blog Functions
 exports.getAllBlogs = async (req, res) => {
   try {
-    const blogs = await Blog.find()
+    const blogs = await Blog.find({ status: "active" })
       .populate("author_id", "fullname email")
       .populate("categoryId", "name");
     res.json(blogs);
@@ -29,14 +30,56 @@ exports.getAllBlogs = async (req, res) => {
   }
 };
 
+exports.getAllBlogsForAdmin = async (req, res) => {
+  try {
+    const { page = 1, limit = 5, categoryId, search } = req.query;
+    const query = {};
+
+    // Filter by category if provided
+    if (categoryId) {
+      query.categoryId = categoryId;
+    }
+
+    // Search by title if provided
+    if (search) {
+      query.title = { $regex: search, $options: "i" }; // Case-insensitive search
+    }
+
+    // Pagination
+    const pageNumber = parseInt(page);
+    const pageSize = parseInt(limit);
+    const skip = (pageNumber - 1) * pageSize;
+
+    // Fetch blogs (both active and inactive) with pagination
+    const blogs = await Blog.find(query)
+      .populate("author_id", "fullname email")
+      .populate("categoryId", "name")
+      .skip(skip)
+      .limit(pageSize);
+
+    // Get total count for pagination
+    const totalBlogs = await Blog.countDocuments(query);
+
+    res.json({
+      blogs,
+      totalBlogs,
+      totalPages: Math.ceil(totalBlogs / pageSize),
+      currentPage: pageNumber,
+    });
+  } catch (error) {
+    console.error("Error fetching blogs for admin:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 exports.getBlogBySlug = async (req, res) => {
   try {
     const { slug } = req.params;
-    const blog = await Blog.findOne({ slug })
+    const blog = await Blog.findOne({ slug, status: "active" })
       .populate("author_id", "fullname email")
       .populate("categoryId", "name");
     if (!blog) {
-      return res.status(404).json({ message: "Blog not found" });
+      return res.status(404).json({ message: "Blog not found or inactive" });
     }
     res.json(blog);
   } catch (error) {
@@ -47,7 +90,7 @@ exports.getBlogBySlug = async (req, res) => {
 
 exports.createBlog = async (req, res) => {
   try {
-    const { title, content, categoryId } = req.body;
+    const { title, content, categoryId, status } = req.body;
     const author_id = req.user.userId;
     if (!title || !categoryId) {
       return res
@@ -56,6 +99,16 @@ exports.createBlog = async (req, res) => {
     }
     if (!Array.isArray(content) || content.length === 0) {
       return res.status(400).json({ message: "Content array is required" });
+    }
+    if (status && !["active", "inactive"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status value" });
+    }
+    // Validate category is active
+    const category = await CategoryBlog.findById(categoryId);
+    if (!category || category.status !== "active") {
+      return res
+        .status(400)
+        .json({ message: "Category is invalid or inactive" });
     }
     const slug = slugify(title, { lower: true, strict: true, locale: "vi" });
     let mainImageUrl = req.body.image || "";
@@ -96,6 +149,7 @@ exports.createBlog = async (req, res) => {
       image: mainImageUrl,
       slug,
       categoryId,
+      status: status || "active",
     });
     await newBlog.save();
     res.status(201).json(newBlog);
@@ -115,14 +169,24 @@ exports.createBlog = async (req, res) => {
 exports.updateBlog = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, content, categoryId } = req.body;
+    const { title, content, categoryId, status } = req.body;
     if (!title || !categoryId) {
       return res
-        .status(400)
+        .state(400)
         .json({ message: "Title and categoryId are required" });
     }
     if (!Array.isArray(content) || content.length === 0) {
       return res.status(400).json({ message: "Content array is required" });
+    }
+    if (status && !["active", "inactive"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status value" });
+    }
+    // Validate category is active
+    const category = await CategoryBlog.findById(categoryId);
+    if (!category || category.status !== "active") {
+      return res
+        .status(400)
+        .json({ message: "Category is invalid or inactive" });
     }
     const slug = title
       ? slugify(title, { lower: true, strict: true, locale: "vi" })
@@ -166,6 +230,7 @@ exports.updateBlog = async (req, res) => {
         image: mainImageUrl,
         slug,
         categoryId,
+        status: status || undefined,
         updatedAt: Date.now(),
       },
       { new: true }
@@ -190,11 +255,20 @@ exports.updateBlog = async (req, res) => {
 exports.deleteBlog = async (req, res) => {
   try {
     const { id } = req.params;
-    const deletedBlog = await Blog.findByIdAndDelete(id);
-    if (!deletedBlog) {
+    const blog = await Blog.findById(id);
+    if (!blog) {
       return res.status(404).json({ message: "Blog not found" });
     }
-    res.json({ message: "Blog deleted successfully" });
+    if (blog.status === "active") {
+      // Soft delete: set status to inactive
+      blog.status = "inactive";
+      await blog.save();
+      res.json({ message: "Blog set to inactive", blog });
+    } else {
+      // Permanent delete
+      await Blog.findByIdAndDelete(id);
+      res.json({ message: "Blog permanently deleted" });
+    }
   } catch (error) {
     console.error("Error deleting blog:", error);
     res.status(500).json({ message: error.message });
@@ -235,9 +309,10 @@ exports.uploadImage = async (req, res) => {
   }
 };
 
+// Category Functions
 exports.getAllCategories = async (req, res) => {
   try {
-    const categories = await CategoryBlog.find();
+    const categories = await CategoryBlog.find({ status: "active" });
     res.json(categories);
   } catch (error) {
     console.error("Error fetching categories:", error);
@@ -245,13 +320,56 @@ exports.getAllCategories = async (req, res) => {
   }
 };
 
+exports.getAllCategoriesForAdmin = async (req, res) => {
+  try {
+    const { page = 1, limit = 5, status, search } = req.query;
+    const query = {};
+
+    // Filter by status if provided
+    if (status) {
+      query.status = status;
+    }
+
+    // Search by name if provided
+    if (search) {
+      query.name = { $regex: search, $options: "i" }; // Case-insensitive search
+    }
+
+    // Pagination
+    const pageNumber = parseInt(page);
+    const pageSize = parseInt(limit);
+    const skip = (pageNumber - 1) * pageSize;
+
+    // Fetch categories (both active and inactive) with pagination
+    const categories = await CategoryBlog.find(query)
+      .skip(skip)
+      .limit(pageSize);
+
+    // Get total count for pagination
+    const totalCategories = await CategoryBlog.countDocuments(query);
+
+    res.json({
+      categories,
+      totalCategories,
+      totalPages: Math.ceil(totalCategories / pageSize),
+      currentPage: pageNumber,
+    });
+  } catch (error) {
+    console.error("Error fetching categories for admin:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 exports.createCategory = async (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, status } = req.body;
     if (!name) {
       return res.status(400).json({ message: "Category name is required" });
     }
-    const newCategory = new CategoryBlog({ name });
+    if (status && !["active", "inactive"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status value" });
+    }
+    const newCategory = new CategoryBlog({ name, status: status || "active" });
     await newCategory.save();
     res.status(201).json(newCategory);
   } catch (error) {
@@ -263,17 +381,24 @@ exports.createCategory = async (req, res) => {
 exports.updateCategory = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name } = req.body;
+    const { name, status } = req.body;
     if (!name) {
       return res.status(400).json({ message: "Category name is required" });
     }
+    if (status && !["active", "inactive"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status value" });
+    }
     const updatedCategory = await CategoryBlog.findByIdAndUpdate(
       id,
-      { name },
+      { name, status: status || "active" },
       { new: true }
     );
     if (!updatedCategory) {
       return res.status(404).json({ message: "Category not found" });
+    }
+    // If category is set to inactive, inactivate associated blogs
+    if (status === "inactive") {
+      await Blog.updateMany({ categoryId: id }, { status: "inactive" });
     }
     res.json(updatedCategory);
   } catch (error) {
@@ -285,17 +410,24 @@ exports.updateCategory = async (req, res) => {
 exports.deleteCategory = async (req, res) => {
   try {
     const { id } = req.params;
-    const blogs = await Blog.find({ categoryId: id });
-    if (blogs.length > 0) {
-      return res
-        .status(400)
-        .json({ message: "Cannot delete category with associated blogs" });
-    }
-    const deletedCategory = await CategoryBlog.findByIdAndDelete(id);
-    if (!deletedCategory) {
+    const category = await CategoryBlog.findById(id);
+    if (!category) {
       return res.status(404).json({ message: "Category not found" });
     }
-    res.json({ message: "Category deleted successfully" });
+    if (category.status === "active") {
+      // Soft delete: set category and associated blogs to inactive
+      category.status = "inactive";
+      await category.save();
+      await Blog.updateMany({ categoryId: id }, { status: "inactive" });
+      res.json({
+        message: "Category and associated blogs set to inactive",
+        category,
+      });
+    } else {
+      // Permanent delete
+      await CategoryBlog.findByIdAndDelete(id);
+      res.json({ message: "Category permanently deleted" });
+    }
   } catch (error) {
     console.error("Error deleting category:", error);
     res.status(500).json({ message: error.message });
@@ -304,11 +436,11 @@ exports.deleteCategory = async (req, res) => {
 
 exports.getTopViewedBlogs = async (req, res) => {
   try {
-    const topBlogs = await Blog.find()
+    const topBlogs = await Blog.find({ status: "active" })
       .populate("categoryId", "name")
-      .sort({ views: -1 }) // Sắp xếp giảm dần theo views
-      .limit(5) // Lấy 5 bài viết đầu tiên
-      .select("title content slug image views"); // Chỉ lấy các trường cần thiết
+      .sort({ views: -1 })
+      .limit(5)
+      .select("title content slug image views");
     res.json(topBlogs);
   } catch (error) {
     console.error("Error fetching top viewed blogs:", error);
@@ -319,9 +451,9 @@ exports.getTopViewedBlogs = async (req, res) => {
 exports.incrementBlogViews = async (req, res) => {
   try {
     const { slug } = req.params;
-    const blog = await Blog.findOne({ slug });
+    const blog = await Blog.findOne({ slug, status: "active" });
     if (!blog) {
-      return res.status(404).json({ message: "Blog not found" });
+      return res.status(404).json({ message: "Blog not found or inactive" });
     }
     blog.views = (blog.views || 0) + 1;
     await blog.save();

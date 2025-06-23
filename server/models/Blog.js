@@ -71,7 +71,13 @@ const blogSchema = new Schema({
   },
   views: {
     type: Number,
-    default: 0, 
+    default: 0,
+  },
+  status: {
+    type: String,
+    enum: ["active", "inactive"],
+    default: "active",
+    required: true,
   },
 });
 

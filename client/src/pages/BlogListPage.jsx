@@ -21,18 +21,22 @@ import {
   FormControl,
   FormControlLabel,
   Checkbox,
-  Tab,
-  Tabs,
   Box,
   IconButton,
   CircularProgress,
-  Snackbar,
-  Alert,
+  Pagination,
+  Typography,
+  InputAdornment,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import CategoryIcon from "@mui/icons-material/Category";
 import RemoveIcon from "@mui/icons-material/Remove";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import FilterAltIcon from "@mui/icons-material/FilterAlt";
+import SearchIcon from "@mui/icons-material/Search";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import ErrorIcon from "@mui/icons-material/Error";
 import { useNavigate } from "react-router-dom";
 import "../assets/css/Blog/BlogListPage.css";
 
@@ -42,67 +46,77 @@ const BlogListPage = () => {
   const [editingBlog, setEditingBlog] = useState(null);
   const [newBlog, setNewBlog] = useState({
     title: "",
-    content: [
-      {
-        type: "paragraph",
-        text: "",
-        url: "",
-        bold: false,
-        italic: false,
-        fontSize: "medium",
-      },
-    ],
-    image: "",
+    content: [],
+    image: null,
+    imagePreview: null,
     categoryId: "",
+    status: "active",
   });
   const [openEditBlog, setOpenEditBlog] = useState(false);
   const [openAddBlog, setOpenAddBlog] = useState(false);
-  const [openDeleteBlogConfirm, setOpenDeleteBlogConfirm] = useState(false);
+  const [openDeleteBlogDialog, setOpenDeleteBlogDialog] = useState(false);
   const [imageFiles, setImageFiles] = useState({
     mainImage: null,
     contentImages: {},
   });
+  const [imagePreviews, setImagePreviews] = useState({
+    mainImage: null,
+    contentImages: {},
+  });
   const [blogToDelete, setBlogToDelete] = useState(null);
-  const [editingCategory, setEditingCategory] = useState(null);
-  const [newCategory, setNewCategory] = useState({ name: "" });
-  const [openEditCategory, setOpenEditCategory] = useState(false);
-  const [openAddCategory, setOpenAddCategory] = useState(false);
-  const [openDeleteCategoryConfirm, setOpenDeleteCategoryConfirm] =
-    useState(false);
-  const [categoryToDelete, setCategoryToDelete] = useState(null);
-  const [tabValue, setTabValue] = useState(0);
+  const [deleteBlogType, setDeleteBlogType] = useState("soft");
   const [loading, setLoading] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("");
+  const [notification, setNotification] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
   const [filterCategory, setFilterCategory] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalBlogs, setTotalBlogs] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const pageSize = 5;
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
+  const isAdmin = () => {
     const user = JSON.parse(localStorage.getItem("user"));
-    if (!token || !user || user.role !== "admin") {
-      navigate("/");
-      return;
-    }
-    fetchBlogs();
-    fetchCategories();
-  }, [navigate]);
+    return user && user.role === "admin";
+  };
 
+  // Fetch blogs from API
   const fetchBlogs = async () => {
+    setLoading(true);
     try {
-      const response = await axios.get("http://localhost:9999/api/blogs", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
-      setBlogs(response.data);
-    } catch (error) {
-      console.error("Error fetching blogs:", error);
-      alert(
-        "Failed to fetch blogs: " +
-          (error.response?.data?.message || error.message)
+      const response = await axios.get(
+        "http://localhost:9999/api/admin/blogs",
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          params: {
+            page: currentPage,
+            limit: pageSize,
+            categoryId: filterCategory,
+            search: searchQuery,
+          },
+        }
       );
+      setBlogs(response.data.blogs);
+      setTotalBlogs(response.data.totalBlogs);
+      setTotalPages(response.data.totalPages);
+      setCurrentPage(response.data.currentPage);
+    } catch (error) {
+      setNotification({
+        open: true,
+        message: `Failed to fetch blogs: ${
+          error.response?.data?.message || error.message
+        }`,
+        severity: "error",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
+  // Fetch categories for filter dropdown
   const fetchCategories = async () => {
     try {
       const response = await axios.get("http://localhost:9999/api/categories", {
@@ -110,21 +124,56 @@ const BlogListPage = () => {
       });
       setCategories(response.data);
     } catch (error) {
-      console.error("Error fetching categories:", error);
-      alert(
-        "Failed to fetch categories: " +
-          (error.response?.data?.message || error.message)
-      );
+      setNotification({
+        open: true,
+        message: `Failed to fetch categories: ${
+          error.response?.data?.message || error.message
+        }`,
+        severity: "error",
+      });
     }
   };
 
+  // Fetch data on mount and when dependencies change
+  useEffect(() => {
+    if (!isAdmin()) return;
+    fetchBlogs();
+    fetchCategories();
+  }, [currentPage, filterCategory, searchQuery]);
+
+  // Clean up image previews
+  useEffect(() => {
+    return () => {
+      if (newBlog.imagePreview) URL.revokeObjectURL(newBlog.imagePreview);
+      Object.values(imagePreviews.contentImages).forEach((url) => {
+        if (url) URL.revokeObjectURL(url);
+      });
+      if (editingBlog?.imagePreview)
+        URL.revokeObjectURL(editingBlog.imagePreview);
+    };
+  }, [newBlog.imagePreview, imagePreviews.contentImages, editingBlog]);
+
+  // Handle image uploads
   const handleUploadImages = async (files) => {
+    if (!isAdmin()) {
+      setNotification({
+        open: true,
+        message: "Admin access required to upload images.",
+        severity: "error",
+      });
+      return [];
+    }
     const formData = new FormData();
     const totalImages =
       (files.mainImage ? 1 : 0) + Object.keys(files.contentImages).length;
     if (totalImages === 0) return [];
     if (totalImages > 10) {
-      alert("Cannot upload more than 10 images (main image + content images).");
+      setNotification({
+        open: true,
+        message:
+          "Cannot upload more than 10 images (main image + content images).",
+        severity: "error",
+      });
       return [];
     }
     if (files.mainImage) formData.append("mainImage", files.mainImage);
@@ -142,36 +191,86 @@ const BlogListPage = () => {
           },
         }
       );
+      console.log("Image upload response:", response.data);
       return response.data.urls || [];
     } catch (error) {
-      console.error("Error uploading images:", error.response?.data || error);
-      alert(
-        "Failed to upload images: " +
-          (error.response?.data?.message || error.message)
-      );
+      setNotification({
+        open: true,
+        message: `Failed to upload images: ${
+          error.response?.data?.message || error.message
+        }`,
+        severity: "error",
+      });
       return [];
     }
   };
 
+  // Validate blog data
+  const validateBlog = (blog) => {
+    if (!blog.title.trim()) {
+      setNotification({
+        open: true,
+        message: "Please enter a title.",
+        severity: "error",
+      });
+      return false;
+    }
+    if (!blog.categoryId) {
+      setNotification({
+        open: true,
+        message: "Please select a category.",
+        severity: "error",
+      });
+      return false;
+    }
+    const selectedCategory = categories.find(
+      (cat) => cat._id === blog.categoryId
+    );
+    if (!selectedCategory || selectedCategory.status !== "active") {
+      setNotification({
+        open: true,
+        message: "Selected category is inactive or invalid.",
+        severity: "error",
+      });
+      return false;
+    }
+    if (!blog.content.length) {
+      setNotification({
+        open: true,
+        message: "Please add at least one content item.",
+        severity: "error",
+      });
+      return false;
+    }
+    if (!["active", "inactive"].includes(blog.status)) {
+      setNotification({
+        open: true,
+        message: "Invalid status selected.",
+        severity: "error",
+      });
+      return false;
+    }
+    return true;
+  };
+
+  // Handle add blog
   const handleAddBlog = async () => {
+    if (!isAdmin()) {
+      setNotification({
+        open: true,
+        message: "Admin access required to add blogs.",
+        severity: "error",
+      });
+      return;
+    }
     setLoading(true);
     try {
       let blogToAdd = { ...newBlog };
-      if (!newBlog.title.trim()) {
-        alert("Please enter a title.");
+      if (!validateBlog(blogToAdd)) {
         setLoading(false);
         return;
       }
-      if (!newBlog.categoryId) {
-        alert("Please select a category.");
-        setLoading(false);
-        return;
-      }
-      if (!newBlog.content.length) {
-        alert("Please add at least one content item.");
-        setLoading(false);
-        return;
-      }
+      console.log("Adding blog with data:", blogToAdd);
       const imageContentItems = newBlog.content.filter(
         (item) => item.type === "image"
       );
@@ -188,7 +287,6 @@ const BlogListPage = () => {
           uploadedUrls.length === 0 &&
           (uploadedContentImages > 0 || imageFiles.mainImage)
         ) {
-          alert("Image upload failed. Please try again.");
           setLoading(false);
           return;
         }
@@ -214,60 +312,65 @@ const BlogListPage = () => {
           content: blogToAdd.content,
           image: blogToAdd.image,
           categoryId: blogToAdd.categoryId,
+          status: blogToAdd.status,
         },
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }
       );
-      setBlogs([...blogs, response.data]);
+      console.log("Add blog response:", response.data);
+      if (currentPage === 1) {
+        setBlogs([response.data, ...blogs].slice(0, pageSize));
+        setTotalBlogs(totalBlogs + 1);
+        setTotalPages(Math.ceil((totalBlogs + 1) / pageSize));
+      }
       setNewBlog({
         title: "",
-        content: [
-          {
-            type: "paragraph",
-            text: "",
-            url: "",
-            bold: false,
-            italic: false,
-            fontSize: "medium",
-          },
-        ],
-        image: "",
+        content: [],
+        image: null,
+        imagePreview: null,
         categoryId: "",
+        status: "active",
       });
       setImageFiles({ mainImage: null, contentImages: {} });
+      setImagePreviews({ mainImage: null, contentImages: {} });
       setOpenAddBlog(false);
-      setSuccessMessage("Blog added successfully!");
+      setNotification({
+        open: true,
+        message: "Blog added successfully!",
+        severity: "success",
+      });
     } catch (error) {
-      console.error("Error adding blog:", error.response?.data || error);
-      alert(
-        "Failed to add blog: " +
-          (error.response?.data?.message || error.message)
-      );
+      setNotification({
+        open: true,
+        message: `Failed to add blog: ${
+          error.response?.data?.message || error.message
+        }`,
+        severity: "error",
+      });
     } finally {
       setLoading(false);
     }
   };
 
+  // Handle update blog
   const handleUpdateBlog = async () => {
+    if (!isAdmin()) {
+      setNotification({
+        open: true,
+        message: "Admin access required to update blogs.",
+        severity: "error",
+      });
+      return;
+    }
     setLoading(true);
     try {
       let updatedBlog = { ...editingBlog };
-      if (!updatedBlog.title.trim()) {
-        alert("Please enter a title.");
+      if (!validateBlog(updatedBlog)) {
         setLoading(false);
         return;
       }
-      if (!updatedBlog.categoryId) {
-        alert("Please select a category.");
-        setLoading(false);
-        return;
-      }
-      if (!updatedBlog.content.length) {
-        alert("Please add at least one content item.");
-        setLoading(false);
-        return;
-      }
+      console.log("Updating blog with data:", updatedBlog);
       const imageContentItems = updatedBlog.content.filter(
         (item) => item.type === "image"
       );
@@ -284,7 +387,6 @@ const BlogListPage = () => {
           uploadedUrls.length === 0 &&
           (uploadedContentImages > 0 || imageFiles.mainImage)
         ) {
-          alert("Image upload failed. Please try again.");
           setLoading(false);
           return;
         }
@@ -310,161 +412,114 @@ const BlogListPage = () => {
           content: updatedBlog.content,
           image: updatedBlog.image,
           categoryId: updatedBlog.categoryId,
+          status: updatedBlog.status,
         },
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }
       );
+      console.log("Update blog response:", response.data);
       setBlogs(
         blogs.map((blog) =>
           blog._id === editingBlog._id ? response.data : blog
         )
       );
       setEditingBlog(null);
-      setOpenEditBlog(false);
       setImageFiles({ mainImage: null, contentImages: {} });
-      setSuccessMessage("Blog updated successfully!");
+      setImagePreviews({ mainImage: null, contentImages: {} });
+      setOpenEditBlog(false);
+      setNotification({
+        open: true,
+        message: "Blog updated successfully!",
+        severity: "success",
+      });
     } catch (error) {
-      console.error("Error updating blog:", error.response?.data || error);
-      alert(
-        "Failed to update blog: " +
-          (error.response?.data?.message || error.message)
-      );
+      setNotification({
+        open: true,
+        message: `Failed to update blog: ${
+          error.response?.data?.message || error.message
+        }`,
+        severity: "error",
+      });
     } finally {
       setLoading(false);
     }
   };
 
+  // Handle delete blog
   const handleDeleteBlog = async () => {
+    if (!isAdmin()) {
+      setNotification({
+        open: true,
+        message: "Admin access required to delete blogs.",
+        severity: "error",
+      });
+      return;
+    }
     setLoading(true);
     try {
-      await axios.delete(
+      const response = await axios.delete(
         `http://localhost:9999/api/blogs/${blogToDelete._id}`,
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          params: { permanent: deleteBlogType === "permanent" },
         }
       );
-      setBlogs(blogs.filter((blog) => blog._id !== blogToDelete._id));
-      setOpenDeleteBlogConfirm(false);
+      console.log("Delete blog response:", response.data);
+      if (deleteBlogType === "soft") {
+        setBlogs(
+          blogs.map((blog) =>
+            blog._id === blogToDelete._id
+              ? { ...blog, status: "inactive" }
+              : blog
+          )
+        );
+      } else {
+        setBlogs(blogs.filter((blog) => blog._id !== blogToDelete._id));
+        setTotalBlogs(totalBlogs - 1);
+        setTotalPages(Math.ceil((totalBlogs - 1) / pageSize));
+        if (blogs.length === 1 && currentPage > 1) {
+          setCurrentPage(currentPage - 1);
+        }
+      }
+      setOpenDeleteBlogDialog(false);
       setBlogToDelete(null);
-      setSuccessMessage("Blog deleted successfully!");
+      setNotification({
+        open: true,
+        message: response.data.message,
+        severity: "success",
+      });
     } catch (error) {
-      console.error("Error deleting blog:", error);
-      alert(
-        "Failed to delete blog: " +
-          (error.response?.data?.message || error.message)
-      );
+      setNotification({
+        open: true,
+        message: `Failed to delete blog: ${
+          error.response?.data?.message || error.message
+        }`,
+        severity: "error",
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAddCategory = async () => {
-    setLoading(true);
-    try {
-      if (!newCategory.name.trim()) {
-        alert("Please enter a category name.");
-        setLoading(false);
-        return;
-      }
-      const response = await axios.post(
-        "http://localhost:9999/api/categories",
-        { name: newCategory.name },
-        {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        }
-      );
-      setCategories([...categories, response.data]);
-      setNewCategory({ name: "" });
-      setOpenAddCategory(false);
-      setSuccessMessage("Category added successfully!");
-    } catch (error) {
-      console.error("Error adding category:", error);
-      alert(
-        "Failed to add category: " +
-          (error.response?.data?.message || error.message)
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleUpdateCategory = async () => {
-    setLoading(true);
-    try {
-      if (!editingCategory.name.trim()) {
-        alert("Please enter a category name.");
-        setLoading(false);
-        return;
-      }
-      const response = await axios.put(
-        `http://localhost:9999/api/categories/${editingCategory._id}`,
-        { name: editingCategory.name },
-        {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        }
-      );
-      setCategories(
-        categories.map((category) =>
-          category._id === editingCategory._id ? response.data : category
-        )
-      );
-      setEditingCategory(null);
-      setOpenEditCategory(false);
-      setSuccessMessage("Category updated successfully!");
-    } catch (error) {
-      console.error("Error updating category:", error);
-      alert(
-        "Failed to update category: " +
-          (error.response?.data?.message || error.message)
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDeleteCategory = async () => {
-    setLoading(true);
-    try {
-      await axios.delete(
-        `http://localhost:9999/api/categories/${categoryToDelete._id}`,
-        {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        }
-      );
-      setCategories(
-        categories.filter((category) => category._id !== categoryToDelete._id)
-      );
-      setOpenDeleteCategoryConfirm(false);
-      setCategoryToDelete(null);
-      setSuccessMessage("Category deleted successfully!");
-    } catch (error) {
-      console.error("Error deleting category:", error);
-      alert(
-        "Failed to delete category: " +
-          (error.response?.data?.message || error.message)
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Handle modal open/close
   const handleOpenEditBlog = (blog) => {
+    if (!isAdmin()) {
+      setNotification({
+        open: true,
+        message: "Admin access required to edit blogs.",
+        severity: "error",
+      });
+      return;
+    }
     setEditingBlog({
       _id: blog._id,
       title: blog.title,
-      content: blog.content || [
-        {
-          type: "paragraph",
-          text: "",
-          url: "",
-          bold: false,
-          italic: false,
-          fontSize: "medium",
-        },
-      ],
+      content: blog.content || [],
       image: blog.image,
+      imagePreview: blog.image,
       categoryId: blog.categoryId?._id || blog.categoryId,
+      status: blog.status || "active",
     });
     setOpenEditBlog(true);
   };
@@ -473,9 +528,28 @@ const BlogListPage = () => {
     setOpenEditBlog(false);
     setEditingBlog(null);
     setImageFiles({ mainImage: null, contentImages: {} });
+    setImagePreviews({ mainImage: null, contentImages: {} });
   };
 
   const handleOpenAddBlog = () => {
+    if (!isAdmin()) {
+      setNotification({
+        open: true,
+        message: "Admin access required to add blogs.",
+        severity: "error",
+      });
+      return;
+    }
+    setNewBlog({
+      title: "",
+      content: [],
+      image: null,
+      imagePreview: null,
+      categoryId: "",
+      status: "active",
+    });
+    setImageFiles({ mainImage: null, contentImages: {} });
+    setImagePreviews({ mainImage: null, contentImages: {} });
     setOpenAddBlog(true);
   };
 
@@ -483,7 +557,43 @@ const BlogListPage = () => {
     setOpenAddBlog(false);
     setNewBlog({
       title: "",
+      content: [],
+      image: null,
+      imagePreview: null,
+      categoryId: "",
+      status: "active",
+    });
+    setImageFiles({ mainImage: null, contentImages: {} });
+    setImagePreviews({ mainImage: null, contentImages: {} });
+  };
+
+  const handleOpenDeleteBlogDialog = (blog) => {
+    if (!isAdmin()) {
+      setNotification({
+        open: true,
+        message: "Admin access required to delete blogs.",
+        severity: "error",
+      });
+      return;
+    }
+    setBlogToDelete(blog);
+    setDeleteBlogType(blog.status === "active" ? "soft" : "permanent");
+    setOpenDeleteBlogDialog(true);
+  };
+
+  const handleCloseDeleteBlogDialog = () => {
+    setOpenDeleteBlogDialog(false);
+    setBlogToDelete(null);
+    setDeleteBlogType("soft");
+  };
+
+  // Handle content item changes
+  const handleAddContentItem = () => {
+    const targetState = openEditBlog ? setEditingBlog : setNewBlog;
+    targetState((prev) => ({
+      ...prev,
       content: [
+        ...prev.content,
         {
           type: "paragraph",
           text: "",
@@ -493,219 +603,231 @@ const BlogListPage = () => {
           fontSize: "medium",
         },
       ],
-      image: "",
-      categoryId: "",
-    });
-    setImageFiles({ mainImage: null, contentImages: {} });
-  };
-
-  const handleOpenDeleteBlogConfirm = (blog) => {
-    setBlogToDelete(blog);
-    setOpenDeleteBlogConfirm(true);
-  };
-
-  const handleCloseDeleteBlogConfirm = () => {
-    setOpenDeleteBlogConfirm(false);
-    setBlogToDelete(null);
-  };
-
-  const handleOpenEditCategory = (category) => {
-    setEditingCategory({ _id: category._id, name: category.name });
-    setOpenEditCategory(true);
-  };
-
-  const handleCloseEditCategory = () => {
-    setOpenEditCategory(false);
-    setEditingCategory(null);
-  };
-
-  const handleOpenAddCategory = () => {
-    setOpenAddCategory(true);
-  };
-
-  const handleCloseAddCategory = () => {
-    setOpenAddCategory(false);
-    setNewCategory({ name: "" });
-  };
-
-  const handleOpenDeleteCategoryConfirm = (category) => {
-    setCategoryToDelete(category);
-    setOpenDeleteCategoryConfirm(true);
-  };
-
-  const handleCloseDeleteCategoryConfirm = () => {
-    setOpenDeleteCategoryConfirm(false);
-    setCategoryToDelete(null);
-  };
-
-  const handleTabChange = (event, newValue) => {
-    setTabValue(newValue);
-  };
-
-  const handleAddContentItem = (type) => {
-    if (tabValue === 0 && (openEditBlog || openAddBlog)) {
-      const targetState = openEditBlog ? setEditingBlog : setNewBlog;
-      targetState((prev) => ({
-        ...prev,
-        content: [
-          ...prev.content,
-          {
-            type,
-            text: "",
-            url: "",
-            bold: false,
-            italic: false,
-            fontSize: "medium",
-          },
-        ],
-      }));
-    }
+    }));
   };
 
   const handleRemoveContentItem = (index) => {
-    if (tabValue === 0 && (openEditBlog || openAddBlog)) {
-      const targetState = openEditBlog ? setEditingBlog : setNewBlog;
-      targetState((prev) => ({
-        ...prev,
-        content: prev.content.filter((_, i) => i !== index),
-      }));
-      setImageFiles((prev) => {
-        const newContentImages = { ...prev.contentImages };
-        delete newContentImages[index];
-        return { ...prev, contentImages: newContentImages };
-      });
-    }
+    const targetState = openEditBlog ? setEditingBlog : setNewBlog;
+    targetState((prev) => ({
+      ...prev,
+      content: prev.content.filter((_, i) => i !== index),
+    }));
+    setImageFiles((prev) => {
+      const newContentImages = { ...prev.contentImages };
+      delete newContentImages[index];
+      return { ...prev, contentImages: newContentImages };
+    });
+    setImagePreviews((prev) => {
+      const newContentPreviews = { ...prev.contentImages };
+      delete newContentPreviews[index];
+      return { ...prev, contentImages: newContentPreviews };
+    });
   };
 
   const handleContentChange = (index, field, value) => {
-    if (tabValue === 0 && (openEditBlog || openAddBlog)) {
+    const targetState = openEditBlog ? setEditingBlog : setNewBlog;
+    targetState((prev) => ({
+      ...prev,
+      content: prev.content.map((item, i) =>
+        i === index ? { ...item, [field]: value } : item
+      ),
+    }));
+  };
+
+  const handleImageChange = (index, file) => {
+    if (file) {
+      const previewUrl = URL.createObjectURL(file);
+      setImageFiles((prev) => ({
+        ...prev,
+        contentImages: { ...prev.contentImages, [index]: file },
+      }));
+      setImagePreviews((prev) => ({
+        ...prev,
+        contentImages: { ...prev.contentImages, [index]: previewUrl },
+      }));
       const targetState = openEditBlog ? setEditingBlog : setNewBlog;
       targetState((prev) => ({
         ...prev,
         content: prev.content.map((item, i) =>
-          i === index ? { ...item, [field]: value } : item
+          i === index ? { ...item, url: previewUrl } : item
         ),
       }));
     }
   };
 
-  const handleImageChange = (index, file) => {
-    setImageFiles((prev) => ({
-      ...prev,
-      contentImages: { ...prev.contentImages, [index]: file },
-    }));
-  };
-
   const handleMainImageChange = (file) => {
-    setImageFiles((prev) => ({ ...prev, mainImage: file }));
+    if (file) {
+      const previewUrl = URL.createObjectURL(file);
+      setImageFiles((prev) => ({ ...prev, mainImage: file }));
+      setImagePreviews((prev) => ({ ...prev, mainImage: previewUrl }));
+      const targetState = openEditBlog ? setEditingBlog : setNewBlog;
+      targetState((prev) => ({
+        ...prev,
+        image: previewUrl,
+        imagePreview: previewUrl,
+      }));
+    }
   };
 
-  const handleCloseSuccess = () => {
-    setSuccessMessage("");
+  const handleCloseNotification = () => {
+    setNotification({ open: false, message: "", severity: "success" });
   };
 
-  // Lọc và tìm kiếm blogs
-  const filteredBlogs = blogs.filter((blog) => {
-    const matchesCategory =
-      !filterCategory || blog.categoryId?._id === filterCategory;
-    const matchesSearch =
-      !searchQuery ||
-      blog.title.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
+  const handlePageChange = (event, value) => {
+    setCurrentPage(value);
+  };
 
   return (
     <div className="blog-list-page">
       <h1>Blog Management</h1>
-      <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-        <Tabs
-          value={tabValue}
-          onChange={handleTabChange}
-          aria-label="admin tabs"
-        >
-          <Tab label="Manage Blogs" />
-          <Tab label="Manage Categories" />
-        </Tabs>
-      </Box>
-      {tabValue === 0 && (
-        <>
-          <Box className="filter-search-container">
-            <FormControl sx={{ minWidth: 200 }}>
-              <InputLabel>Filter by Category</InputLabel>
-              <Select
-                value={filterCategory}
-                onChange={(e) => setFilterCategory(e.target.value)}
-              >
-                <MenuItem value="">
-                  <em>All Categories</em>
-                </MenuItem>
-                {categories.map((category) => (
-                  <MenuItem key={category._id} value={category._id}>
-                    {category.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <TextField
-              label="Search by Title"
-              variant="outlined"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value.toLowerCase())}
-              sx={{ flexGrow: 1 }}
-            />
-          </Box>
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<AddIcon />}
-            onClick={handleOpenAddBlog}
-            disabled={loading}
+      <Box className="filter-search-container">
+        <FormControl sx={{ minWidth: 200 }}>
+          <InputLabel id="filter-category-label">Filter by Category</InputLabel>
+          <Select
+            labelId="filter-category-label"
+            value={filterCategory}
+            label="Filter by Category"
+            onChange={(e) => {
+              setFilterCategory(e.target.value);
+              setCurrentPage(1);
+            }}
+            startAdornment={
+              <InputAdornment position="start">
+                <FilterAltIcon />
+              </InputAdornment>
+            }
           >
-            Add Blog
-          </Button>
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell className="title">Title</TableCell>
-                  <TableCell className="content">Content</TableCell>
-                  <TableCell>Image</TableCell>
-                  <TableCell className="category">Category</TableCell>
-                  <TableCell className="slug">Slug</TableCell>
+            <MenuItem value="">
+              <em>All Categories</em>
+            </MenuItem>
+            {categories
+              .filter((category) => category.status === "active")
+              .map((category) => (
+                <MenuItem key={category._id} value={category._id}>
+                  {category.name}
+                </MenuItem>
+              ))}
+          </Select>
+        </FormControl>
+        <TextField
+          label="Search by Title"
+          variant="outlined"
+          value={searchQuery}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            setCurrentPage(1);
+          }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon />
+              </InputAdornment>
+            ),
+          }}
+          sx={{ flexGrow: 1 }}
+        />
+      </Box>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          my: 2,
+        }}
+      >
+        <Typography className="showing-info">
+          Showing {blogs.length} / {totalBlogs} Blogs
+        </Typography>
+        {isAdmin() && (
+          <Box sx={{ display: "flex", gap: 2 }}>
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<AddIcon />}
+              onClick={handleOpenAddBlog}
+              disabled={loading}
+            >
+              Add Blog
+            </Button>
+            <Button
+              variant="contained"
+              color="primary"
+              className="navigation-button"
+              startIcon={<CategoryIcon />}
+              onClick={() => {
+                console.log("Navigating to /admin/categories");
+                navigate("/admin/categories");
+              }}
+              disabled={loading}
+            >
+              Go to CategoryBlog
+            </Button>
+          </Box>
+        )}
+      </Box>
+      {loading ? (
+        <Box sx={{ display: "flex", justifyContent: "center", my: 4 }}>
+          <CircularProgress />
+        </Box>
+      ) : blogs.length === 0 ? (
+        <Typography sx={{ textAlign: "center", my: 4 }}>
+          No blogs found.
+        </Typography>
+      ) : (
+        <TableContainer component={Paper}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell className="stt"></TableCell>
+                <TableCell className="title">Title</TableCell>
+                <TableCell className="content">Content</TableCell>
+                <TableCell>Image</TableCell>
+                <TableCell className="category">Category</TableCell>
+                <TableCell className="slug">Slug</TableCell>
+                <TableCell className="status">Status</TableCell>
+                {isAdmin() && (
                   <TableCell className="actions">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredBlogs.map((blog) => {
-                  const categoryIdValue =
-                    blog.categoryId?._id || blog.categoryId;
-                  const categoryName =
-                    blog.categoryId?.name ||
-                    categories.find((cat) => cat._id === categoryIdValue)
-                      ?.name ||
-                    "N/A";
-                  return (
-                    <TableRow key={blog._id}>
-                      <TableCell className="title">{blog.title}</TableCell>
-                      <TableCell className="content">
-                        {blog.content
-                          ?.map(
-                            (item) =>
-                              `${item.type}: ${item.text || item.url || "N/A"}`
-                          )
-                          .join(", ") || "N/A"}
-                      </TableCell>
-                      <TableCell>
-                        {blog.image && (
-                          <img
-                            src={blog.image}
-                            alt={blog.title}
-                            style={{ width: "50px" }}
-                          />
-                        )}
-                      </TableCell>
-                      <TableCell className="category">{categoryName}</TableCell>
-                      <TableCell className="slug">{blog.slug}</TableCell>
+                )}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {blogs.map((blog, index) => {
+                const categoryIdValue = blog.categoryId?._id || blog.categoryId;
+                const categoryName =
+                  blog.categoryId?.name ||
+                  categories.find((cat) => cat._id === categoryIdValue)?.name ||
+                  "N/A";
+                return (
+                  <TableRow key={blog._id}>
+                    <TableCell className="stt">
+                      {(currentPage - 1) * pageSize + index + 1}
+                    </TableCell>
+                    <TableCell className="title">{blog.title}</TableCell>
+                    <TableCell className="content">
+                      {blog.content
+                        ?.map(
+                          (item) =>
+                            `${item.type}: ${item.text || item.url || "N/A"}`
+                        )
+                        .join(", ") || "N/A"}
+                    </TableCell>
+                    <TableCell>
+                      {blog.image && (
+                        <img
+                          src={blog.image}
+                          alt={blog.title}
+                          style={{ width: "50px" }}
+                        />
+                      )}
+                    </TableCell>
+                    <TableCell className="category">{categoryName}</TableCell>
+                    <TableCell className="slug">{blog.slug}</TableCell>
+                    <TableCell
+                      className={`status ${blog.status.toLowerCase()}`}
+                    >
+                      {blog.status}
+                    </TableCell>
+                    {isAdmin() && (
                       <TableCell className="actions">
                         <Button
                           color="primary"
@@ -715,594 +837,597 @@ const BlogListPage = () => {
                         />
                         <Button
                           color="secondary"
-                          onClick={() => handleOpenDeleteBlogConfirm(blog)}
+                          onClick={() => handleOpenDeleteBlogDialog(blog)}
                           startIcon={<DeleteIcon />}
                           disabled={loading}
                         />
                       </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          {/* Edit Blog Dialog */}
-          <Dialog
-            open={openEditBlog}
-            onClose={handleCloseEditBlog}
-            maxWidth="md"
-            fullWidth
-          >
-            <DialogTitle>Edit Blog</DialogTitle>
-            <DialogContent>
-              {loading && (
-                <div className="custom-loading-overlay">
-                  <CircularProgress />
-                </div>
-              )}
-              <Box sx={{ mb: 2 }}>
-                <TextField
-                  autoFocus
-                  margin="dense"
-                  label="Title"
-                  type="text"
-                  fullWidth
-                  value={editingBlog?.title || ""}
-                  onChange={(e) =>
-                    setEditingBlog({ ...editingBlog, title: e.target.value })
-                  }
-                />
-              </Box>
-              <Box sx={{ mb: 2 }}>
-                {editingBlog?.content?.map((item, index) => (
-                  <Box
-                    key={index}
-                    className="custom-edit-section"
-                    sx={{ mb: 2, p: 2, borderRadius: 4 }}
-                  >
-                    <FormControl fullWidth margin="dense">
-                      <InputLabel>Type</InputLabel>
-                      <Select
-                        value={item.type}
-                        onChange={(e) =>
-                          handleContentChange(index, "type", e.target.value)
-                        }
-                      >
-                        <MenuItem value="paragraph">Paragraph</MenuItem>
-                        <MenuItem value="bullet">Bullet</MenuItem>
-                        <MenuItem value="image">Image</MenuItem>
-                      </Select>
-                    </FormControl>
-                    {item.type !== "image" ? (
-                      <>
-                        <TextField
-                          margin="dense"
-                          label="Text"
-                          type="text"
-                          fullWidth
-                          value={item.text || ""}
-                          onChange={(e) =>
-                            handleContentChange(index, "text", e.target.value)
-                          }
-                          sx={{ mt: 1 }}
-                        />
-                        <Box sx={{ display: "flex", gap: 2, mt: 1 }}>
-                          <FormControlLabel
-                            control={
-                              <Checkbox
-                                checked={item.bold || false}
-                                onChange={(e) =>
-                                  handleContentChange(
-                                    index,
-                                    "bold",
-                                    e.target.checked
-                                  )
-                                }
-                              />
-                            }
-                            label="Bold"
-                          />
-                          <FormControlLabel
-                            control={
-                              <Checkbox
-                                checked={item.italic || false}
-                                onChange={(e) =>
-                                  handleContentChange(
-                                    index,
-                                    "italic",
-                                    e.target.checked
-                                  )
-                                }
-                              />
-                            }
-                            label="Italic"
-                          />
-                        </Box>
-                        <FormControl fullWidth margin="dense" sx={{ mt: 1 }}>
-                          <InputLabel>Font Size</InputLabel>
-                          <Select
-                            value={item.fontSize || "medium"}
-                            onChange={(e) =>
-                              handleContentChange(
-                                index,
-                                "fontSize",
-                                e.target.value
-                              )
-                            }
-                          >
-                            <MenuItem value="small">Small</MenuItem>
-                            <MenuItem value="medium">Medium</MenuItem>
-                            <MenuItem value="large">Large</MenuItem>
-                          </Select>
-                        </FormControl>
-                      </>
-                    ) : (
-                      <Box sx={{ mt: 1 }}>
-                        <input
-                          type="file"
-                          accept="image/jpeg,image/jpg,image/png"
-                          onChange={(e) =>
-                            handleImageChange(index, e.target.files[0])
-                          }
-                        />
-                        {item.url && (
-                          <img
-                            src={item.url}
-                            alt={`Image ${index}`}
-                            style={{ width: "100px", marginTop: "10px" }}
-                          />
-                        )}
-                      </Box>
                     )}
-                    <IconButton
-                      color="secondary"
-                      onClick={() => handleRemoveContentItem(index)}
-                      sx={{ mt: 1 }}
-                    >
-                      <RemoveIcon />
-                    </IconButton>
-                    <IconButton
-                      color="primary"
-                      onClick={() => handleAddContentItem("paragraph")}
-                      sx={{ mt: 1, ml: 1 }}
-                    >
-                      <AddIcon />
-                    </IconButton>
-                  </Box>
-                ))}
-              </Box>
-              <Box sx={{ mb: 2 }}>
-                <FormControl fullWidth margin="dense">
-                  <InputLabel>Category</InputLabel>
-                  <Select
-                    value={editingBlog?.categoryId || ""}
-                    onChange={(e) =>
-                      setEditingBlog({
-                        ...editingBlog,
-                        categoryId: e.target.value,
-                      })
-                    }
-                  >
-                    {categories.map((category) => (
-                      <MenuItem key={category._id} value={category._id}>
-                        {category.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Box>
-              <Box>
-                <input
-                  type="file"
-                  accept="image/jpeg,image/jpg,image/png"
-                  onChange={(e) => handleMainImageChange(e.target.files[0])}
-                  disabled={loading}
-                />
-                {editingBlog?.image && (
-                  <img
-                    src={editingBlog.image}
-                    alt="Main Image"
-                    style={{ width: "100px", marginTop: "10px" }}
-                  />
-                )}
-              </Box>
-            </DialogContent>
-            <DialogActions>
-              <Button
-                onClick={handleCloseEditBlog}
-                color="primary"
-                disabled={loading}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleUpdateBlog}
-                color="primary"
-                disabled={loading}
-              >
-                Update
-              </Button>
-            </DialogActions>
-          </Dialog>
-          {/* Add Blog Dialog */}
-          <Dialog
-            open={openAddBlog}
-            onClose={handleCloseAddBlog}
-            maxWidth="sm"
-            fullWidth
-          >
-            <DialogTitle>Add Blog</DialogTitle>
-            <DialogContent>
-              {loading && (
-                <div className="custom-loading-overlay">
-                  <CircularProgress />
-                </div>
-              )}
-              <Box sx={{ mb: 2 }}>
-                <TextField
-                  autoFocus
-                  margin="dense"
-                  label="Title"
-                  type="text"
-                  fullWidth
-                  value={newBlog.title}
-                  onChange={(e) =>
-                    setNewBlog({ ...newBlog, title: e.target.value })
-                  }
-                />
-              </Box>
-              <Box sx={{ mb: 2 }}>
-                {newBlog.content.map((item, index) => (
-                  <Box
-                    key={index}
-                    className="custom-edit-section"
-                    sx={{ mb: 2, p: 2, borderRadius: 4 }}
-                  >
-                    <FormControl fullWidth margin="dense">
-                      <InputLabel>Type</InputLabel>
-                      <Select
-                        value={item.type}
-                        onChange={(e) =>
-                          handleContentChange(index, "type", e.target.value)
-                        }
-                      >
-                        <MenuItem value="paragraph">Paragraph</MenuItem>
-                        <MenuItem value="bullet">Bullet</MenuItem>
-                        <MenuItem value="image">Image</MenuItem>
-                      </Select>
-                    </FormControl>
-                    {item.type !== "image" ? (
-                      <>
-                        <TextField
-                          margin="dense"
-                          label="Text"
-                          type="text"
-                          fullWidth
-                          value={item.text || ""}
-                          onChange={(e) =>
-                            handleContentChange(index, "text", e.target.value)
-                          }
-                          sx={{ mt: 1 }}
-                        />
-                        <Box sx={{ display: "flex", gap: 2, mt: 1 }}>
-                          <FormControlLabel
-                            control={
-                              <Checkbox
-                                checked={item.bold || false}
-                                onChange={(e) =>
-                                  handleContentChange(
-                                    index,
-                                    "bold",
-                                    e.target.checked
-                                  )
-                                }
-                              />
-                            }
-                            label="Bold"
-                          />
-                          <FormControlLabel
-                            control={
-                              <Checkbox
-                                checked={item.italic || false}
-                                onChange={(e) =>
-                                  handleContentChange(
-                                    index,
-                                    "italic",
-                                    e.target.checked
-                                  )
-                                }
-                              />
-                            }
-                            label="Italic"
-                          />
-                        </Box>
-                        <FormControl fullWidth margin="dense" sx={{ mt: 1 }}>
-                          <InputLabel>Font Size</InputLabel>
-                          <Select
-                            value={item.fontSize || "medium"}
-                            onChange={(e) =>
-                              handleContentChange(
-                                index,
-                                "fontSize",
-                                e.target.value
-                              )
-                            }
-                          >
-                            <MenuItem value="small">Small</MenuItem>
-                            <MenuItem value="medium">Medium</MenuItem>
-                            <MenuItem value="large">Large</MenuItem>
-                          </Select>
-                        </FormControl>
-                      </>
-                    ) : (
-                      <Box sx={{ mt: 1 }}>
-                        <input
-                          type="file"
-                          accept="image/jpeg,image/jpg,image/png"
-                          onChange={(e) =>
-                            handleImageChange(index, e.target.files[0])
-                          }
-                        />
-                        {item.url && (
-                          <img
-                            src={item.url}
-                            alt={`Image ${index}`}
-                            style={{ width: "100px", marginTop: "10px" }}
-                          />
-                        )}
-                      </Box>
-                    )}
-                    <IconButton
-                      color="secondary"
-                      onClick={() => handleRemoveContentItem(index)}
-                      sx={{ mt: 1 }}
-                    >
-                      <RemoveIcon />
-                    </IconButton>
-                    <IconButton
-                      color="primary"
-                      onClick={() => handleAddContentItem("paragraph")}
-                      sx={{ mt: 1, ml: 1 }}
-                    >
-                      <AddIcon />
-                    </IconButton>
-                  </Box>
-                ))}
-              </Box>
-              <Box sx={{ mb: 2 }}>
-                <FormControl fullWidth margin="dense">
-                  <InputLabel>Category</InputLabel>
-                  <Select
-                    value={newBlog.categoryId}
-                    onChange={(e) =>
-                      setNewBlog({ ...newBlog, categoryId: e.target.value })
-                    }
-                  >
-                    {categories.map((category) => (
-                      <MenuItem key={category._id} value={category._id}>
-                        {category.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Box>
-              <Box>
-                <input
-                  type="file"
-                  accept="image/jpeg,image/jpg,image/png"
-                  onChange={(e) => handleMainImageChange(e.target.files[0])}
-                  disabled={loading}
-                />
-                {newBlog.image && (
-                  <img
-                    src={newBlog.image}
-                    alt="Main Image"
-                    style={{ width: "100px", marginTop: "10px" }}
-                  />
-                )}
-              </Box>
-            </DialogContent>
-            <DialogActions>
-              <Button
-                onClick={handleCloseAddBlog}
-                color="primary"
-                disabled={loading}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleAddBlog}
-                color="primary"
-                disabled={loading}
-              >
-                Add
-              </Button>
-            </DialogActions>
-          </Dialog>
-          {/* Delete Blog Confirm Dialog */}
-          <Dialog
-            open={openDeleteBlogConfirm}
-            onClose={handleCloseDeleteBlogConfirm}
-          >
-            <DialogTitle>Delete Blog</DialogTitle>
-            <DialogContent>
-              <DialogContentText>
-                Are you sure you want to delete this blog?
-              </DialogContentText>
-            </DialogContent>
-            <DialogActions>
-              <Button
-                onClick={handleCloseDeleteBlogConfirm}
-                color="primary"
-                disabled={loading}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleDeleteBlog}
-                color="secondary"
-                disabled={loading}
-              >
-                Delete
-              </Button>
-            </DialogActions>
-          </Dialog>
-        </>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </TableContainer>
       )}
-      {tabValue === 1 && (
-        <>
+      {totalPages > 1 && (
+        <Box className="pagination-container">
+          <Pagination
+            count={totalPages}
+            page={currentPage}
+            onChange={handlePageChange}
+            color="primary"
+            showFirstButton
+            showLastButton
+          />
+        </Box>
+      )}
+      <Dialog
+        open={openAddBlog}
+        onClose={handleCloseEditBlog}
+        maxWidth="md"
+        fullWidth
+        className="blog-dialog"
+        PaperProps={{
+          sx: {
+            maxHeight: "70vh",
+          },
+        }}
+        sx={{ zIndex: 1300 }}
+      >
+        <DialogTitle>Add New Blog</DialogTitle>
+        <DialogContent
+          sx={{
+            maxHeight: "70vh",
+            overflowY: "auto",
+            padding: "24px",
+          }}
+        >
+          {loading && (
+            <div className="custom-loading-overlay">
+              <CircularProgress />
+            </div>
+          )}
+          <Box className="blog-form">
+            <TextField
+              sx={{ mt: 2 }}
+              autoFocus
+              label="Title"
+              variant="outlined"
+              fullWidth
+              value={newBlog.title}
+              onChange={(e) =>
+                setNewBlog({ ...newBlog, title: e.target.value })
+              }
+              className="form-field"
+            />
+            <Box className="content-section">
+              <Typography variant="subtitle1" gutterBottom>
+                Content
+              </Typography>
+              {newBlog.content.map((item, index) => (
+                <Box key={index} className="content-item">
+                  <FormControl fullWidth className="form-field">
+                    <InputLabel>Type</InputLabel>
+                    <Select
+                      value={item.type}
+                      label="Type"
+                      onChange={(e) =>
+                        handleContentChange(index, "type", e.target.value)
+                      }
+                    >
+                      <MenuItem value="paragraph">Paragraph</MenuItem>
+                      <MenuItem value="bullet">Bullet</MenuItem>
+                      <MenuItem value="image">Image</MenuItem>
+                    </Select>
+                  </FormControl>
+                  {item.type !== "image" ? (
+                    <>
+                      <TextField
+                        label="Text"
+                        variant="outlined"
+                        fullWidth
+                        multiline
+                        rows={3}
+                        value={item.text || ""}
+                        onChange={(e) =>
+                          handleContentChange(index, "text", e.target.value)
+                        }
+                        className="form-field"
+                      />
+                      <Box className="content-options">
+                        <FormControlLabel
+                          control={
+                            <Checkbox
+                              checked={item.bold || false}
+                              onChange={(e) =>
+                                handleContentChange(
+                                  index,
+                                  "bold",
+                                  e.target.checked
+                                )
+                              }
+                            />
+                          }
+                          label="Bold"
+                        />
+                        <FormControlLabel
+                          control={
+                            <Checkbox
+                              checked={item.italic || false}
+                              onChange={(e) =>
+                                handleContentChange(
+                                  index,
+                                  "italic",
+                                  e.target.checked
+                                )
+                              }
+                            />
+                          }
+                          label="Italic"
+                        />
+                        <FormControl className="font-size-select">
+                          <InputLabel>Font Size</InputLabel>
+                          <Select
+                            value={item.fontSize || "medium"}
+                            label="Font Size"
+                            onChange={(e) =>
+                              handleContentChange(
+                                index,
+                                "fontSize",
+                                e.target.value
+                              )
+                            }
+                          >
+                            <MenuItem value="small">Small</MenuItem>
+                            <MenuItem value="medium">Medium</MenuItem>
+                            <MenuItem value="large">Large</MenuItem>
+                          </Select>
+                        </FormControl>
+                      </Box>
+                    </>
+                  ) : (
+                    <Box className="image-upload">
+                      <Button
+                        variant="outlined"
+                        component="label"
+                        className="upload-button"
+                      >
+                        Upload Image
+                        <input
+                          type="file"
+                          hidden
+                          accept="image/jpeg,image/jpg,image/png"
+                          onChange={(e) =>
+                            handleImageChange(index, e.target.files[0])
+                          }
+                        />
+                      </Button>
+                      {(item.url || imagePreviews.contentImages[index]) && (
+                        <img
+                          src={imagePreviews.contentImages[index] || item.url}
+                          alt={`Content ${index}`}
+                          className="preview-image"
+                        />
+                      )}
+                    </Box>
+                  )}
+                  <Box className="content-actions">
+                    <IconButton
+                      color="secondary"
+                      onClick={() => handleRemoveContentItem(index)}
+                    >
+                      <RemoveIcon />
+                    </IconButton>
+                    <IconButton color="primary" onClick={handleAddContentItem}>
+                      <AddIcon />
+                    </IconButton>
+                  </Box>
+                </Box>
+              ))}
+              {!newBlog.content.length && (
+                <Button
+                  variant="outlined"
+                  startIcon={<AddIcon />}
+                  onClick={handleAddContentItem}
+                  className="add-content-button"
+                >
+                  Add Content
+                </Button>
+              )}
+            </Box>
+            <FormControl fullWidth className="form-field">
+              <InputLabel>Category</InputLabel>
+              <Select
+                value={newBlog.categoryId}
+                label="Category"
+                onChange={(e) =>
+                  setNewBlog({ ...newBlog, categoryId: e.target.value })
+                }
+              >
+                <MenuItem value="">
+                  <em>Select a category</em>
+                </MenuItem>
+                {categories
+                  .filter((category) => category.status === "active")
+                  .map((category) => (
+                    <MenuItem key={category._id} value={category._id}>
+                      {category.name}
+                    </MenuItem>
+                  ))}
+              </Select>
+            </FormControl>
+            <FormControl fullWidth className="form-field">
+              <InputLabel>Status</InputLabel>
+              <Select
+                value={newBlog.status}
+                label="Status"
+                onChange={(e) => {
+                  console.log("New blog status changed to:", e.target.value);
+                  setNewBlog({ ...newBlog, status: e.target.value });
+                }}
+              >
+                <MenuItem value="active">Active</MenuItem>
+                <MenuItem value="inactive">Inactive</MenuItem>
+              </Select>
+            </FormControl>
+            <Box className="image-upload">
+              <Typography variant="subtitle1" gutterBottom>
+                Main Image
+              </Typography>
+              <Button
+                variant="outlined"
+                component="label"
+                className="upload-button"
+              >
+                Upload Main Image
+                <input
+                  type="file"
+                  hidden
+                  accept="image/jpeg,image/jpg,image/png"
+                  onChange={(e) => handleMainImageChange(e.target.files[0])}
+                />
+              </Button>
+              {(newBlog.image || imagePreviews.mainImage) && (
+                <img
+                  src={imagePreviews.mainImage || newBlog.image}
+                  alt="Main Image"
+                  className="preview-image"
+                />
+              )}
+            </Box>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseAddBlog} disabled={loading}>
+            Cancel
+          </Button>
           <Button
             variant="contained"
             color="primary"
-            startIcon={<AddIcon />}
-            onClick={handleOpenAddCategory}
+            onClick={handleAddBlog}
             disabled={loading}
           >
-            Add Category
+            Add Blog
           </Button>
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {categories.map((category) => (
-                  <TableRow key={category._id}>
-                    <TableCell>{category.name}</TableCell>
-                    <TableCell>
-                      <Button
-                        color="primary"
-                        onClick={() => handleOpenEditCategory(category)}
-                        startIcon={<EditIcon />}
-                        disabled={loading}
-                      />
-                      <Button
-                        color="secondary"
-                        onClick={() =>
-                          handleOpenDeleteCategoryConfirm(category)
-                        }
-                        startIcon={<DeleteIcon />}
-                        disabled={loading}
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          {/* Edit Category Dialog */}
-          <Dialog open={openEditCategory} onClose={handleCloseEditCategory}>
-            <DialogTitle>Edit Category</DialogTitle>
-            <DialogContent>
-              <TextField
-                autoFocus
-                margin="dense"
-                label="Category Name"
-                type="text"
-                fullWidth
-                value={editingCategory?.name || ""}
-                onChange={(e) =>
-                  setEditingCategory({
-                    ...editingCategory,
-                    name: e.target.value,
-                  })
-                }
-              />
-            </DialogContent>
-            <DialogActions>
-              <Button
-                onClick={handleCloseEditCategory}
-                color="primary"
-                disabled={loading}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleUpdateCategory}
-                color="primary"
-                disabled={loading}
-              >
-                Update
-              </Button>
-            </DialogActions>
-          </Dialog>
-          {/* Add Category Dialog */}
-          <Dialog open={openAddCategory} onClose={handleCloseAddCategory}>
-            <DialogTitle>Add Category</DialogTitle>
-            <DialogContent>
-              <TextField
-                autoFocus
-                margin="dense"
-                label="Category Name"
-                type="text"
-                fullWidth
-                value={newCategory.name}
-                onChange={(e) =>
-                  setNewCategory({ ...newCategory, name: e.target.value })
-                }
-              />
-            </DialogContent>
-            <DialogActions>
-              <Button
-                onClick={handleCloseAddCategory}
-                color="primary"
-                disabled={loading}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleAddCategory}
-                color="primary"
-                disabled={loading}
-              >
-                Add
-              </Button>
-            </DialogActions>
-          </Dialog>
-          {/* Delete Category Confirm Dialog */}
-          <Dialog
-            open={openDeleteCategoryConfirm}
-            onClose={handleCloseDeleteCategoryConfirm}
-          >
-            <DialogTitle>Delete Category</DialogTitle>
-            <DialogContent>
-              <DialogContentText>
-                Are you sure you want to delete this category? This will also
-                clear its association with blogs.
-              </DialogContentText>
-            </DialogContent>
-            <DialogActions>
-              <Button
-                onClick={handleCloseDeleteCategoryConfirm}
-                color="primary"
-                disabled={loading}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleDeleteCategory}
-                color="secondary"
-                disabled={loading}
-              >
-                Delete
-              </Button>
-            </DialogActions>
-          </Dialog>
-        </>
-      )}
-      <Snackbar
-        open={!!successMessage}
-        autoHideDuration={3000}
-        onClose={handleCloseSuccess}
-        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={openEditBlog}
+        onClose={handleCloseEditBlog}
+        maxWidth="md"
+        fullWidth
+        className="blog-dialog"
+        PaperProps={{
+          sx: {
+            maxHeight: "70vh",
+            display: "flex",
+            flexDirection: "column",
+          },
+        }}
+        sx={{ zIndex: 1300 }}
       >
-        <Alert onClose={handleCloseSuccess} severity="success">
-          {successMessage}
-        </Alert>
-      </Snackbar>
+        <DialogTitle
+          sx={{
+            padding: "10px 24px",
+            minHeight: "60px",
+            display: "flex",
+            alignItems: "center",
+          }}
+        >
+          Edit Blog
+        </DialogTitle>
+        <DialogContent
+          sx={{
+            padding: "20px 24px",
+            paddingTop: "80px",
+            maxHeight: "70vh",
+            overflowY: "auto",
+          }}
+        >
+          {loading && (
+            <div className="custom-loading-overlay">
+              <CircularProgress />
+            </div>
+          )}
+          <Box className="blog-form">
+            <TextField
+              sx={{ mt: 2 }}
+              autoFocus
+              label="Title"
+              variant="outlined"
+              fullWidth
+              value={editingBlog?.title || ""}
+              onChange={(e) =>
+                setEditingBlog({ ...editingBlog, title: e.target.value })
+              }
+              className="form-field"
+            />
+            <Box className="content-section">
+              <Typography variant="subtitle1" gutterBottom>
+                Content
+              </Typography>
+              {editingBlog?.content.map((item, index) => (
+                <Box key={index} className="content-item">
+                  <FormControl fullWidth className="form-field">
+                    <InputLabel>Type</InputLabel>
+                    <Select
+                      value={item.type}
+                      label="Type"
+                      onChange={(e) =>
+                        handleContentChange(index, "type", e.target.value)
+                      }
+                    >
+                      <MenuItem value="paragraph">Paragraph</MenuItem>
+                      <MenuItem value="bullet">Bullet</MenuItem>
+                      <MenuItem value="image">Image</MenuItem>
+                    </Select>
+                  </FormControl>
+                  {item.type !== "image" ? (
+                    <>
+                      <TextField
+                        label="Text"
+                        variant="outlined"
+                        fullWidth
+                        multiline
+                        rows={3}
+                        value={item.text || ""}
+                        onChange={(e) =>
+                          handleContentChange(index, "text", e.target.value)
+                        }
+                        className="form-field"
+                      />
+                      <Box className="content-options">
+                        <FormControlLabel
+                          control={
+                            <Checkbox
+                              checked={item.bold || false}
+                              onChange={(e) =>
+                                handleContentChange(
+                                  index,
+                                  "bold",
+                                  e.target.checked
+                                )
+                              }
+                            />
+                          }
+                          label="Bold"
+                        />
+                        <FormControlLabel
+                          control={
+                            <Checkbox
+                              checked={item.italic || false}
+                              onChange={(e) =>
+                                handleContentChange(
+                                  index,
+                                  "italic",
+                                  e.target.checked
+                                )
+                              }
+                            />
+                          }
+                          label="Italic"
+                        />
+                        <FormControl className="font-size-select">
+                          <InputLabel>Font Size</InputLabel>
+                          <Select
+                            value={item.fontSize || "medium"}
+                            label="Font Size"
+                            onChange={(e) =>
+                              handleContentChange(
+                                index,
+                                "fontSize",
+                                e.target.value
+                              )
+                            }
+                          >
+                            <MenuItem value="small">Small</MenuItem>
+                            <MenuItem value="medium">Medium</MenuItem>
+                            <MenuItem value="large">Large</MenuItem>
+                          </Select>
+                        </FormControl>
+                      </Box>
+                    </>
+                  ) : (
+                    <Box className="image-upload">
+                      <Button
+                        variant="outlined"
+                        component="label"
+                        className="upload-button"
+                      >
+                        Upload Image
+                        <input
+                          type="file"
+                          hidden
+                          accept="image/jpeg,image/jpg,image/png"
+                          onChange={(e) =>
+                            handleImageChange(index, e.target.files[0])
+                          }
+                        />
+                      </Button>
+                      {(item.url || imagePreviews.contentImages[index]) && (
+                        <img
+                          src={imagePreviews.contentImages[index] || item.url}
+                          alt={`Content ${index}`}
+                          className="preview-image"
+                        />
+                      )}
+                    </Box>
+                  )}
+                  <Box className="content-actions">
+                    <IconButton
+                      color="secondary"
+                      onClick={() => handleRemoveContentItem(index)}
+                    >
+                      <RemoveIcon />
+                    </IconButton>
+                    <IconButton color="primary" onClick={handleAddContentItem}>
+                      <AddIcon />
+                    </IconButton>
+                  </Box>
+                </Box>
+              ))}
+              {!editingBlog?.content.length && (
+                <Button
+                  variant="outlined"
+                  startIcon={<AddIcon />}
+                  onClick={handleAddContentItem}
+                  className="add-content-button"
+                >
+                  Add Content
+                </Button>
+              )}
+            </Box>
+            <FormControl fullWidth className="form-field">
+              <InputLabel>Category</InputLabel>
+              <Select
+                value={editingBlog?.categoryId || ""}
+                label="Category"
+                onChange={(e) =>
+                  setEditingBlog({ ...editingBlog, categoryId: e.target.value })
+                }
+              >
+                <MenuItem value="">
+                  <em>Select a category</em>
+                </MenuItem>
+                {categories
+                  .filter((category) => category.status === "active")
+                  .map((category) => (
+                    <MenuItem key={category._id} value={category._id}>
+                      {category.name}
+                    </MenuItem>
+                  ))}
+              </Select>
+            </FormControl>
+            <FormControl fullWidth className="form-field">
+              <InputLabel>Status</InputLabel>
+              <Select
+                value={editingBlog?.status || "active"}
+                label="Status"
+                onChange={(e) => {
+                  console.log(
+                    "Editing blog status changed to:",
+                    e.target.value
+                  );
+                  setEditingBlog({ ...editingBlog, status: e.target.value });
+                }}
+              >
+                <MenuItem value="active">Active</MenuItem>
+                <MenuItem value="inactive">Inactive</MenuItem>
+              </Select>
+            </FormControl>
+            <Box className="image-upload">
+              <Typography variant="subtitle1" gutterBottom>
+                Main Image
+              </Typography>
+              <Button
+                variant="outlined"
+                component="label"
+                className="upload-button"
+              >
+                Upload Main Image
+                <input
+                  type="file"
+                  hidden
+                  accept="image/jpeg,image/jpg,image/png"
+                  onChange={(e) => handleMainImageChange(e.target.files[0])}
+                />
+              </Button>
+              {(editingBlog?.image || imagePreviews.mainImage) && (
+                <img
+                  src={imagePreviews.mainImage || editingBlog.image}
+                  alt="Main Image"
+                  className="preview-image"
+                />
+              )}
+            </Box>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseEditBlog} disabled={loading}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleUpdateBlog}
+            disabled={loading}
+          >
+            Update Blog
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={openDeleteBlogDialog}
+        onClose={handleCloseDeleteBlogDialog}
+        maxWidth="xs"
+        fullWidth
+        sx={{ zIndex: 1300 }}
+      >
+        <DialogTitle>Delete Blog</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            {deleteBlogType === "soft"
+              ? "After deletion, the blog's status will be set to inactive."
+              : "Are you sure you want to permanently delete this blog?"}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDeleteBlogDialog} disabled={loading}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleDeleteBlog}
+            disabled={loading}
+          >
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={notification.open}
+        onClose={handleCloseNotification}
+        maxWidth="xs"
+        fullWidth
+        className={`notification-dialog ${notification.severity}`}
+        sx={{ zIndex: 1300 }}
+      >
+        <DialogContent sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          {notification.severity === "success" ? (
+            <CheckCircleIcon />
+          ) : (
+            <ErrorIcon />
+          )}
+          <DialogContentText>{notification.message}</DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseNotification} color="primary">
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };
