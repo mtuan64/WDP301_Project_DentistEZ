@@ -9,13 +9,31 @@ import {
   TableRow,
   Paper,
   Button,
+  DialogActions,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+
 import "../assets/css/DoctorAccountManagement.css";
+
 
 const DoctorAccountManagement = () => {
   const [doctors, setDoctors] = useState([]);
+  
+  const [clinics, setClinics] = useState([]);
+  
   const navigate = useNavigate();
+
+  // Lấy danh sách clinic đã được sử dụng
+  
+ 
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -30,6 +48,7 @@ const DoctorAccountManagement = () => {
     }
 
     fetchDoctors();
+    fetchClinics();
   }, [navigate]);
 
   const fetchDoctors = async () => {
@@ -51,6 +70,19 @@ const DoctorAccountManagement = () => {
       setDoctors([]);
     }
   };
+  const fetchClinics = async () => {
+    try {
+      const response = await axios.get("http://localhost:9999/api/clinic", {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      if (response.data.success) {
+        setClinics(response.data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching clinics:", error);
+    }
+  };
+  
 
   const handleChangeStatus = async (doctorId, currentStatus) => {
     const newStatus = currentStatus === "active" ? "inactive" : "active";
@@ -80,14 +112,18 @@ const DoctorAccountManagement = () => {
 
   return (
     <div className="doctor-account-management">
+
       <h1>Doctor Account Management</h1>
       <p>Tổng số bác sĩ: {doctors.length}</p> {/* Debug: Kiểm tra số lượng bác sĩ */}
+     
+
+      
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
             <TableRow>
               <TableCell>Full Name</TableCell>
-              <TableCell>Clinic ID</TableCell>
+              <TableCell>Clinic Name</TableCell>
               <TableCell>Specialty</TableCell>
               <TableCell>Degree</TableCell>
               <TableCell>Experience (Years)</TableCell>
@@ -105,7 +141,7 @@ const DoctorAccountManagement = () => {
               doctors.map((doctor) => (
                 <TableRow key={doctor._id}>
                   <TableCell>{doctor.userId?.fullname || "N/A"}</TableCell>
-                  <TableCell>{doctor.clinic_id}</TableCell>
+                  <TableCell>{doctor.clinic_id?.clinic_name || "N/A"}</TableCell>
                   <TableCell>{doctor.Specialty || "N/A"}</TableCell>
                   <TableCell>{doctor.Degree || "N/A"}</TableCell>
                   <TableCell>{doctor.ExperienceYears || "N/A"}</TableCell>
