@@ -70,7 +70,7 @@ router.post("/user/update", authMiddleware, updateUser);
 
 
 router.get("/docroraccount", authAdminMiddleware, getAllDoctors);
-router.put("/doctor/:doctorId/status", authAdminMiddleware, updateDoctorStatus
+router.put("/doctor/:doctorId/status", authAdminMiddleware, updateDoctorStatus);
 
 
 // admin 
