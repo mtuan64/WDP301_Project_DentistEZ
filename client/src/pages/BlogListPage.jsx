@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import {
   Table,
@@ -83,8 +83,8 @@ const BlogListPage = () => {
     return user && user.role === "admin";
   };
 
-  // Fetch blogs from API
-  const fetchBlogs = async () => {
+  // Fetch blogs from API (memoized with useCallback)
+  const fetchBlogs = useCallback(async () => {
     setLoading(true);
     try {
       const response = await axios.get(
@@ -114,10 +114,10 @@ const BlogListPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, filterCategory, searchQuery]);
 
-  // Fetch categories for filter dropdown
-  const fetchCategories = async () => {
+  // Fetch categories for filter dropdown (memoized with useCallback)
+  const fetchCategories = useCallback(async () => {
     try {
       const response = await axios.get("http://localhost:9999/api/categories", {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
@@ -132,15 +132,14 @@ const BlogListPage = () => {
         severity: "error",
       });
     }
-  };
+  }, []);
 
   // Fetch data on mount and when dependencies change
   useEffect(() => {
     if (!isAdmin()) return;
     fetchBlogs();
     fetchCategories();
-  }, [currentPage, filterCategory, searchQuery]);
-
+  }, [fetchBlogs, fetchCategories]);
   // Clean up image previews
   useEffect(() => {
     return () => {

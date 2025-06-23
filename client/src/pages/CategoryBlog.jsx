@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import {
   Table,
@@ -69,8 +69,7 @@ const CategoryBlog = () => {
     return user && user.role === "admin";
   };
 
-  // Fetch categories from API
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     setLoading(true);
     try {
       const response = await axios.get(
@@ -100,7 +99,7 @@ const CategoryBlog = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, filterStatus, searchQuery]); // Các phụ thuộc của fetchCategories
 
   // Fetch data on mount and when dependencies change
   useEffect(() => {
@@ -113,7 +112,7 @@ const CategoryBlog = () => {
       return;
     }
     fetchCategories();
-  }, [currentPage, filterStatus, searchQuery]);
+  }, [fetchCategories]);
 
   // Validate category data
   const validateCategory = (category) => {
