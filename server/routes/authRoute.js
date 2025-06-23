@@ -9,12 +9,13 @@ const {
   uploadProfilePicture,
   updateUser,
   upload,
-  logoutUser
+  logoutUser,
+  googleLogin,
 } = require("../controllers/authController");
 const {
   getAllDoctors,
   getDoctorById,
-  updateDoctorStatus
+  updateDoctorStatus,
 } = require("../controllers/doctorController");
 const {
   getAllBlogs,
@@ -36,7 +37,11 @@ const chatbotController = require("../controllers/chat/chatbotController");
 const chatboxController = require("../controllers/chat/chatboxController");
 const multer = require("multer");
 const path = require("path");
-const { requestPasswordReset, verifyOTP, resetPassword } = require("../controllers/otpController");
+const {
+  requestPasswordReset,
+  verifyOTP,
+  resetPassword,
+} = require("../controllers/otpController");
 
 // Configure multer for file uploads (used for profile pictures and blog images)
 const storage = multer.diskStorage({
@@ -62,11 +67,16 @@ const uploadMulter = multer({
   },
 });
 
-
 // Authentication
 router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.post("/logout", authMiddleware, logoutUser);
+router.post("/reset-pass", requestPasswordReset);
+router.post("/verify", verifyOTP);
+router.post("/confirm-reset", resetPassword);
+router.post("/gg-login", googleLogin);
+
+// Doctor
 router.get("/doctor", getAllDoctors);
 router.get("/doctor/:doctorId", getDoctorById);
 router.post(
@@ -95,7 +105,7 @@ router.post(
   authAdminMiddleware,
   uploadMulter.fields([
     { name: "mainImage", maxCount: 1 },
-    { name: "contentImages", maxCount: 10 }, 
+    { name: "contentImages", maxCount: 10 },
   ]),
   uploadImage
 );

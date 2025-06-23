@@ -6,6 +6,8 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const multer = require("multer");
 const path = require("path");
+const { OAuth2Client } = require("google-auth-library");
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Danh sách đen để lưu token đã logout (thay bằng Redis trong production)
 const tokenBlacklist = [];
@@ -142,7 +144,9 @@ exports.loginUser = async (req, res, next) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ msg: "Vui lòng nhập đầy đủ email và mật khẩu." });
+      return res
+        .status(400)
+        .json({ msg: "Vui lòng nhập đầy đủ email và mật khẩu." });
     }
 
     const user = await User.findOne({ email }).lean();
@@ -185,6 +189,51 @@ exports.loginUser = async (req, res, next) => {
   }
 };
 
+exports.googleLogin = async (req, res) => {
+  const { token } = req.body;
+
+  try {
+    // Xác thực token Google gửi lên
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    const { email, name, picture } = payload;
+
+    // Kiểm tra user đã tồn tại chưa
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      // Nếu chưa — tạo mới user với role patient mặc định
+      user = await User.create({
+        username: email.split("@")[0],
+        fullname: name,
+        email,
+        isGoogleAccount: true,
+        profilePicture: picture,
+      });
+    }
+
+    // Tạo token JWT cho app của bạn
+    const appToken = jwt.sign(
+      { userId: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "20h" }
+    );
+
+    res.status(200).json({
+      msg: "Đăng nhập Google thành công!",
+      token: appToken,
+      user,
+    });
+
+  } catch (err) {
+    console.error("Google login error:", err);
+    res.status(500).json({ msg: "Xác thực Google thất bại." });
+  }
+};
 
 exports.uploadProfilePicture = async (req, res, next) => {
   try {
