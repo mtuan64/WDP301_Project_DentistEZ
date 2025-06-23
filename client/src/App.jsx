@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { Routes, Route } from "react-router-dom"; // KHÔNG import BrowserRouter ở đây
+
 import ServicePage from "./pages/ServicePage";
 
 import DoctorPage from "./pages/DoctorPage";
