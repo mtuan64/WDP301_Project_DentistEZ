@@ -17,11 +17,13 @@ const {
 } = require("../controllers/doctorController");
 const {
   getAllBlogs,
+  getAllBlogsForAdmin,
   createBlog,
   updateBlog,
   deleteBlog,
   uploadImage,
   getAllCategories,
+  getAllCategoriesForAdmin,
   createCategory,
   updateCategory,
   deleteCategory,
@@ -89,6 +91,7 @@ router.put("/staff/:staffId/status", authAdminMiddleware, updateStaffStatus);
 
 //Blog
 router.get("/blogs", getAllBlogs);
+router.get("/admin/blogs", authAdminMiddleware, getAllBlogsForAdmin);
 router.post("/blogs", authAdminMiddleware, createBlog);
 router.put("/blogs/:id", authAdminMiddleware, updateBlog);
 router.delete("/blogs/:id", authAdminMiddleware, deleteBlog);
@@ -102,6 +105,7 @@ router.post(
   uploadImage
 );
 router.get("/categories", getAllCategories);
+router.get("/admin/categories", authAdminMiddleware, getAllCategoriesForAdmin);
 router.post("/categories", authAdminMiddleware, createCategory);
 router.put("/categories/:id", authAdminMiddleware, updateCategory);
 router.delete("/categories/:id", authAdminMiddleware, deleteCategory);

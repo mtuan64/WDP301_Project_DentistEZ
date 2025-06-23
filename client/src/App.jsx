@@ -10,6 +10,7 @@ import AboutPage from "./pages/AboutPage";
 import ProfilePage from "./pages/ProfilePage";
 import HomePage from "./pages/Homepage";
 import BlogListPage from "./pages/BlogListPage";
+import CategoryBlog from "./pages/CategoryBlog"
 import BlogPage from "./pages/BlogPage";
 import BlogDetail from "./pages/BlogDetail";
 import UserListPage from "./pages/UserListManage";
@@ -70,7 +71,8 @@ const App = () => {
           <Route path="/appointment" element={<AppointmentPage />} />
           <Route path="/userlist" element={<UserListPage />} />
           <Route path="/doctor/:doctorId" element={<DoctorDetail />} />
-          <Route path="/bloglist" element={<BlogListPage />} />
+          <Route path="admin/blogs" element={<BlogListPage />} />
+          <Route path="/admin/categories" element={<CategoryBlog />} />
           <Route path="/blog" element={<BlogPage />} />
           <Route path="/blog/:slug" element={<BlogDetail />} />
           <Route path="/doctoraccount" element={<DoctorAccountManagement />} />

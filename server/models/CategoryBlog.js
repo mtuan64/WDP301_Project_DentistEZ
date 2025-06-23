@@ -8,6 +8,12 @@ const categoryBlogSchema = new Schema({
     trim: true,
     unique: true,
   },
+  status: {
+    type: String,
+    enum: ["active", "inactive"],
+    default: "active",
+    required: true,
+  },
 });
 
 const CategoryBlog = mongoose.model("CategoryBlog", categoryBlogSchema);
