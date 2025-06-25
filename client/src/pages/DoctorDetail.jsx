@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Container, Row, Col } from "react-bootstrap";
 import { Link, useParams } from "react-router-dom";
-
-import FooterComponent from "../components/FooterComponent";
 import axios from "axios";
-import "../assets/css/Homepage.css";
+import "../assets/css/DoctorDetail.css";
 
 const DoctorDetail = () => {
   const { doctorId } = useParams();

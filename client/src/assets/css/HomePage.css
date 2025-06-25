@@ -280,7 +280,56 @@ p {
     font-size: 1.1rem;
 }
 
-/* Custom Doctors Carousel */
+/********** About Us Section **********/
+.about-section {
+    padding: 5rem 0;
+}
+
+.about-section img {
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.about-section img:hover {
+    transform: scale(1.05);
+}
+
+.about-section p {
+    color: var(--gray);
+    font-size: 1.1rem;
+}
+
+.about-section .fa-check-circle {
+    color: var(--primary);
+    margin-right: 10px;
+}
+
+/********** Doctors Section **********/
+.doctors-section {
+    padding: 5rem 0;
+    background-color: var(--white);
+}
+
+.doctors-section h2 {
+    font-size: 2rem;
+    color: var(--primary);
+    text-align: center;
+    margin-bottom: 2.5rem;
+    position: relative;
+}
+
+.doctors-section h2::after {
+    content: "";
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 3px;
+    background-color: var(--primary);
+}
+
 .doctors-carousel {
     position: relative;
     overflow: hidden;
@@ -291,9 +340,47 @@ p {
     transition: transform 0.5s ease-in-out;
 }
 
-.doctors-carousel .col-lg-3 {
+.doctors-carousel .col-md-3 {
     flex: 0 0 25%;
     max-width: 25%;
+}
+
+.doctor-card {
+    background-color: var(--light-blue);
+    border-radius: 12px;
+    overflow: hidden;
+    padding: 20px;
+    position: relative;
+    margin: 0 auto;
+    text-align: center;
+    transition: transform 0.3s ease;
+}
+
+.doctor-card:hover {
+    transform: translateY(-10px);
+}
+
+.doctor-image img {
+    width: 100%;
+    height: 250px;
+    object-fit: cover;
+    border-radius: 12px;
+}
+
+.contact-icons a {
+    color: var(--primary);
+    font-size: 1.2rem;
+    margin: 0 5px;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.contact-icons a:hover {
+    color: var(--secondary);
+}
+
+.contact-icons i {
+    margin-right: 5px;
 }
 
 /* Carousel controls */
@@ -320,27 +407,30 @@ p {
 
 /* Responsive adjustments */
 @media (max-width: 991.98px) {
-    .doctors-carousel .col-lg-3 {
+    .doctors-carousel .col-md-3 {
         flex: 0 0 50%;
         max-width: 50%;
     }
 }
 
 @media (max-width: 575.98px) {
-    .doctors-carousel .col-lg-3 {
+    .doctors-carousel .col-md-3 {
         flex: 0 0 100%;
         max-width: 100%;
     }
+
+    .doctor-image img {
+        height: 200px;
+    }
 }
 
-/********** Doctors Section **********/
-/* Doctors section container */
-.doctors-section {
+/********** Services Section **********/
+.services-section {
     padding: 5rem 0;
-    background-color: var(--white);
+    background-color: var(--light);
 }
 
-.doctors-section h3 {
+.services-section h2 {
     font-size: 2rem;
     color: var(--primary);
     text-align: center;
@@ -348,7 +438,7 @@ p {
     position: relative;
 }
 
-.doctors-section h3::after {
+.services-section h2::after {
     content: "";
     position: absolute;
     bottom: -10px;
@@ -359,214 +449,125 @@ p {
     background-color: var(--primary);
 }
 
-/* Doctor card */
-.doctor-card {
-    background-color: var(--light-blue);
-    border-radius: 50%;
+.services-carousel {
+    position: relative;
+    overflow: hidden;
+}
+
+.services-carousel-inner {
+    display: flex;
+    transition: transform 0.5s ease-in-out;
+}
+
+.services-carousel .col-md-3 {
+    flex: 0 0 25%;
+    max-width: 25%;
+}
+
+.service-item {
+    background-color: var(--white);
+    border-radius: 12px;
     overflow: hidden;
     padding: 20px;
-    position: relative;
-    max-width: 250px;
-    margin: 0 auto;
-    text-align: center;
-}
-
-.doctor-image {
-    position: relative;
-    margin-bottom: 15px;
-}
-
-.doctor-image img {
-    width: 200px;
-    height: 200px;
-    object-fit: cover;
-    border-radius: 50%;
-    border: 5px solid var(--white);
-}
-
-.tooth-logo {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    width: 50px;
-    height: 50px;
-    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%2306A3DA"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>') no-repeat center;
-    background-size: contain;
-}
-
-.doctor-card h5 {
-    font-size: 1.1rem;
-    color: var(--dark);
-    margin-bottom: 5px;
-}
-
-.doctor-card p {
-    font-size: 0.9rem;
-    color: var(--gray);
-    margin-bottom: 10px;
-}
-
-/* Contact icons */
-.contact-icons a {
-    color: var(--primary);
-    font-size: 1.2rem;
-    margin: 0 5px;
-    text-decoration: none;
-    transition: color 0.3s ease;
-}
-
-.contact-icons a:hover {
-    color: var(--secondary);
-}
-
-.contact-icons i {
-    margin-right: 5px;
-}
-
-/* Responsive design */
-@media (max-width: 768px) {
-    .doctor-card {
-        max-width: 200px;
-    }
-
-    .doctor-image img {
-        width: 150px;
-        height: 150px;
-    }
-
-    .tooth-logo {
-        width: 40px;
-        height: 40px;
-    }
-
-    .doctor-card h5 {
-        font-size: 1rem;
-    }
-
-    .doctor-card p {
-        font-size: 0.85rem;
-    }
-}
-
-@media (max-width: 576px) {
-    .doctor-card {
-        max-width: 180px;
-    }
-
-    .doctor-image img {
-        width: 130px;
-        height: 130px;
-    }
-
-    .tooth-logo {
-        width: 35px;
-        height: 35px;
-    }
-
-    .doctor-card h5 {
-        font-size: 0.9rem;
-    }
-
-    .doctor-card p {
-        font-size: 0.8rem;
-    }
-}
-
-/********** Banner Section **********/
-.banner-section .bg-primary,
-.banner-section .bg-dark,
-.banner-section .bg-secondary {
-    padding: 3rem 2rem;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
     text-align: center;
     transition: transform 0.3s ease;
-}
-
-.banner-section .bg-primary:hover,
-.banner-section .bg-dark:hover,
-.banner-section .bg-secondary:hover {
-    transform: translateY(-5px);
-}
-
-.banner-section h3 {
-    font-size: 1.75rem;
-    margin-bottom: 1.5rem;
-    color: var(--white);
-}
-
-.banner-section p {
-    font-size: 1rem;
-    margin-bottom: 1.5rem;
-}
-
-.banner-section h2 {
-    font-size: 1.5rem;
-    color: var(--white);
-}
-
-.banner-section .btn {
-    font-size: 1rem;
-    padding: 10px 20px;
-}
-
-/********** About Us Section **********/
-.about-section {
-    padding: 5rem 0;
-}
-
-.about-section img {
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease;
-}
-
-.about-section img:hover {
-    transform: scale(1.05);
-}
-
-.about-section p {
-    color: var(--gray);
-    font-size: 1.1rem;
-}
-
-.about-section .fa-check-circle {
-    color: var(--primary);
-    margin-right: 10px;
-}
-
-/********** Services Section **********/
-.service-item {
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    border-radius: 12px;
-    padding: 2rem;
-    background-color: var(--white);
 }
 
 .service-item:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    transform: scale(1.05);
 }
 
-.service-item i {
-    color: var(--primary);
-    margin-bottom: 1.5rem;
+.service-item img {
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
 }
 
 .service-item h5 {
     font-size: 1.25rem;
     color: var(--dark);
+    margin-top: 15px;
 }
 
-.service-item p {
-    font-size: 0.95rem;
-    color: var(--gray);
+/* Carousel controls */
+.carousel-control-prev,
+.carousel-control-next {
+    width: 5%;
+    background: none;
+    border: none;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+}
+
+.carousel-control-prev:hover,
+.carousel-control-next:hover {
+    opacity: 1;
+}
+
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+    background-size: 100% 100%;
+    width: 30px;
+    height: 30px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 991.98px) {
+    .services-carousel .col-md-3 {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .services-carousel .col-md-3 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    .service-item img {
+        height: 150px;
+    }
 }
 
 /********** Blog Section **********/
+.blog-section {
+    padding: 5rem 0;
+    background-color: var(--white);
+}
+
+.blog-section h2 {
+    font-size: 2rem;
+    color: var(--primary);
+    text-align: center;
+    margin-bottom: 2.5rem;
+    position: relative;
+}
+
+.blog-section h2::after {
+    content: "";
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 3px;
+    background-color: var(--primary);
+}
+
+.blog-container {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+}
+
 .blog-item {
+    flex: 1 1 calc(33.33% - 13.33px);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     border-radius: 12px;
     overflow: hidden;
@@ -579,37 +580,8 @@ p {
 }
 
 .blog-item img {
-    border-radius: 12px 12px 0 0;
-}
-
-.blog-item .btn {
-    font-size: 0.95rem;
-    padding: 8px 20px;
-}
-.blog-container {
-    display: flex;
-    justify-content: space-between;
-    gap: 20px;
-    /* Space between cards */
-}
-
-.blog-item {
-    flex: 1 1 calc(33.33% - 13.33px);
-    /* Adjust for 3 columns with gap */
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    /* Ensure full height */
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    border-radius: 12px;
-    overflow: hidden;
-    background-color: var(--white);
-}
-
-.blog-item img {
     width: 100%;
     height: 220px;
-    /* Fixed height for images */
     object-fit: cover;
     border-radius: 12px 12px 0 0;
 }
@@ -639,13 +611,11 @@ p {
     font-size: 0.95rem;
     padding: 8px 20px;
     align-self: flex-start;
-    /* Align button to the left or start */
 }
 
 @media (max-width: 991.98px) {
     .blog-item {
         flex: 1 1 calc(50% - 10px);
-        /* 2 columns on medium screens */
     }
 }
 
@@ -657,7 +627,6 @@ p {
 
     .blog-item {
         flex: 1 1 100%;
-        /* 1 column on small screens */
     }
 }
 
