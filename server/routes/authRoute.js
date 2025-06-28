@@ -12,6 +12,8 @@ const chatbotController = require("../controllers/chat/chatbotController");
 const chatboxController = require("../controllers/chat/chatboxController");
 const {requestPasswordReset,verifyOTP,resetPassword,} = require("../controllers/otpController");
 
+const { createPayment } = require("../controllers/paymentController");
+const { createPayment } = require("../controllers/paymentController");
 
 // Configure multer for file uploads (used for profile pictures and blog images)
 const storage = multer.diskStorage({
@@ -122,5 +124,11 @@ router.post("/chat/chatwithai", chatbotController.chatWithAI);
 router.get("/chat/messages", chatboxController.getMessages);
 router.post("/chat/send", chatboxController.sendMessage);
 
+
+//Payment
+router.post("/create-payment", createPayment);
+
+//Payment
+router.post("/create-payment", createPayment);
 
 module.exports = router;
