@@ -1,0 +1,168 @@
+.doctordetail-page {
+  padding: 40px 0;
+  background-color: #f8f9fa;
+}
+
+.doctordetail-wrapper {
+  display: flex;
+  max-width: 1200px;
+  margin: 0 auto;
+  gap: 30px;
+}
+
+.doctordetail-main {
+  flex: 2;
+}
+
+.doctordetail-sidebar {
+  flex: 1;
+}
+
+.doctordetail-container {
+  padding: 20px;
+}
+
+.doctordetail-card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 30px;
+}
+
+.doctordetail-header {
+  margin-bottom: 20px;
+}
+
+.doctordetail-title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.doctordetail-meta {
+  display: flex;
+  gap: 20px;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.doctordetail-specialty svg {
+  margin-right: 5px;
+  vertical-align: middle;
+}
+
+.doctordetail-image {
+  margin-bottom: 20px;
+}
+
+.doctordetail-image img {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  object-fit: contain; /* Display full image without cropping */
+  max-width: 600px; /* Prevent oversized images */
+}
+
+.doctordetail-content {
+  font-size: 1rem;
+  color: #333;
+  line-height: 1.6;
+}
+
+.doctordetail-content p {
+  margin-bottom: 15px;
+}
+
+.doctordetail-read-more {
+  display: inline-block;
+  margin-top: 10px;
+  color: #007bff;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.doctordetail-read-more:hover {
+  text-decoration: underline;
+}
+
+.doctordetail-sidebar-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.doctordetail-featured-doctors {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.doctordetail-featured-doctor-card {
+  display: flex;
+  gap: 15px;
+  background: #fff;
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.doctordetail-featured-doctor-image {
+  width: 100px;
+  height: 100px;
+  object-fit: cover; /* Keep sidebar images square */
+  border-radius: 8px;
+}
+
+.doctordetail-featured-doctor-content {
+  flex: 1;
+}
+
+.doctordetail-featured-doctor-title {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.doctordetail-featured-doctor-title-link {
+  color: #333;
+  text-decoration: none;
+}
+
+.doctordetail-featured-doctor-title-link:hover {
+  color: #007bff;
+}
+
+.doctordetail-featured-doctor-excerpt {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 10px;
+}
+
+.doctordetail-loading,
+.doctordetail-error {
+  text-align: center;
+  padding: 50px;
+  font-size: 1.2rem;
+  color: #333;
+}
+
+.doctordetail-error .btn {
+  margin-top: 20px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .doctordetail-wrapper {
+    flex-direction: column;
+  }
+  .doctordetail-main,
+  .doctordetail-sidebar {
+    flex: none;
+    width: 100%;
+  }
+  .doctordetail-image img {
+    max-width: 100%; /* Ensure image fits smaller screens */
+  }
+}

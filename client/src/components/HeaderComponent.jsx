@@ -100,7 +100,7 @@ const Header = ({ onMenuClick }) => {
             <BookOutlined style={{ marginRight: 8 }} />
             Blog
           </Link>
-          <Link to="/service" className="nav-item nav-link">
+          <Link to="/services" className="nav-item nav-link">
             <ToolOutlined style={{ marginRight: 8 }} />
             Service
           </Link>

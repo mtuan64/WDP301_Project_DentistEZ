@@ -1,9 +1,6 @@
 import React, { useState } from "react";
 
-import { BrowserRouter as Router} from "react-router-dom";
-import { Routes, Route } from "react-router-dom"; // KHÔNG import BrowserRouter ở đây
-// import ServicePage from "./pages/ServicePage";
-
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import DoctorPage from "./pages/DoctorPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
@@ -20,6 +17,7 @@ import BlogPage from "./pages/BlogPage";
 import BlogDetail from "./pages/BlogDetail";
 import UserListPage from "./pages/UserListManage";
 import AppointmentPage from "./pages/AppointmentPage";
+import AppointmentManagement from "./pages/AppointmentManagement";
 import DoctorAccountManagement from "./pages/DoctorAccountManagement";
 import StaticPage from "./pages/StatisticPage";
 import Header from "./components/HeaderComponent";
@@ -93,7 +91,7 @@ const App = () => {
           <Route path="/blog" element={<BlogPage />} />
           <Route path="/blog/:slug" element={<BlogDetail />} />
           <Route path="/doctoraccount" element={<DoctorAccountManagement />} />
-
+          <Route path="/admin/appointments" element={<AppointmentManagement />} />
           <Route path="/accountmanagement"element={<AccountManagement />} />
           <Route path="/doctor/schedule" element={<ScheduleManagement />} />
           <Route path="/services" element={<ServiceCard />} />
