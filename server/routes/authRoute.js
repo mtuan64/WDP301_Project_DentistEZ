@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { authMiddleware, authAdminMiddleware, authDentistMiddleware } = require("../middleware/authMiddleware");
 const { registerUser, loginUser, uploadProfilePicture, updateUser, upload, getServiceDetail, logoutUser, googleLogin } = require("../controllers/authController");
-const { getAllDoctors, getDoctorById, updateDoctorStatus, createSchedule, getSchedule, getScheduleByWeek, getSchedulebydoctorId } = require("../controllers/doctorController");
+const { getAllDoctors, getDoctorById, updateDoctorStatus,updateDoctor, createSchedule, getSchedule, getScheduleByWeek, getSchedulebydoctorId } = require("../controllers/doctorController");
 const { getAllBlogs, getAllBlogsForAdmin, createBlog, updateBlog, deleteBlog, uploadImage, getAllCategories, getAllCategoriesForAdmin, createCategory, updateCategory, deleteCategory, getBlogBySlug, getTopViewedBlogs, incrementBlogViews } = require("../controllers/blogController");
 const { getAllAppointment, createAppointment, editAppointment, deleteAppointment } = require("../controllers/appointmentController");
 const multer = require("multer");
@@ -57,6 +57,7 @@ router.post("/gg-login", googleLogin);
 // Doctor
 router.get("/doctor", getAllDoctors);
 router.get("/doctor/:doctorId", getDoctorById);
+router.put('/doctors/:doctorId',authAdminMiddleware, updateDoctor);
 
 router.post("/user/upload-profile-picture", authMiddleware, uploadMulter.single("profilePicture"), uploadProfilePicture);
 router.post("/user/update", authMiddleware, updateUser);
@@ -65,11 +66,6 @@ router.get("/docroraccount", authAdminMiddleware, getAllDoctors);
 router.put("/doctor/:doctorId/status", authAdminMiddleware, updateDoctorStatus);
 
 // admin 
-router.get("/blogs", authAdminMiddleware, getAllBlogs); 
-router.post("/blogs", authAdminMiddleware, createBlog); 
-router.put("/blogs/:id", authAdminMiddleware, updateBlog); 
-router.delete("/blogs/:id", authAdminMiddleware, deleteBlog);
-router.post("/blogs/upload", authAdminMiddleware, uploadMulter.single("image"), uploadImage);
 router.post("/admin/create-account-doctor", authAdminMiddleware, createAcountDoctor);
 router.get("/clinic", getAllClinic);
 router.post("/admin/create-account-staff", authAdminMiddleware, createAcountStaff);

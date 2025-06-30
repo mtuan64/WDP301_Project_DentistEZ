@@ -7,29 +7,6 @@ import { Row, Col } from "react-bootstrap";
 const AboutPage = () => {
   return (
     <>
-      {/* Topbar */}
-      {/* <div className="bg-light py-3 px-5 d-none d-lg-block border-bottom shadow-sm">
-        <Row className="align-items-center justify-content-between">
-          <Col md={6} className="text-start">
-            <small className="text-muted">
-              <i className="far fa-clock text-primary me-2"></i>
-              Opening Hours: Mon - Tues : 6.00 am - 10.00 pm, Sunday Closed
-            </small>
-          </Col>
-          <Col md={6} className="text-end">
-            <small className="text-muted me-4">
-              <i className="fa fa-envelope-open text-primary me-2"></i>
-              info@example.com
-            </small>
-            <small className="text-muted">
-              <i className="fa fa-phone-alt text-primary me-2"></i>
-              +012 345 6789
-            </small>
-          </Col>
-        </Row>
-      </div> */}
-
-      
 
       {/* Hero Section */}
       <div id="heroCarousel" className="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="4000">

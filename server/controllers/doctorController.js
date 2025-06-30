@@ -22,27 +22,30 @@ exports.getAllDoctors = async (req, res) => {
 };
 
 
-exports.getDoctorById = async (req, res, next) => {
+exports.getDoctorById = async (req, res) => {
   try {
-    const doctorId = req.params.doctorId; // ID dạng string
-
-    // Tìm theo _id
-    const doctor = await Doctor.findById(doctorId).populate('userId', 'fullname');
-
+    const doctor = await Doctor.findById(req.params.doctorId)
+      .populate('userId', 'fullname')
+      .populate('clinic_id', 'clinic_name');
     if (!doctor) {
-      return res.status(404).json({
-        success: false,
-        message: "Không tìm thấy bác sĩ"
-      });
+      return res.status(404).json({ message: 'Doctor not found' });
     }
-
-    return res.status(200).json({
-      success: true,
-      data: doctor
-    });
+    res.status(200).json({ data: doctor });
   } catch (error) {
-    console.error("Error in getDoctorById:", error);
-    return next(error);
+    console.error('Error in getDoctorById:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+exports.getAllDoctors = async (req, res) => {
+  try {
+    const doctors = await Doctor.find()
+      .populate('userId', 'fullname')
+      .populate('clinic_id', 'clinic_name');
+    res.status(200).json({ data: doctors });
+  } catch (error) {
+    console.error('Error in getAllDoctors:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -82,6 +85,65 @@ exports.updateDoctorStatus = async (req, res, next) => {
     return next(error);
   }
 
+};
+
+exports.updateDoctor = async (req, res) => {
+  try {
+    const doctorId = req.params.doctorId;
+    const { Specialty, Degree, ExperienceYears, Description, ProfileImage } = req.body;
+
+    // Validate input
+    if (!Specialty || !Degree || ExperienceYears === undefined || ExperienceYears === null) {
+      return res.status(400).json({
+        success: false,
+        message: "Vui lòng cung cấp đầy đủ thông tin: Specialty, Degree, và ExperienceYears",
+      });
+    }
+
+    // Validate ExperienceYears
+    const parsedExperienceYears = Number(ExperienceYears);
+    if (isNaN(parsedExperienceYears) || parsedExperienceYears < 0) {
+      return res.status(400).json({
+        success: false,
+        message: "ExperienceYears phải là số không âm",
+      });
+    }
+
+    // Find and update doctor
+    const doctor = await Doctor.findByIdAndUpdate(
+      doctorId,
+      {
+        Specialty,
+        Degree,
+        ExperienceYears: parsedExperienceYears,
+        Description,
+        ProfileImage,
+      },
+      { new: true, runValidators: true }
+    )
+      .populate("userId", "fullname")
+      .populate("clinic_id", "clinic_name");
+
+    if (!doctor) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy bác sĩ",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Cập nhật thông tin bác sĩ thành công",
+      data: doctor,
+    });
+  } catch (error) {
+    console.error("Error in updateDoctor:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi server khi cập nhật thông tin bác sĩ",
+      error: error.message,
+    });
+  }
 };
 
 // POST /api/doctor/create-schedule

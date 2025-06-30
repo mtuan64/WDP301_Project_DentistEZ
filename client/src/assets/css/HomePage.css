@@ -1,18 +1,12 @@
 /********** Root & Fonts **********/
 :root {
     --primary: #06A3DA;
-    /* Bright blue for primary actions */
     --secondary: #F57E57;
-    /* Warm coral for accents */
     --light: #EEF9FF;
-    /* Light blue background */
     --dark: #091E3E;
-    /* Deep navy for text and contrast */
     --white: #fff;
     --gray: #6c757d;
-    /* Muted gray for secondary text */
     --light-blue: #E6F0FA;
-    /* Light blue for doctor cards */
 }
 
 /* Reset cơ bản */
@@ -383,47 +377,6 @@ p {
     margin-right: 5px;
 }
 
-/* Carousel controls */
-.carousel-control-prev,
-.carousel-control-next {
-    width: 5%;
-    background: none;
-    border: none;
-    opacity: 0.5;
-    transition: opacity 0.2s;
-}
-
-.carousel-control-prev:hover,
-.carousel-control-next:hover {
-    opacity: 1;
-}
-
-.carousel-control-prev-icon,
-.carousel-control-next-icon {
-    background-size: 100% 100%;
-    width: 30px;
-    height: 30px;
-}
-
-/* Responsive adjustments */
-@media (max-width: 991.98px) {
-    .doctors-carousel .col-md-3 {
-        flex: 0 0 50%;
-        max-width: 50%;
-    }
-}
-
-@media (max-width: 575.98px) {
-    .doctors-carousel .col-md-3 {
-        flex: 0 0 100%;
-        max-width: 100%;
-    }
-
-    .doctor-image img {
-        height: 200px;
-    }
-}
-
 /********** Services Section **********/
 .services-section {
     padding: 5rem 0;
@@ -491,9 +444,92 @@ p {
     margin-top: 15px;
 }
 
-/* Carousel controls */
-.carousel-control-prev,
-.carousel-control-next {
+/********** Custom Carousel Controls **********/
+.custom-carousel-control-prev,
+.custom-carousel-control-next {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 50px;
+    height: 50px;
+    background-color: var(--primary);
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.3s ease, transform 0.3s ease;
+    z-index: 10;
+}
+
+.custom-carousel-control-prev {
+    left: -25px;
+}
+
+.custom-carousel-control-next {
+    right: -25px;
+}
+
+.custom-carousel-control-prev:hover,
+.custom-carousel-control-next:hover {
+    background-color: var(--secondary);
+    transform: translateY(-50%) scale(1.1);
+}
+
+.custom-carousel-control-icon {
+    font-size: 1.5rem;
+    color: var(--white);
+}
+
+.custom-carousel-control-icon i {
+    line-height: 1;
+}
+
+/* Responsive adjustments for carousel controls */
+@media (max-width: 991.98px) {
+    .custom-carousel-control-prev,
+    .custom-carousel-control-next {
+        width: 40px;
+        height: 40px;
+    }
+
+    .custom-carousel-control-icon {
+        font-size: 1.2rem;
+    }
+
+    .custom-carousel-control-prev {
+        left: -15px;
+    }
+
+    .custom-carousel-control-next {
+        right: -15px;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .custom-carousel-control-prev,
+    .custom-carousel-control-next {
+        width: 35px;
+        height: 35px;
+    }
+
+    .custom-carousel-control-icon {
+        font-size: 1rem;
+    }
+
+    .custom-carousel-control-prev {
+        left: -10px;
+    }
+
+    .custom-carousel-control-next {
+        right: -10px;
+    }
+}
+
+/* Override default Bootstrap carousel controls for facilityCarousel */
+#facilityCarousel .carousel-control-prev,
+#facilityCarousel .carousel-control-next {
     width: 5%;
     background: none;
     border: none;
@@ -501,35 +537,16 @@ p {
     transition: opacity 0.2s;
 }
 
-.carousel-control-prev:hover,
-.carousel-control-next:hover {
+#facilityCarousel .carousel-control-prev:hover,
+#facilityCarousel .carousel-control-next:hover {
     opacity: 1;
 }
 
-.carousel-control-prev-icon,
-.carousel-control-next-icon {
+#facilityCarousel .carousel-control-prev-icon,
+#facilityCarousel .carousel-control-next-icon {
     background-size: 100% 100%;
     width: 30px;
     height: 30px;
-}
-
-/* Responsive adjustments */
-@media (max-width: 991.98px) {
-    .services-carousel .col-md-3 {
-        flex: 0 0 50%;
-        max-width: 50%;
-    }
-}
-
-@media (max-width: 575.98px) {
-    .services-carousel .col-md-3 {
-        flex: 0 0 100%;
-        max-width: 100%;
-    }
-
-    .service-item img {
-        height: 150px;
-    }
 }
 
 /********** Blog Section **********/

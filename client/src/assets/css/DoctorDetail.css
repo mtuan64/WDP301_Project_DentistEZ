@@ -1,212 +1,168 @@
-/* DoctorDetail.css */
-
-/* General Reset for Consistent Styling */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+.doctordetail-page {
+  padding: 40px 0;
+  background-color: #f8f9fa;
 }
 
-/* Container Fluid */
-.container-fluid {
-  padding: 0;
-  background-color: #f8f9fa; /* Light background for contrast */
-}
-
-/* Hero Carousel */
-#heroCarousel {
-  position: relative;
-}
-
-.carousel-inner {
-  position: relative;
-}
-
-.carousel-item img {
-  width: 100%;
-  height: 80vh;
-  object-fit: cover;
-  filter: brightness(80%); /* Slightly dim the image for better text readability */
-}
-
-.carousel-caption {
+.doctordetail-wrapper {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  background: rgba(0, 0, 0, 0.6); /* Semi-transparent overlay for readability */
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  max-width: 1200px;
+  margin: 0 auto;
+  gap: 30px;
+}
+
+.doctordetail-main {
+  flex: 2;
+}
+
+.doctordetail-sidebar {
+  flex: 1;
+}
+
+.doctordetail-container {
   padding: 20px;
 }
 
-.carousel-caption h1 {
-  font-size: 3.5rem;
-  font-weight: 700;
-  color: #fff;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); /* Subtle shadow for text clarity */
-  margin-bottom: 1rem;
+.doctordetail-card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 30px;
 }
 
-.carousel-caption p {
-  font-size: 1.25rem;
-  color: #f1f1f1;
-  margin-bottom: 1.5rem;
+.doctordetail-header {
+  margin-bottom: 20px;
 }
 
-.carousel-caption .btn-outline-light {
-  font-size: 1.1rem;
-  padding: 10px 25px;
-  border-radius: 50px;
-  transition: all 0.3s ease;
+.doctordetail-title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 10px;
 }
 
-.carousel-caption .btn-outline-light:hover {
-  background-color: #007bff;
-  border-color: #007bff;
-  color: #fff;
+.doctordetail-meta {
+  display: flex;
+  gap: 20px;
+  font-size: 0.9rem;
+  color: #666;
 }
 
-/* Doctor Details Section */
-.doctor-details-section {
-  padding: 60px 0;
+.doctordetail-specialty svg {
+  margin-right: 5px;
+  vertical-align: middle;
 }
 
-.container {
-  max-width: 1200px;
+.doctordetail-image {
+  margin-bottom: 20px;
 }
 
-.bg-light {
-  background-color: #ffffff !important; /* Override Bootstrap's bg-light for a cleaner look */
-  border-radius: 15px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
-  transition: transform 0.3s ease;
-}
-
-.bg-light:hover {
-  transform: translateY(-5px); /* Slight lift effect on hover */
-}
-
-.img-fluid {
+.doctordetail-image img {
   width: 100%;
   height: auto;
-  max-height: 400px;
-  object-fit: cover;
-  border-radius: 10px;
+  border-radius: 8px;
+  object-fit: contain; /* Display full image without cropping */
+  max-width: 600px; /* Prevent oversized images */
 }
 
-h2.mb-4 {
-  font-size: 2rem;
-  font-weight: 600;
-  color: #333;
-  border-bottom: 2px solid #007bff;
-  padding-bottom: 10px;
-}
-
-p {
-  font-size: 1.1rem;
-  color: #555;
-  margin-bottom: 1rem;
-}
-
-p strong {
-  color: #333;
-  font-weight: 600;
-}
-
-.btn-secondary {
-  background-color: #6c757d;
-  border-color: #6c757d;
-  border-radius: 50px;
-  padding: 10px 20px;
+.doctordetail-content {
   font-size: 1rem;
-  transition: background-color 0.3s ease;
+  color: #333;
+  line-height: 1.6;
 }
 
-.btn-secondary:hover {
-  background-color: #5a6268;
-  border-color: #5a6268;
+.doctordetail-content p {
+  margin-bottom: 15px;
 }
 
-/* Loading and Error States */
-.text-center.py-5 {
-  min-height: 50vh;
+.doctordetail-read-more {
+  display: inline-block;
+  margin-top: 10px;
+  color: #007bff;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.doctordetail-read-more:hover {
+  text-decoration: underline;
+}
+
+.doctordetail-sidebar-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.doctordetail-featured-doctors {
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
+  gap: 20px;
 }
 
-.text-center h3 {
-  font-size: 1.5rem;
-  color: #dc3545; /* Red for error state */
-  margin-bottom: 1rem;
+.doctordetail-featured-doctor-card {
+  display: flex;
+  gap: 15px;
+  background: #fff;
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.btn-primary {
-  border-radius: 50px;
-  padding: 10px 25px;
-  font-size: 1rem;
-  background-color: #007bff;
-  border-color: #007bff;
-  transition: background-color 0.3s ease;
+.doctordetail-featured-doctor-image {
+  width: 100px;
+  height: 100px;
+  object-fit: cover; /* Keep sidebar images square */
+  border-radius: 8px;
 }
 
-.btn-primary:hover {
-  background-color: #0056b3;
-  border-color: #0056b3;
+.doctordetail-featured-doctor-content {
+  flex: 1;
 }
 
-/* Responsive Design */
-@media (max-width: 992px) {
-  .carousel-caption h1 {
-    font-size: 2.5rem;
-  }
-
-  .carousel-caption p {
-    font-size: 1rem;
-  }
-
-  .carousel-caption .btn-outline-light {
-    font-size: 1rem;
-    padding: 8px 20px;
-  }
-
-  .bg-light {
-    margin-bottom: 20px;
-  }
-
-  h2.mb-4 {
-    font-size: 1.75rem;
-  }
-
-  p {
-    font-size: 1rem;
-  }
+.doctordetail-featured-doctor-title {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 5px;
 }
 
-@media (max-width: 576px) {
-  .carousel-item img {
-    height: 60vh;
-  }
+.doctordetail-featured-doctor-title-link {
+  color: #333;
+  text-decoration: none;
+}
 
-  .carousel-caption h1 {
-    font-size: 1.8rem;
-  }
+.doctordetail-featured-doctor-title-link:hover {
+  color: #007bff;
+}
 
-  .carousel-caption p {
-    font-size: 0.9rem;
-  }
+.doctordetail-featured-doctor-excerpt {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 10px;
+}
 
-  .carousel-caption .btn-outline-light {
-    font-size: 0.9rem;
-    padding: 6px 15px;
-  }
+.doctordetail-loading,
+.doctordetail-error {
+  text-align: center;
+  padding: 50px;
+  font-size: 1.2rem;
+  color: #333;
+}
 
-  .doctor-details-section {
-    padding: 40px 0;
+.doctordetail-error .btn {
+  margin-top: 20px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .doctordetail-wrapper {
+    flex-direction: column;
+  }
+  .doctordetail-main,
+  .doctordetail-sidebar {
+    flex: none;
+    width: 100%;
+  }
+  .doctordetail-image img {
+    max-width: 100%; /* Ensure image fits smaller screens */
   }
 }

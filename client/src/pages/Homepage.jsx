@@ -13,8 +13,8 @@ const HomePage = () => {
   const [loadingServices, setLoadingServices] = useState(true);
   const [doctors, setDoctors] = useState([]);
   const [loadingDoctors, setLoadingDoctors] = useState(true);
-  const [doctorCarouselIndex, setDoctorCarouselIndex] = useState(0); // Separate state for doctors
-  const [serviceCarouselIndex, setServiceCarouselIndex] = useState(0); // Separate state for services
+  const [doctorCarouselIndex, setDoctorCarouselIndex] = useState(0);
+  const [serviceCarouselIndex, setServiceCarouselIndex] = useState(0);
 
   // Fetch Doctors
   useEffect(() => {
@@ -61,7 +61,6 @@ const HomePage = () => {
           headers,
         });
 
-        // Transform content if it's a string or missing
         const transformedBlogs = blogsResponse.data.map((blog) => ({
           ...blog,
           content: Array.isArray(blog.content)
@@ -74,7 +73,6 @@ const HomePage = () => {
               ],
         }));
 
-        // Sort blogs by creation date (newest first)
         const sortedBlogs = transformedBlogs.sort(
           (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
         );
@@ -89,7 +87,6 @@ const HomePage = () => {
     fetchBlogs();
   }, []);
 
-  // Utility functions from BlogPage
   const truncateText = (text, maxLength) => {
     if (!text || text.length <= maxLength) return text || "";
     return text.substring(0, maxLength - 3) + "...";
@@ -102,10 +99,8 @@ const HomePage = () => {
     return truncateText(firstItem.text, 100);
   };
 
-  // Filter active doctors
   const activeDoctors = doctors.filter((doctor) => doctor.Status !== "inactive");
 
-  // Handle carousel navigation for doctors
   const handleDoctorNext = () => {
     setDoctorCarouselIndex((prevIndex) =>
       prevIndex + 1 < Math.ceil(activeDoctors.length / 4)
@@ -120,7 +115,6 @@ const HomePage = () => {
     );
   };
 
-  // Handle carousel navigation for services
   const handleServiceNext = () => {
     setServiceCarouselIndex((prevIndex) =>
       prevIndex + 1 < Math.ceil(services.length / 4)
@@ -135,7 +129,6 @@ const HomePage = () => {
     );
   };
 
-  // Get the doctors to display based on doctorCarouselIndex
   const getVisibleDoctors = () => {
     const visibleDoctors = [];
     for (let i = 0; i < 4; i++) {
@@ -145,9 +138,8 @@ const HomePage = () => {
     return visibleDoctors;
   };
 
-  // Get the services to display based on serviceCarouselIndex
   const getVisibleServices = () => {
-    const itemsPerPage = 4; // Display 4 services per row
+    const itemsPerPage = 4;
     const startIndex = serviceCarouselIndex * itemsPerPage;
     return services.slice(startIndex, startIndex + itemsPerPage);
   };
@@ -439,25 +431,23 @@ const HomePage = () => {
                 ))}
               </Row>
               <button
-                className="carousel-control-prev"
+                className="custom-carousel-control-prev"
                 type="button"
                 onClick={handleServicePrev}
               >
-                <span
-                  className="carousel-control-prev-icon"
-                  aria-hidden="true"
-                ></span>
+                <span className="custom-carousel-control-icon" aria-hidden="true">
+                  <i className="bi bi-chevron-left"></i>
+                </span>
                 <span className="visually-hidden">Previous</span>
               </button>
               <button
-                className="carousel-control-next"
+                className="custom-carousel-control-next"
                 type="button"
                 onClick={handleServiceNext}
               >
-                <span
-                  className="carousel-control-next-icon"
-                  aria-hidden="true"
-                ></span>
+                <span className="custom-carousel-control-icon" aria-hidden="true">
+                  <i className="bi bi-chevron-right"></i>
+                </span>
                 <span className="visually-hidden">Next</span>
               </button>
             </div>
@@ -511,25 +501,23 @@ const HomePage = () => {
               ))}
             </Row>
             <button
-              className="carousel-control-prev"
+              className="custom-carousel-control-prev"
               type="button"
               onClick={handleDoctorPrev}
             >
-              <span
-                className="carousel-control-prev-icon"
-                aria-hidden="true"
-              ></span>
+              <span className="custom-carousel-control-icon" aria-hidden="true">
+                <i className="bi bi-chevron-left"></i>
+              </span>
               <span className="visually-hidden">Previous</span>
             </button>
             <button
-              className="carousel-control-next"
+              className="custom-carousel-control-next"
               type="button"
               onClick={handleDoctorNext}
             >
-              <span
-                className="carousel-control-next-icon"
-                aria-hidden="true"
-              ></span>
+              <span className="custom-carousel-control-icon" aria-hidden="true">
+                <i className="bi bi-chevron-right"></i>
+              </span>
               <span className="visually-hidden">Next</span>
             </button>
           </div>

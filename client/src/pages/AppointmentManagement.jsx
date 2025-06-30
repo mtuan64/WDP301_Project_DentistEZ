@@ -26,7 +26,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import "../assets/css/UserListPage.css"; // Tái sử dụng CSS tương tự UserListPage
+import "../assets/css/AppointmentPage.css"; 
 
 const AppointmentManagement = () => {
   const [appointments, setAppointments] = useState([]);
