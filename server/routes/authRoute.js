@@ -1,7 +1,25 @@
 const express = require("express");
 const router = express.Router();
-const { authMiddleware, authAdminMiddleware, authDentistMiddleware } = require("../middleware/authMiddleware");
-const { registerUser, loginUser, uploadProfilePicture, updateUser, upload, getServiceDetail, logoutUser, googleLogin } = require("../controllers/authController");
+const {
+  authMiddleware,
+  authAdminMiddleware,
+  authDentistMiddleware,
+} = require("../middleware/authMiddleware");
+const {
+  registerUser,
+  loginUser,
+  uploadProfilePicture,
+  updateUser,
+  upload,
+  getServiceDetail,
+  logoutUser,
+  googleLogin,
+} = require("../controllers/authController");
+const {
+  getUserProfile,
+  updateUserProfile,
+  uploadPictureProfile,
+} = require("../controllers/userController");
 const { getAllDoctors, getDoctorById, updateDoctorStatus,updateDoctor, createSchedule, getSchedule, getScheduleByWeek, getSchedulebydoctorId } = require("../controllers/doctorController");
 const { getAllBlogs, getAllBlogsForAdmin, createBlog, updateBlog, deleteBlog, uploadImage, getAllCategories, getAllCategoriesForAdmin, createCategory, updateCategory, deleteCategory, getBlogBySlug, getTopViewedBlogs, incrementBlogViews } = require("../controllers/blogController");
 const { getAllAppointment, createAppointment, editAppointment, deleteAppointment } = require("../controllers/appointmentController");
@@ -37,11 +55,35 @@ const uploadMulter = multer({
   },
 });
 
+const uploadMulterMemory = multer({
+  storage: multer.memoryStorage(), // dùng bộ nhớ RAM
+  fileFilter: (req, file, cb) => {
+    const filetypes = /jpeg|jpg|png/;
+    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = filetypes.test(file.mimetype);
+    if (extname && mimetype) {
+      return cb(null, true);
+    }
+    cb(new Error("Only JPEG/PNG images are allowed"));
+  },
+});
+
 // auth 
 router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.get("/view/service", getAllService);
 router.get("/view-detail/service/:id", getServiceDetail);
+
+// update profile
+router.get("/user/profile", authMiddleware, getUserProfile);
+router.put("/user/profile", authMiddleware, updateUserProfile);
+router.post(
+  "/user/upload-picture-profile",
+  authMiddleware,
+  uploadMulterMemory.single("profilePicture"), 
+  uploadPictureProfile
+);
+
 
 // doctor 
 router.post("/doctor/create-schedule", authDentistMiddleware, createSchedule);
@@ -58,10 +100,6 @@ router.post("/gg-login", googleLogin);
 router.get("/doctor", getAllDoctors);
 router.get("/doctor/:doctorId", getDoctorById);
 router.put('/doctors/:doctorId',authAdminMiddleware, updateDoctor);
-
-router.post("/user/upload-profile-picture", authMiddleware, uploadMulter.single("profilePicture"), uploadProfilePicture);
-router.post("/user/update", authMiddleware, updateUser);
-
 router.get("/docroraccount", authAdminMiddleware, getAllDoctors);
 router.put("/doctor/:doctorId/status", authAdminMiddleware, updateDoctorStatus);
 
