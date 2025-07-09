@@ -33,7 +33,11 @@ const authMiddleware = (req, res, next) => {
   try {
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // Attach userId and role to req
+    req.user = {
+      id: decoded.userId || decoded.id, // hỗ trợ cả khi token có userId hoặc id
+      role: decoded.role,
+    };
+    
     next();
   } catch (err) {
     console.error('Xác minh token thất bại:', err);
