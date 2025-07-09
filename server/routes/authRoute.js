@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { authMiddleware, authAdminMiddleware, authDentistMiddleware } = require("../middleware/authMiddleware");
+const { authMiddleware, authAdminMiddleware, authDentistMiddleware, authPatientMiddleware } = require("../middleware/authMiddleware");
 const {registerUser,loginUser,uploadProfilePicture,updateUser,upload, getServiceDetail,logoutUser,googleLogin} = require("../controllers/authController");
 const {getAllDoctors,getDoctorById,updateDoctorStatus, createSchedule, getSchedule, getScheduleByWeek, getSchedulebydoctorId} = require("../controllers/doctorController");
 const {getAllBlogs,getAllBlogsForAdmin,createBlog,updateBlog,deleteBlog,uploadImage,getAllCategories,getAllCategoriesForAdmin, createCategory,updateCategory,deleteCategory,getBlogBySlug,getTopViewedBlogs,incrementBlogViews} = require("../controllers/blogController");
@@ -11,6 +11,7 @@ const { getDefaultResultOrder } = require("dns");
 const chatbotController = require("../controllers/chat/chatbotController");
 const chatboxController = require("../controllers/chat/chatboxController");
 const {requestPasswordReset,verifyOTP,resetPassword,} = require("../controllers/otpController");
+
 
 
 // Configure multer for file uploads (used for profile pictures and blog images)
@@ -121,6 +122,8 @@ router.post("/blogs/slug/:slug/views", incrementBlogViews);
 router.post("/chat/chatwithai", chatbotController.chatWithAI);
 router.get("/chat/messages", chatboxController.getMessages);
 router.post("/chat/send", chatboxController.sendMessage);
+
+
 
 
 module.exports = router;

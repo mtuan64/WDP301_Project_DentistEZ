@@ -44,7 +44,7 @@ const menuByRole = {
   ],
   patient: [
     { title: "Home", path: "/", icon: <HomeOutlined /> },
-    { title: "My Project", path: "/my-project-intern", icon: <HomeOutlined /> },
+    { title: "My Appointment", path: "/myappointment", icon: <HomeOutlined /> },
     {
       title: "Report Management",
       path: "/report-management",
