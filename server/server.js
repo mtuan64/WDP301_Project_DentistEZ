@@ -37,6 +37,8 @@ app.get("/", (req, res) => {
 
 // Routes
 app.use("/api", require("./routes/authRoute"));
+app.use("/app", require("./routes/appRoute"));
+
 
 // 404 handler
 app.use((req, res, next) => {

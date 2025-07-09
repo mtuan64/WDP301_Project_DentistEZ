@@ -1,28 +1,19 @@
 const express = require("express");
 const router = express.Router();
-const {
-  authMiddleware,
-  authAdminMiddleware,
-  authDentistMiddleware,
-} = require("../middleware/authMiddleware");
-const {
-  registerUser,
-  loginUser,
-  uploadProfilePicture,
-  updateUser,
-  upload,
-  getServiceDetail,
-  logoutUser,
-  googleLogin,
-} = require("../controllers/authController");
+
+const { authMiddleware, authAdminMiddleware, authDentistMiddleware, authPatientMiddleware } = require("../middleware/authMiddleware");
+const {registerUser,loginUser,uploadProfilePicture,updateUser,upload, getServiceDetail,logoutUser,googleLogin} = require("../controllers/authController");
+const {getAllDoctors,getDoctorById,updateDoctorStatus, createSchedule, getSchedule, getScheduleByWeek, getSchedulebydoctorId} = require("../controllers/doctorController");
+const {getAllBlogs,getAllBlogsForAdmin,createBlog,updateBlog,deleteBlog,uploadImage,getAllCategories,getAllCategoriesForAdmin, createCategory,updateCategory,deleteCategory,getBlogBySlug,getTopViewedBlogs,incrementBlogViews} = require("../controllers/blogController");
+
 const {
   getUserProfile,
   updateUserProfile,
   uploadPictureProfile,
 } = require("../controllers/userController");
-const { getAllDoctors, getDoctorById, updateDoctorStatus,updateDoctor, createSchedule, getSchedule, getScheduleByWeek, getSchedulebydoctorId } = require("../controllers/doctorController");
-const { getAllBlogs, getAllBlogsForAdmin, createBlog, updateBlog, deleteBlog, uploadImage, getAllCategories, getAllCategoriesForAdmin, createCategory, updateCategory, deleteCategory, getBlogBySlug, getTopViewedBlogs, incrementBlogViews } = require("../controllers/blogController");
-const { getAllAppointment, createAppointment, editAppointment, deleteAppointment } = require("../controllers/appointmentController");
+ 
+
+
 const multer = require("multer");
 const path = require("path");
 const { createAcountDoctor, getAllClinic, createAcountStaff, getAllPatient, getAllStaff, getAllDoctor, changeStatus, createService, getAllService, uploadImageCloudinary, deleteService, editService } = require("../controllers/adminController");
@@ -30,6 +21,7 @@ const { getDefaultResultOrder } = require("dns");
 const chatbotController = require("../controllers/chat/chatbotController");
 const chatboxController = require("../controllers/chat/chatboxController");
 const { requestPasswordReset, verifyOTP, resetPassword } = require("../controllers/otpController");
+
 
 // Configure multer for file uploads (used for profile pictures and blog images)
 const storage = multer.diskStorage({
@@ -117,11 +109,7 @@ router.post("/admin/upload-image", authAdminMiddleware, uploadMulter.single("ima
 router.delete("/admin/delete-service/:id", authAdminMiddleware, deleteService);
 router.put("/admin/update-service/:id", authAdminMiddleware, uploadMulter.single("image"), editService);
 
-// Appointment routes
-router.get("/admin/appointments", authAdminMiddleware, getAllAppointment);
-router.post("/admin/appointments", authAdminMiddleware, createAppointment);
-router.put("/admin/appointments/:id", authAdminMiddleware, editAppointment);
-router.delete("/admin/appointments/:id", authAdminMiddleware, deleteAppointment);
+
 
 // Blog
 router.get("/blogs", getAllBlogs);
@@ -150,4 +138,7 @@ router.post("/chat/chatwithai", chatbotController.chatWithAI);
 router.get("/chat/messages", chatboxController.getMessages);
 router.post("/chat/send", chatboxController.sendMessage);
 
+exports = router;
+
 module.exports = router;
+
