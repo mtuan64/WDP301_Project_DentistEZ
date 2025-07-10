@@ -11,12 +11,6 @@ const appointmentSchema = new mongoose.Schema({
   AppointmentDate: { type: Date, required: true },
   AppointmentTime: { type: String, required: true }, // bạn có thể thay bằng Date nếu lưu timestamp đầy đủ
 
-  Status: {
-    type: String,
-    enum: ['pending', 'confirmed', 'cancelled', 'completed'],
-    default: 'pending'
-  },
-
   Note: { type: String },
 
 }, {

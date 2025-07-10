@@ -35,7 +35,6 @@ const createAppointment = async (req, res) => {
       clinic_id,
       AppointmentDate,
       AppointmentTime,
-      Status,
       Note
     } = req.body;
 
@@ -55,7 +54,6 @@ const createAppointment = async (req, res) => {
       clinic_id,
       AppointmentDate,
       AppointmentTime,
-      Status: Status || 'pending',
       Note
     });
 

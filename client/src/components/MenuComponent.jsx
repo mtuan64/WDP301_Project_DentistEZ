@@ -18,6 +18,7 @@ const menuByRole = {
     { title: "Manage Service", path: "/servicemanagement", icon: <FileTextOutlined />, },
     { title: "Settings", path: "/settings", icon: <SettingOutlined /> },
     { title: "Manage Blogs", path: "/admin/blogs", icon: <FileTextOutlined /> },
+    { title: "Manage Revenue", path: "/admin/payments", icon: <FileTextOutlined /> },
     {
       title: "Statistic Dashboard",
       path: "/statistic",

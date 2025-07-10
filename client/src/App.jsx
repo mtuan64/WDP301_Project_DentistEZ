@@ -23,7 +23,7 @@ import StaticPage from "./pages/StatisticPage";
 import Header from "./components/HeaderComponent";
 import Topbar from "./components/Topbar";
 import MenuComponent from "./components/MenuComponent";
-
+import PaymentManage from "./pages/PaymentManage";
 import "antd/dist/reset.css"; 
 import AccountManagement from "./pages/AccountManagement";
 import ScheduleManagement from "./pages/ScheduleManagement";
@@ -97,7 +97,7 @@ const App = () => {
           <Route path="/services" element={<ServiceCard />} />
           <Route path="/service-detail/:id" element={<ServiceDetail />} />
           <Route path="/servicemanagement" element={<ServiceManagement />}/>
-
+          <Route path="/admin/payments" element={<PaymentManage />}/>
           <Route path="/statistic" element={<StaticPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/verify-otp" element={<VerifyOtpPage />} />
