@@ -7,6 +7,11 @@ const paymentSchema = new Schema({
     ref: "Appointment",
     required: true,
   },
+  serviceId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Service",
+    required: true,
+  },
   amount: {
     type: Number,
     required: true,
@@ -17,6 +22,7 @@ const paymentSchema = new Schema({
     enum: ["pending", "completed", "failed"],
     default: "pending",
   },
-}, { timestamps: true });
+},{timestamps: true });
 
 module.exports = mongoose.model("Payment", paymentSchema);
+

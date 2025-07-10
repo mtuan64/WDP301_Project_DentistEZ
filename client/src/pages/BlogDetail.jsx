@@ -161,7 +161,9 @@ const BlogDetail = () => {
           </div>
         </div>
         <div className="blogdetail-sidebar">
-          <h3 className="blogdetail-sidebar-title">Most Viewed News</h3>
+          <h3 className="blogdetail-sidebar-title">
+            Tin tức được xem nhiều nhất
+          </h3>
           <div className="blogdetail-featured-posts">
             {topViewedBlogs.map((topBlog, index) => (
               <div key={index} className="blogdetail-featured-post-card">
@@ -193,7 +195,7 @@ const BlogDetail = () => {
                     to={`/blog/${topBlog.slug}`}
                     className="blogdetail-read-more"
                   >
-                    Read article
+                    Chi tiết
                   </Link>
                 </div>
               </div>

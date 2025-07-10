@@ -1,240 +1,145 @@
-const mongoose = require('mongoose');
-const Payment = require('../models/Payment');
-const Appointment = require('../models/Appointment');
-const Service = require('../models/Service');
-const moment = require('moment');
 
-// Handle cash payment
-exports.paidServices = async (req, res) => {
-    try {
-        const { appointmentId, serviceId } = req.params;
-        const { method } = req.body;
 
-        if (!mongoose.Types.ObjectId.isValid(appointmentId) || !mongoose.Types.ObjectId.isValid(serviceId)) {
-            return res.status(400).json({
-                success: false,
-                message: 'Invalid appointment or service ID'
-            });
-        }
+// Tạo payment
+const Payment = require("../models/Payment");
+const Service = require("../models/Service");
+const TimeSlot = require("../models/TimeSlot");
+const Patient = require("../models/Patient");
+const PayOS = require("@payos/node");
 
-        const appointment = await Appointment.findById(appointmentId);
-        const service = await Service.findById(serviceId);
+const payos = new PayOS(
+  process.env.PAYOS_CLIENT_ID,
+  process.env.PAYOS_API_KEY,
+  process.env.PAYOS_CHECKSUM_KEY
+);
 
-        if (!appointment || !service) {
-            return res.status(404).json({
-                success: false,
-                message: 'Appointment or service not found'
-            });
-        }
+// Tạo payment
+const createPayment = async (req, res) => {
+  try {
+    // Lấy userId từ middleware xác thực (giả sử đã gán vào req.user.id)
+    const createdBy = req.user.userId;
+    console.log("user id :", createdBy);
 
-        let payment = await Payment.findOne({ appointmentId, serviceId, status: 'pending' });
 
-        if (!payment) {
-            payment = await Payment.create({
-                appointmentId,
-                serviceId,
-                amount: service.price,
-                method: method || 'Cash',
-                status: 'completed',
-                createdAt: new Date()
-            });
-        } else {
-            payment.status = 'completed';
-            payment.method = method || 'Cash';
-            await payment.save();
-        }
+    // Tìm patientId theo userId
+    const patient = await Patient.findOne({ userId: createdBy });
+    if (!patient) return res.status(404).json({ message: "Không tìm thấy bệnh nhân." });
+    const patientId = patient._id;
 
-        appointment.status = 'completed'; // Assuming payment completion updates appointment status
-        await appointment.save();
+    const {
+      amount, description,
+      serviceId, serviceOptionId,
+      timeslotId, note,
+      fileUrl, fileName, fileType
+    } = req.body;
 
-        res.status(200).json({
-            success: true,
-            message: 'Payment processed successfully',
-            data: payment
-        });
-    } catch (error) {
-        console.error('Error processing cash payment:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Server error',
-            error: error.message
-        });
+    // Kiểm tra timeslotId hợp lệ
+    if (!timeslotId) {
+      return res.status(400).json({ message: "Thiếu timeslotId!" });
     }
+    // Lấy timeslot từ DB
+    const timeslot = await TimeSlot.findById(timeslotId);
+    if (!timeslot) {
+      return res.status(404).json({ message: "Không tìm thấy timeslot." });
+    }
+
+    // Kiểm tra ngày đặt lịch phải sau hôm nay ít nhất 1 ngày
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const slotDate = new Date(timeslot.date);
+    slotDate.setHours(0, 0, 0, 0);
+
+    if (slotDate <= today) {
+      return res.status(400).json({
+        message: "Bạn phải đặt lịch trước ít nhất 1 ngày (không được đặt lịch cho hôm nay hoặc ngày đã qua)."
+      });
+    }
+
+    // Lấy thông tin dịch vụ để lấy doctorId, clinicId
+    const service = await Service.findById(serviceId);
+    if (!service) {
+      return res.status(404).json({ message: "Không tìm thấy dịch vụ." });
+    }
+    const doctorId = service.doctorId;
+    const clinicId = service.clinicId;
+
+    // Tạo orderCode duy nhất
+    const orderCode = Math.floor(Date.now() / 1000);
+
+    // Payload gửi PayOS
+    const payload = {
+      orderCode,
+      amount,
+      description: `Cọc ${description}`.slice(0, 25),
+      returnUrl: "http://localhost:5173/payment-success",
+      cancelUrl: "http://localhost:5173/payment-cancel",
+      items: [{ name: String(description || "Dịch vụ"), quantity: 1, price: amount }]
+    };
+
+    const response = await payos.createPaymentLink(payload);
+
+    // Tạo bản ghi payment
+    const payment = await Payment.create({
+      amount,
+      description,
+      orderCode,
+      payUrl: response.checkoutUrl,
+      qrCode: response.qrCode,
+      status: "pending",
+      metaData: {
+        patientId,
+        doctorId,
+        serviceId,
+        serviceOptionId,
+        clinicId,
+        timeslotId,
+        note,
+        createdBy,
+        fileUrl,
+        fileName,
+        fileType
+      }
+    });
+
+    return res.status(201).json({
+      message: "Tạo thanh toán thành công. Vui lòng thanh toán để xác nhận lịch.",
+      payment
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: "Lỗi tạo thanh toán.", error: error.message });
+  }
 };
 
-// Get payment summary
-exports.getPaymentSummary = async (req, res) => {
-    try {
-        const todayStart = moment().startOf('day').toDate();
-        console.log('Querying payments created after:', todayStart);
-        const monthStart = moment().startOf('month').toDate();
-        console.log('Querying payments since:', monthStart);
-
-        const [
-            todayCount,
-            monthTotalAgg,
-            pendingCount,
-            totalPayments,
-            completedPayments
-        ] = await Promise.all([
-            Payment.countDocuments({ createdAt: { $gte: todayStart } })
-                .then(count => { console.log('Live today count:', count); return count; }),
-            Payment.aggregate([
-                {
-                    $match: {
-                        createdAt: { $gte: monthStart },
-                        status: 'completed'
-                    }
-                },
-                {
-                    $group: {
-                        _id: null,
-                        total: { $sum: '$amount' }
-                    }
-                }
-            ]).then(result => { console.log('Live month total agg:', result); return result; }),
-            Payment.countDocuments({ status: 'pending' })
-                .then(count => { console.log('Live pending count:', count); return count; }),
-            Payment.countDocuments()
-                .then(count => { console.log('Live total payments:', count); return count; }),
-            Payment.countDocuments({ status: 'completed' })
-                .then(count => { console.log('Live completed payments:', count); return count; })
-        ]);
-
-        const monthTotal = monthTotalAgg.length > 0 ? monthTotalAgg[0].total : 0;
-        const successRate = totalPayments > 0 ? parseFloat(((completedPayments / totalPayments) * 100).toFixed(1)) : 0;
-
-        console.log('Returning summary:', { todayCount, monthTotal, pendingCount, successRate });
-        res.status(200).json({
-            todayCount,
-            monthTotal,
-            pendingCount,
-            successRate
-        });
-    } catch (error) {
-        console.error('Error fetching payment summary:', {
-            message: error.message,
-            stack: error.stack
-        });
-        res.status(500).json({
-            success: false,
-            message: 'Server error fetching summary',
-            error: error.message
-        });
-    }
+// Lấy payment theo id
+const getPayment = async (req, res) => {
+  try {
+    const payment = await Payment.findById(req.params.id);
+    if (!payment) return res.status(404).json({ message: "Không tìm thấy payment." });
+    return res.json(payment);
+  } catch (error) {
+    return res.status(500).json({ message: "Lỗi truy vấn payment.", error: error.message });
+  }
 };
 
-// Get paginated payments
-exports.getPayments = async (req, res) => {
-    try {
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
-        const skip = (page - 1) * limit;
-        const { search = '', status, method, sortField = 'createdAt', sortOrder = 'desc' } = req.query;
+// Huỷ payment
+const cancelPayment = async (req, res) => {
+  try {
+    const payment = await Payment.findById(req.params.id);
+    if (!payment) return res.status(404).json({ message: "Không tìm thấy payment." });
+    if (payment.status !== "pending") return res.status(400).json({ message: "Không thể huỷ payment đã xử lý." });
 
-        const matchConditions = {};
-        if (status) matchConditions.status = status;
-        if (method) matchConditions.method = method;
-
-        const pipeline = [
-            {
-                $lookup: {
-                    from: 'appointments',
-                    localField: 'appointmentId',
-                    foreignField: '_id',
-                    as: 'appointment'
-                }
-            },
-            { $unwind: '$appointment' },
-            {
-                $lookup: {
-                    from: 'services',
-                    localField: 'serviceId',
-                    foreignField: '_id',
-                    as: 'service'
-                }
-            },
-            { $unwind: '$service' },
-            {
-                $match: {
-                    ...matchConditions,
-                    ...(search ? { 'service.name': { $regex: search, $options: 'i' } } : {})
-                }
-            },
-            {
-                $sort: {
-                    [sortField]: sortOrder === 'asc' ? 1 : -1
-                }
-            },
-            { $skip: skip },
-            { $limit: limit },
-            {
-                $project: {
-                    _id: 1,
-                    amount: 1,
-                    method: 1,
-                    status: 1,
-                    createdAt: 1,
-                    appointment: {
-                        _id: 1,
-                        appointmentDate: 1
-                    },
-                    service: {
-                        name: 1,
-                        price: 1
-                    }
-                }
-            }
-        ];
-
-        const countPipeline = [...pipeline];
-        countPipeline.push({ $count: 'total' });
-        const countResult = await Payment.aggregate(countPipeline);
-        const total = countResult[0]?.total || 0;
-
-        const data = await Payment.aggregate(pipeline);
-        console.log('Live payments data:', data);
-
-        res.json({
-            data,
-            pagination: {
-                totalPages: Math.ceil(total / limit),
-                totalItems: total,
-                page,
-                limit
-            }
-        });
-    } catch (error) {
-        console.error('Error fetching payments:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Server error',
-            error: error.message
-        });
-    }
+    payment.status = "canceled";
+    await payment.save();
+    return res.json({ message: "Đã huỷ thanh toán.", payment });
+  } catch (error) {
+    return res.status(500).json({ message: "Lỗi huỷ payment.", error: error.message });
+  }
 };
 
-exports.getAllPayment = async (req, res) => {
-    try {
-        const payments = await Payment.find()
-            .populate({
-                path: 'appointmentId',
-                populate: [
-                    { path: 'PatientId', model: 'Patient', select: 'name' },
-                    { path: 'DoctorId', model: 'Doctor', populate: { path: 'userId', model: 'User', select: 'name' } },
-                    { path: 'StaffId', model: 'Staff', select: 'name' },
-                    { path: 'serviceid', model: 'Service', select: 'serviceName price' },
-                    { path: 'clinic_id', model: 'Clinic', select: 'clinic_name' }
-                ]
-            });
-
-        res.status(200).json(payments);
-    } catch (error) {
-        console.error('Error fetching payments:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Server error',
-            error: error.message
-        });
-    }
+module.exports = {
+  createPayment,
+  getPayment,
+  cancelPayment
 };
