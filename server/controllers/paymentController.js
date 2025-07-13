@@ -1,123 +1,163 @@
+// Tạo payment
 const Payment = require("../models/Payment");
+const Service = require("../models/Service");
+const TimeSlot = require("../models/TimeSlot");
+const Patient = require("../models/Patient");
 const PayOS = require("@payos/node");
-// require("dotenv").config();
 
-// Khởi tạo PayOS SDK
 const payos = new PayOS(
   process.env.PAYOS_CLIENT_ID,
   process.env.PAYOS_API_KEY,
   process.env.PAYOS_CHECKSUM_KEY
 );
 
-exports.createPayment = async (req, res) => {
+// Tạo payment
+const createPayment = async (req, res) => {
   try {
-    const { amount, description, appointmentId } = req.body;
+    // Lấy userId từ middleware xác thực (giả sử đã gán vào req.user.id)
+    const createdBy = req.user.userId;
+    console.log("user id :", createdBy);
 
-    const orderCode = Math.floor(Math.random() * 1000000000); // dưới 10^9
-    const limitedDescription = description.substring(0, 25);
+    // Tìm patientId theo userId
+    const patient = await Patient.findOne({ userId: createdBy });
+    if (!patient)
+      return res.status(404).json({ message: "Không tìm thấy bệnh nhân." });
+    const patientId = patient._id;
 
-    const response = await payos.createPaymentLink({
+    const {
+      amount,
+      description,
+      serviceId,
+      serviceOptionId,
+      timeslotId,
+      note,
+      fileUrl,
+      fileName,
+      fileType,
+    } = req.body;
+
+    // Kiểm tra timeslotId hợp lệ
+    if (!timeslotId) {
+      return res.status(400).json({ message: "Thiếu timeslotId!" });
+    }
+    // Lấy timeslot từ DB
+    const timeslot = await TimeSlot.findById(timeslotId);
+    if (!timeslot) {
+      return res.status(404).json({ message: "Không tìm thấy timeslot." });
+    }
+
+    // Kiểm tra ngày đặt lịch phải sau hôm nay ít nhất 1 ngày
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const slotDate = new Date(timeslot.date);
+    slotDate.setHours(0, 0, 0, 0);
+
+    if (slotDate <= today) {
+      return res.status(400).json({
+        message:
+          "Bạn phải đặt lịch trước ít nhất 1 ngày (không được đặt lịch cho hôm nay hoặc ngày đã qua).",
+      });
+    }
+
+    // Lấy thông tin dịch vụ để lấy doctorId, clinicId
+    const service = await Service.findById(serviceId);
+    if (!service) {
+      return res.status(404).json({ message: "Không tìm thấy dịch vụ." });
+    }
+    const doctorId = service.doctorId;
+    const clinicId = service.clinicId;
+
+    // Tạo orderCode duy nhất
+    const orderCode = Math.floor(Date.now() / 1000);
+
+    // Payload gửi PayOS
+    const payload = {
       orderCode,
       amount,
-      description: limitedDescription,
+      description: `Cọc ${description}`.slice(0, 25),
       returnUrl: "http://localhost:5173/payment-success",
       cancelUrl: "http://localhost:5173/payment-cancel",
-    });
+      items: [
+        { name: String(description || "Dịch vụ"), quantity: 1, price: amount },
+      ],
+    };
 
+    const response = await payos.createPaymentLink(payload);
+
+    // Tạo bản ghi payment
     const payment = await Payment.create({
       amount,
-      description: limitedDescription,
+      description,
       orderCode,
       payUrl: response.checkoutUrl,
       qrCode: response.qrCode,
-      appointmentId,
+      status: "pending",
+      metaData: {
+        patientId,
+        doctorId,
+        serviceId,
+        serviceOptionId,
+        clinicId,
+        timeslotId,
+        note,
+        createdBy,
+        fileUrl,
+        fileName,
+        fileType,
+      },
     });
 
-    res.status(200).json({
-      msg: "Tạo link thanh toán thành công",
+    return res.status(201).json({
+      message:
+        "Tạo thanh toán thành công. Vui lòng thanh toán để xác nhận lịch.",
       payment,
     });
   } catch (error) {
-    console.error(
-      "Lỗi khi tạo link thanh toán PayOS:",
-      error.response?.data || error.message || error
-    );
-    res
+    console.log(error);
+    return res
       .status(500)
-      .json({ msg: "Tạo thanh toán thất bại", error: error.message });
+      .json({ message: "Lỗi tạo thanh toán.", error: error.message });
   }
 };
 
-exports.getPaymentStatus = async (req, res) => {
+// Lấy payment theo id
+const getPayment = async (req, res) => {
   try {
-    const { orderCode } = req.params;
-
-    // Gọi PayOS để lấy trạng thái đơn hàng
-    const payOSRes = await payos.getPaymentLinkInformation(orderCode);
-
-    // Cập nhật DB nếu trạng thái mới là "PAID"
-    if (payOSRes.status === "PAID") {
-      await Payment.findOneAndUpdate({ orderCode }, { status: "paid" });
-    }
-
-    res.status(200).json({
-      msg: "Trạng thái đơn hàng",
-      status: payOSRes.status,
-      payment: payOSRes,
-    });
+    const payment = await Payment.findById(req.params.id);
+    if (!payment)
+      return res.status(404).json({ message: "Không tìm thấy payment." });
+    return res.json(payment);
   } catch (error) {
-    console.error("Lỗi khi check trạng thái đơn:", error);
-    res
+    return res
       .status(500)
-      .json({ msg: "Không lấy được trạng thái đơn", error: error.message });
+      .json({ message: "Lỗi truy vấn payment.", error: error.message });
   }
 };
 
-exports.getAllPayments = async (req, res) => {
+// Huỷ payment
+const cancelPayment = async (req, res) => {
   try {
-    const payments = await Payment.find().sort({ createdAt: -1 });
-    res.status(200).json(payments);
+    const payment = await Payment.findById(req.params.id);
+    if (!payment)
+      return res.status(404).json({ message: "Không tìm thấy payment." });
+    if (payment.status !== "pending")
+      return res
+        .status(400)
+        .json({ message: "Không thể huỷ payment đã xử lý." });
+
+    payment.status = "canceled";
+    await payment.save();
+    return res.json({ message: "Đã huỷ thanh toán.", payment });
   } catch (error) {
-    console.error("Lỗi khi lấy lịch sử giao dịch:", error);
-    res.status(500).json({ msg: "Không lấy được lịch sử giao dịch", error: error.message });
+    return res
+      .status(500)
+      .json({ message: "Lỗi huỷ payment.", error: error.message });
   }
 };
 
-exports.getPaymentByOrderCode = async (req, res) => {
-  try {
-    const { orderCode } = req.params;
-    const payment = await Payment.findOne({ orderCode });
-
-    if (!payment) {
-      return res.status(404).json({ msg: "Không tìm thấy hóa đơn" });
-    }
-
-    res.status(200).json(payment);
-  } catch (error) {
-    console.error("Lỗi khi lấy hóa đơn:", error);
-    res.status(500).json({ msg: "Không lấy được hóa đơn", error: error.message });
-  }
-};
-
-exports.cancelPayment = async (req, res) => {
-  try {
-    const { orderCode } = req.params;
-
-    // Gọi PayOS hủy đơn
-    const payOSRes = await payos.cancelPaymentLink(orderCode);
-
-    // Cập nhật status đơn trong DB nếu thành công
-    await Payment.findOneAndUpdate(
-      { orderCode },
-      { status: "canceled" }
-    );
-
-    res.status(200).json({
-      msg: "Hủy đơn thành công",
-      payOSRes,
-    });
-  } catch (error) {
-    console.error("Lỗi khi hủy đơn:", error);
-    res.status(500).json({ msg: "Không hủy được đơn", error: error.message });
-  }
+module.exports = {
+  createPayment,
+  getPayment,
+  cancelPayment,
 };

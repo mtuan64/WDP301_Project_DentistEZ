@@ -17,6 +17,13 @@ fs.mkdir(uploadDir, { recursive: true }).catch((err) =>
   console.error("Error creating uploads directory:", err)
 );
 
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
 const createAcountDoctor = async (req, res) => {
   const session = await mongoose.startSession();// tạo session
   session.startTransaction();

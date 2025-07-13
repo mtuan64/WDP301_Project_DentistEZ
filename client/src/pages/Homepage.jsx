@@ -6,13 +6,15 @@ import MilestoneSection from "../components/MilestoneSection";
 import "../assets/css/HomePage.css";
 
 const HomePage = () => {
-  // State for blogs and loading
+  // State for blogs, services, doctors, and loading
   const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [services, setServices] = useState([]);
+  const [loadingServices, setLoadingServices] = useState(true);
   const [doctors, setDoctors] = useState([]);
   const [loadingDoctors, setLoadingDoctors] = useState(true);
-  const [carouselIndex, setCarouselIndex] = useState(0);
-
+  const [doctorCarouselIndex, setDoctorCarouselIndex] = useState(0);
+  const [serviceCarouselIndex, setServiceCarouselIndex] = useState(0);
 
   // Fetch Doctors
   useEffect(() => {
@@ -32,7 +34,23 @@ const HomePage = () => {
     fetchDoctors();
   }, []);
 
-  // Fetch blogs
+  // Fetch Services
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const response = await axios.get("http://localhost:9999/api/view/service");
+        setServices(response.data.data || response.data);
+      } catch (error) {
+        console.error("Failed to fetch services:", error);
+      } finally {
+        setLoadingServices(false);
+      }
+    };
+
+    fetchServices();
+  }, []);
+
+  // Fetch Blogs
   useEffect(() => {
     const fetchBlogs = async () => {
       try {
@@ -43,20 +61,18 @@ const HomePage = () => {
           headers,
         });
 
-        // Transform content if it's a string or missing
         const transformedBlogs = blogsResponse.data.map((blog) => ({
           ...blog,
           content: Array.isArray(blog.content)
             ? blog.content
             : [
-              {
-                type: "paragraph",
-                text: blog.content || "No content available",
-              },
-            ],
+                {
+                  type: "paragraph",
+                  text: blog.content || "No content available",
+                },
+              ],
         }));
 
-        // Sort blogs by creation date (newest first)
         const sortedBlogs = transformedBlogs.sort(
           (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
         );
@@ -71,7 +87,6 @@ const HomePage = () => {
     fetchBlogs();
   }, []);
 
-  // Utility functions from BlogPage
   const truncateText = (text, maxLength) => {
     if (!text || text.length <= maxLength) return text || "";
     return text.substring(0, maxLength - 3) + "...";
@@ -84,33 +99,53 @@ const HomePage = () => {
     return truncateText(firstItem.text, 100);
   };
 
-  // Filter active doctors
   const activeDoctors = doctors.filter((doctor) => doctor.Status !== "inactive");
 
-  // Handle carousel navigation
-  const handleNext = () => {
-    setCarouselIndex((prevIndex) => (prevIndex + 1) % activeDoctors.length);
-  };
-
-  const handlePrev = () => {
-    setCarouselIndex((prevIndex) =>
-      prevIndex === 0 ? activeDoctors.length - 1 : prevIndex - 1
+  const handleDoctorNext = () => {
+    setDoctorCarouselIndex((prevIndex) =>
+      prevIndex + 1 < Math.ceil(activeDoctors.length / 4)
+        ? prevIndex + 1
+        : 0
     );
   };
 
-  // Get the doctors to display based on carouselIndex
+  const handleDoctorPrev = () => {
+    setDoctorCarouselIndex((prevIndex) =>
+      prevIndex === 0 ? Math.ceil(activeDoctors.length / 4) - 1 : prevIndex - 1
+    );
+  };
+
+  const handleServiceNext = () => {
+    setServiceCarouselIndex((prevIndex) =>
+      prevIndex + 1 < Math.ceil(services.length / 4)
+        ? prevIndex + 1
+        : 0
+    );
+  };
+
+  const handleServicePrev = () => {
+    setServiceCarouselIndex((prevIndex) =>
+      prevIndex === 0 ? Math.ceil(services.length / 4) - 1 : prevIndex - 1
+    );
+  };
+
   const getVisibleDoctors = () => {
     const visibleDoctors = [];
     for (let i = 0; i < 4; i++) {
-      const index = (carouselIndex + i) % activeDoctors.length;
+      const index = (doctorCarouselIndex + i) % activeDoctors.length;
       visibleDoctors.push(activeDoctors[index]);
     }
     return visibleDoctors;
   };
 
+  const getVisibleServices = () => {
+    const itemsPerPage = 4;
+    const startIndex = serviceCarouselIndex * itemsPerPage;
+    return services.slice(startIndex, startIndex + itemsPerPage);
+  };
+
   return (
     <>
-
       {/* Hero Carousel */}
       <div
         id="heroCarousel"
@@ -190,28 +225,6 @@ const HomePage = () => {
               Nha Khoa DentistEZ là một trong những phòng khám nha khoa uy tín với đội ngũ bác sĩ và chuyên gia được đào tạo bài bản tại các trường đại học danh tiếng trong và ngoài nước. Chúng tôi tự hào thực hiện thành công nhiều kỹ thuật nha khoa phức tạp, đáp ứng các tiêu chuẩn nghiêm ngặt theo quy chuẩn quốc tế.
               Với cam kết không ngừng nâng cao chất lượng dịch vụ, DentistEZ mong muốn trở thành người bạn đồng hành tin cậy, mang đến trải nghiệm chăm sóc răng miệng an toàn, chuyên nghiệp và đẳng cấp cho tất cả khách hàng.
             </p>
-            {/* <Row className="text-primary fw-semibold">
-              <Col xs={6} className="mb-3">
-                <i className="fa fa-check-circle text-primary me-2"></i>Trồng
-                răng Implant
-              </Col>
-              <Col xs={6} className="mb-3">
-                <i className="fa fa-check-circle text-primary me-2"></i>Niềng
-                răng thẩm mỹ
-              </Col>
-              <Col xs={6} className="mb-3">
-                <i className="fa fa-check-circle text-primary me-2"></i>Phục hình
-                răng sứ
-              </Col>
-              <Col xs={6} className="mb-3">
-                <i className="fa fa-check-circle text-primary me-2"></i>Nhổ răng
-                khôn
-              </Col>
-              <Col xs={6} className="mb-3">
-                <i className="fa fa-check-circle text-primary me-2"></i>Nha khoa
-                tổng quát
-              </Col>
-            </Row> */}
           </Col>
         </Row>
       </Container>
@@ -222,7 +235,12 @@ const HomePage = () => {
       {/* Cơ sở vật chất */}
       <section className="mb-5">
         <h3 className="text-primary mb-4 fw-bold text-center">Cơ Sở Vật Chất</h3>
-        <div id="facilityCarousel" className="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="3000">
+        <div
+          id="facilityCarousel"
+          className="carousel slide carousel-fade"
+          data-bs-ride="carousel"
+          data-bs-interval="3000"
+        >
           <div className="carousel-indicators">
             <button
               type="button"
@@ -251,19 +269,19 @@ const HomePage = () => {
                 src="https://binbadecor.vn/wp-content/uploads/2020/06/10-mau-phong-kham-nha-khoa-dep-nhat.jpg"
                 className="d-block w-100"
                 alt="Máy chụp X-quang kỹ thuật số"
-                style={{ objectFit: 'cover', height: '50vh', borderRadius: '8px' }}
+                style={{ objectFit: "cover", height: "50vh", borderRadius: "8px" }}
               />
               <div
                 className="carousel-caption d-flex flex-column justify-content-center align-items-center"
                 style={{
-                  backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                  backgroundColor: "rgba(0, 0, 0, 0.6)",
                   top: 0,
                   bottom: 0,
                   left: 0,
                   right: 0,
-                  position: 'absolute',
-                  borderRadius: '8px',
-                  padding: '20px'
+                  position: "absolute",
+                  borderRadius: "8px",
+                  padding: "20px",
                 }}
               >
                 <h4 className="text-white fw-bold mb-3">Trang Thiết Bị Hiện Đại</h4>
@@ -277,19 +295,19 @@ const HomePage = () => {
                 src="https://seadent.com.vn/wp-content/uploads/2022/01/mo-phong-kham-nha-khoa.jpg"
                 className="d-block w-100"
                 alt="Ghế điều trị đa năng"
-                style={{ objectFit: 'cover', height: '50vh', borderRadius: '8px' }}
+                style={{ objectFit: "cover", height: "50vh", borderRadius: "8px" }}
               />
               <div
                 className="carousel-caption d-flex flex-column justify-content-center align-items-center"
                 style={{
-                  backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                  backgroundColor: "rgba(0, 0, 0, 0.6)",
                   top: 0,
                   bottom: 0,
                   left: 0,
                   right: 0,
-                  position: 'absolute',
-                  borderRadius: '8px',
-                  padding: '20px'
+                  position: "absolute",
+                  borderRadius: "8px",
+                  padding: "20px",
                 }}
               >
                 <h4 className="text-white fw-bold mb-3">Ghế Điều Trị Đa Năng</h4>
@@ -303,19 +321,19 @@ const HomePage = () => {
                 src="https://anviethouse.vn/wp-content/uploads/2021/07/Mau-thiet-ke-phong-kham-nha-khoa-1-3.png"
                 className="d-block w-100"
                 alt="Phòng vô trùng"
-                style={{ objectFit: 'cover', height: '50vh', borderRadius: '8px' }}
+                style={{ objectFit: "cover", height: "50vh", borderRadius: "8px" }}
               />
               <div
                 className="carousel-caption d-flex flex-column justify-content-center align-items-center"
                 style={{
-                  backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                  backgroundColor: "rgba(0, 0, 0, 0.6)",
                   top: 0,
                   bottom: 0,
                   left: 0,
                   right: 0,
-                  position: 'absolute',
-                  borderRadius: '8px',
-                  padding: '20px'
+                  position: "absolute",
+                  borderRadius: "8px",
+                  padding: "20px",
                 }}
               >
                 <h4 className="text-white fw-bold mb-3">Phòng Vô Trùng</h4>
@@ -370,7 +388,7 @@ const HomePage = () => {
                   <div className="p-3">
                     <h5>{blog.title}</h5>
                     <p>{getContentSummary(blog.content)}</p>
-                    <Link to={`/blog/${blog.slug}`} className="btn btn-primary">
+                    <Link to={`/blog/${blog.slug}`} className="btn btn-primary btn-sm">
                       Read More
                     </Link>
                   </div>
@@ -387,19 +405,55 @@ const HomePage = () => {
           <h2 className="text-center text-primary fw-bold mb-5">
             Các loại dịch vụ
           </h2>
-          <Row>
-            {[1, 2, 3, 4, 5, 6].map((item) => (
-              <Col md={4} lg={2} key={item} className="mb-4">
-                <div className="service-item bg-white shadow rounded p-4 text-center">
-                  <i className="fa fa-tooth fa-3x text-primary mb-3"></i>
-                  <h5>Service {item}</h5>
-                  <p className="text-muted">
-                    Description of Service {item} goes here.
-                  </p>
-                </div>
-              </Col>
-            ))}
-          </Row>
+          {loadingServices ? (
+            <p>Loading services...</p>
+          ) : services.length > 0 ? (
+            <div className="services-carousel">
+              <Row className="flex-nowrap services-carousel-inner">
+                {getVisibleServices().map((service) => (
+                  <Col
+                    key={service._id || service.id}
+                    md={3}
+                    className="mb-4"
+                  >
+                    <div className="service-item bg-white shadow rounded text-center">
+                      <img
+                        src={service.image || "https://via.placeholder.com/300x200"}
+                        alt={service.serviceName || service.title}
+                        className="img-fluid rounded-top"
+                        style={{ width: "100%", height: "200px", objectFit: "cover" }}
+                      />
+                      <div className="p-3">
+                        <h5>{service.serviceName || service.title}</h5>
+                      </div>
+                    </div>
+                  </Col>
+                ))}
+              </Row>
+              <button
+                className="custom-carousel-control-prev"
+                type="button"
+                onClick={handleServicePrev}
+              >
+                <span className="custom-carousel-control-icon" aria-hidden="true">
+                  <i className="bi bi-chevron-left"></i>
+                </span>
+                <span className="visually-hidden">Previous</span>
+              </button>
+              <button
+                className="custom-carousel-control-next"
+                type="button"
+                onClick={handleServiceNext}
+              >
+                <span className="custom-carousel-control-icon" aria-hidden="true">
+                  <i className="bi bi-chevron-right"></i>
+                </span>
+                <span className="visually-hidden">Next</span>
+              </button>
+            </div>
+          ) : (
+            <p>No services available.</p>
+          )}
         </Container>
       </Container>
 
@@ -410,46 +464,11 @@ const HomePage = () => {
           <p>Loading doctors...</p>
         ) : activeDoctors.length === 0 ? (
           <p>No doctors available.</p>
-        ) : activeDoctors.length <= 4 ? (
-          <Row>
-            {activeDoctors.map((doctor) => (
-              <Col key={doctor._id} lg={3} md={6} sm={12} className="mb-4">
-                <div
-                  className="bg-light rounded shadow h-100"
-                  style={{ overflow: "hidden" }}
-                >
-                  <img
-                    src={doctor.ProfileImage}
-                    alt={doctor.userId?.fullname || "Doctor"}
-                    className="img-fluid w-100"
-                    style={{ height: "250px", objectFit: "cover" }}
-                  />
-                  <div className="p-3 text-center">
-                    <h5 className="mb-1">
-                      {doctor.userId
-                        ? `Bác sĩ ${doctor.userId.fullname}`
-                        : "Bác sĩ không rõ tên"}
-                    </h5>
-                    <p className="text-muted mb-2">
-                      <strong>Chuyên ngành:</strong>{" "}
-                      {doctor.Specialty || "Không rõ"}
-                    </p>
-                    <Link
-                      to={`/doctor/${doctor._id}`}
-                      className="btn btn-outline-primary btn-sm"
-                    >
-                      Xem chi tiết
-                    </Link>
-                  </div>
-                </div>
-              </Col>
-            ))}
-          </Row>
         ) : (
           <div className="doctors-carousel">
             <Row className="flex-nowrap doctors-carousel-inner">
               {getVisibleDoctors().map((doctor) => (
-                <Col key={doctor._id} lg={3} md={6} sm={12} className="mb-4">
+                <Col key={doctor._id} md={3} className="mb-4">
                   <div
                     className="bg-light rounded shadow h-100"
                     style={{ overflow: "hidden" }}
@@ -482,25 +501,23 @@ const HomePage = () => {
               ))}
             </Row>
             <button
-              className="carousel-control-prev"
+              className="custom-carousel-control-prev"
               type="button"
-              onClick={handlePrev}
+              onClick={handleDoctorPrev}
             >
-              <span
-                className="carousel-control-prev-icon"
-                aria-hidden="true"
-              ></span>
+              <span className="custom-carousel-control-icon" aria-hidden="true">
+                <i className="bi bi-chevron-left"></i>
+              </span>
               <span className="visually-hidden">Previous</span>
             </button>
             <button
-              className="carousel-control-next"
+              className="custom-carousel-control-next"
               type="button"
-              onClick={handleNext}
+              onClick={handleDoctorNext}
             >
-              <span
-                className="carousel-control-next-icon"
-                aria-hidden="true"
-              ></span>
+              <span className="custom-carousel-control-icon" aria-hidden="true">
+                <i className="bi bi-chevron-right"></i>
+              </span>
               <span className="visually-hidden">Next</span>
             </button>
           </div>

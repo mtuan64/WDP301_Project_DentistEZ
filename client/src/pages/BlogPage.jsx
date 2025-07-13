@@ -192,7 +192,7 @@ const BlogPage = () => {
           <div className="carousel-inner">
             <div className="carousel-item active">
               <img
-                src="https://img6.thuthuatphanmem.vn/uploads/2022/02/12/background-thoi-su-tin-tuc_095013025.jpg"
+                src="https://th.bing.com/th/id/R.338461f2382f9fb756e805abcf101f7c?rik=2gg8BVjwt7kijQ&pid=ImgRaw&r=0"
                 className="d-block w-100"
                 alt="News Banner"
                 style={{
@@ -214,8 +214,10 @@ const BlogPage = () => {
                 }}
               >
                 <div className="text-center text-white">
-                  <h1 className="display-3 fw-bold">News</h1>
-                  <p className="lead mt-3">Bringing quality blogs to you</p>
+                  <h1 className="display-3 fw-bold">Tin tức phòng khám</h1>
+                  <p className="lead mt-3">
+                    Mang đến cho bạn những thông tin chất lượng nhất
+                  </p>
                 </div>
               </div>
             </div>
@@ -225,7 +227,7 @@ const BlogPage = () => {
       <div className="blogpage-page">
         <div className="blogpage-layout">
           <aside className="blogpage-sidebar">
-            <h3 className="blogpage-sidebar-title">Most Viewed Posts</h3>
+            <h3 className="blogpage-sidebar-title">Bài viết mới nhất</h3>
             <div className="blogpage-featured-posts">
               {topViewedBlogs.slice(0, 5).map((blog) => (
                 <div key={blog._id} className="blogpage-featured-post-card">
@@ -255,7 +257,7 @@ const BlogPage = () => {
                       to={`/blog/${blog.slug}`}
                       className="blogpage-read-more"
                     >
-                      Read article
+                      Chi tiết
                     </Link>
                   </div>
                 </div>
@@ -266,7 +268,6 @@ const BlogPage = () => {
           <div className="blogpage-content-main">
             {currentPage === 1 && latestBlogs.length > 0 && (
               <section className="blogpage-latest-blog">
-                <h2 className="blogpage-section-title">Read our latest blog</h2>
                 <div className="blogpage-latest-blog-carousel">
                   <button
                     className="blogpage-carousel-btn prev"
@@ -319,7 +320,7 @@ const BlogPage = () => {
                             to={`/blog/${blog.slug}`}
                             className="blogpage-read-more"
                           >
-                            Read article
+                            Chi tiết
                           </Link>
                         </div>
                       </div>
@@ -346,7 +347,7 @@ const BlogPage = () => {
                   }`}
                   onClick={() => handleCategorySelect(null)}
                 >
-                  All Posts
+                  Tất cả bài viết
                 </button>
                 {categories.map((category) => (
                   <button
@@ -395,7 +396,7 @@ const BlogPage = () => {
                         to={`/blog/${blog.slug}`}
                         className="btn blogpage-read-more"
                       >
-                        Read article
+                        Chi tiết
                       </Link>
                     </div>
                   </div>

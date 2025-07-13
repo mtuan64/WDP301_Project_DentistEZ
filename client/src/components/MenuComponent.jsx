@@ -17,12 +17,13 @@ const menuByRole = {
     { title: "Manage Doctor Account", path: "/doctoraccount", icon: <FileTextOutlined /> },
     { title: "Manage Service", path: "/servicemanagement", icon: <FileTextOutlined />, },
     { title: "Settings", path: "/settings", icon: <SettingOutlined /> },
-    { title: "Manage Blogs", path: "/bloglist", icon: <FileTextOutlined /> },
+    { title: "Manage Blogs", path: "/admin/blogs", icon: <FileTextOutlined /> },
     {
       title: "Statistic Dashboard",
       path: "/statistic",
       icon: <FileTextOutlined />,
     },
+    { title: "Manage Appointments", path: "/admin/appointments", icon: <FileTextOutlined /> },
     
     
 
@@ -44,7 +45,7 @@ const menuByRole = {
   ],
   patient: [
     { title: "Home", path: "/", icon: <HomeOutlined /> },
-    { title: "My Project", path: "/my-project-intern", icon: <HomeOutlined /> },
+    { title: "My Appointment", path: "/myappointment", icon: <HomeOutlined /> },
     {
       title: "Report Management",
       path: "/report-management",

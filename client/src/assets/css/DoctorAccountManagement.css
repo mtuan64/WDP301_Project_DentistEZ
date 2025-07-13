@@ -1,24 +1,259 @@
+/********** Root Variables (Consistent with HomePage) **********/
+:root {
+  --primary: #06A3DA;
+  --secondary: #F57E57;
+  --light: #EEF9FF;
+  --dark: #091E3E;
+  --white: #fff;
+  --gray: #6c757d;
+  --light-blue: #E6F0FA;
+}
+
+/********** Doctor Account Management Container **********/
 .doctor-account-management {
-  padding: 20px;
-  max-width: 1200px;
-  margin: 0 auto;
+  padding: 2rem;
+  background-color: var(--light);
+  font-family: 'Jost', sans-serif;
+  color: var(--dark);
+  min-height: 100vh;
 }
 
+/********** Headings **********/
 .doctor-account-management h1 {
-  font-size: 24px;
-  margin-bottom: 20px;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary);
+  text-align: center;
+  margin-bottom: 1.5rem;
+  position: relative;
 }
 
-.MuiTableContainer-root {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+.doctor-account-management h1::after {
+  content: "";
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 3px;
+  background-color: var(--primary);
 }
 
-.MuiTableCell-root {
+/********** Total Doctors Text **********/
+.doctor-account-management p {
+  font-size: 1.1rem;
+  color: var(--gray);
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+/********** Error and Success Messages **********/
+.doctor-account-management .message {
+  font-size: 1rem;
+  text-align: center;
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  border-radius: 4px;
+}
+
+.doctor-account-management .message.success {
+  color: #2e7d32;
+  background-color: #e8f5e9;
+}
+
+.doctor-account-management .message.error {
+  color: #d32f2f;
+  background-color: #ffebee;
+}
+
+/********** Filter Dropdown **********/
+.doctor-account-management .MuiFormControl-root {
+  max-width: 300px;
+  margin: 0 auto 1.5rem;
+}
+
+.doctor-account-management .MuiInputLabel-root {
+  font-family: 'Jost', sans-serif;
+  color: var(--gray);
+  font-size: 1rem;
+}
+
+.doctor-account-management .MuiSelect-select {
+  font-family: 'Jost', sans-serif;
+  font-size: 0.95rem;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background-color: var(--white);
+}
+
+.doctor-account-management .MuiOutlinedInput-notchedOutline {
+  border-color: var(--primary);
+}
+
+.doctor-account-management .Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: var(--secondary);
+}
+
+.doctor-account-management .MuiSelect-icon {
+  color: var(--primary);
+}
+
+/********** Table Styling **********/
+.doctor-account-management .MuiTableContainer-root {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  overflow-x: auto;
+  background-color: var(--white);
+}
+
+.doctor-account-management .MuiTableHead-root {
+  background-color: var(--primary);
+}
+
+.doctor-account-management .MuiTableCell-head {
+  color: var(--white);
+  font-weight: 600;
+  font-size: 1rem;
+  font-family: 'Jost', sans-serif;
+  padding: 12px;
+}
+
+.doctor-account-management .MuiTableCell-body {
+  font-size: 0.95rem;
+  color: var(--dark);
+  font-family: 'Jost', sans-serif;
   padding: 10px;
-  word-break: break-word;
+  border-bottom: 1px solid var(--light-blue);
 }
 
-.MuiButton-root {
+.doctor-account-management .MuiTableRow-root:hover {
+  background-color: var(--light-blue);
+  transition: background-color 0.3s ease;
+}
+
+/********** Status and Action Buttons **********/
+.doctor-account-management .status-button {
+  font-family: 'Jost', sans-serif;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 8px;
+  text-transform: none;
   min-width: 80px;
-  font-size: 12px;
+  transition: all 0.3s ease;
+}
+
+.doctor-account-management .MuiButton-containedPrimary {
+  background-color: var(--primary);
+}
+
+.doctor-account-management .MuiButton-containedPrimary:hover {
+  background-color: var(--secondary);
+}
+
+.doctor-account-management .MuiButton-containedSecondary {
+  background-color: var(--secondary);
+}
+
+.doctor-account-management .MuiButton-containedSecondary:hover {
+  background-color: var(--primary);
+}
+
+.doctor-account-management .MuiButton-outlinedPrimary {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.doctor-account-management .MuiButton-outlinedPrimary:hover {
+  background-color: var(--primary);
+  color: var(--white);
+}
+
+/********** Profile Image **********/
+.doctor-account-management .profile-image {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/********** Pagination Styling **********/
+.doctor-account-management .MuiPagination-root {
+  margin-top: 1.5rem;
+}
+
+.doctor-account-management .MuiPaginationItem-root {
+  font-family: 'Jost', sans-serif;
+  color: var(--gray);
+  font-size: 1rem;
+}
+
+.doctor-account-management .MuiPaginationItem-page.Mui-selected {
+  background-color: var(--primary);
+  color: var(--white);
+}
+
+.doctor-account-management .MuiPaginationItem-page:hover {
+  background-color: var(--secondary);
+  color: var(--white);
+}
+
+.doctor-account-management .MuiPaginationItem-previousNext {
+  color: var(--primary);
+}
+
+.doctor-account-management .MuiPaginationItem-previousNext:hover {
+  background-color: var(--light-blue);
+}
+
+.doctor-account-management .MuiPaginationItem-previousNext.Mui-disabled {
+  color: var(--gray);
+  opacity: 0.5;
+}
+
+/********** Responsive Adjustments **********/
+@media (max-width: 600px) {
+  .doctor-account-management {
+    padding: 1rem;
+  }
+
+  .doctor-account-management h1 {
+    font-size: 1.5rem;
+  }
+
+  .doctor-account-management p {
+    font-size: 0.95rem;
+  }
+
+  .doctor-account-management .MuiFormControl-root {
+    max-width: 100%;
+  }
+
+  .doctor-account-management .MuiTableCell-head,
+  .doctor-account-management .MuiTableCell-body {
+    font-size: 0.85rem;
+    padding: 8px;
+  }
+
+  /* Hide non-essential columns on mobile */
+  .doctor-account-management .MuiTableCell-head:nth-child(4), /* Degree */
+  .doctor-account-management .MuiTableCell-body:nth-child(4),
+  .doctor-account-management .MuiTableCell-head:nth-child(5), /* Experience */
+  .doctor-account-management .MuiTableCell-body:nth-child(5),
+  .doctor-account-management .MuiTableCell-head:nth-child(6), /* Description */
+  .doctor-account-management .MuiTableCell-body:nth-child(6) {
+    display: none;
+  }
+
+  .doctor-account-management .status-button {
+    min-width: 60px;
+    padding: 4px 8px;
+    font-size: 0.85rem;
+  }
+
+  .doctor-account-management .MuiPaginationItem-root {
+    font-size: 0.9rem;
+    min-width: 28px;
+    height: 28px;
+  }
 }

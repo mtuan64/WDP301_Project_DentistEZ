@@ -17,19 +17,21 @@ import BlogPage from "./pages/BlogPage";
 import BlogDetail from "./pages/BlogDetail";
 import UserListPage from "./pages/UserListManage";
 import AppointmentPage from "./pages/AppointmentPage";
+import AppointmentManagement from "./pages/AppointmentManagement";
 import DoctorAccountManagement from "./pages/DoctorAccountManagement";
 import StaticPage from "./pages/StatisticPage";
 import Header from "./components/HeaderComponent";
 import Topbar from "./components/Topbar";
 import MenuComponent from "./components/MenuComponent";
 
-import "antd/dist/reset.css"; 
+import "antd/dist/reset.css";
 import AccountManagement from "./pages/AccountManagement";
 import ScheduleManagement from "./pages/ScheduleManagement";
 import ServiceCard from "./pages/ServiceCard ";
 import ServiceDetail from "./pages/ServiceDetail ";
 import ServiceManagement from "./pages/ServiceManagement";
-
+import PaymentCancelPage from "./pages/PaymentCancelPage";
+import PaymentSuccessPage from "./pages/PaymentSuccessPage";
 import FooterComponent from "./components/FooterComponent";
 import Chatbox from "./components/Chatbox";
 import "antd/dist/reset.css";
@@ -77,7 +79,7 @@ const App = () => {
       >
         <Routes>
           <Route path="/" element={<HomePage />} />
-          
+
           <Route path="/doctor" element={<DoctorPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
@@ -92,11 +94,16 @@ const App = () => {
           <Route path="/blog/:slug" element={<BlogDetail />} />
           <Route path="/doctoraccount" element={<DoctorAccountManagement />} />
 
+
+          
+
+          <Route path="/admin/appointments" element={<AppointmentManagement />} />
           <Route path="/accountmanagement"element={<AccountManagement />} />
+
           <Route path="/doctor/schedule" element={<ScheduleManagement />} />
           <Route path="/services" element={<ServiceCard />} />
           <Route path="/service-detail/:id" element={<ServiceDetail />} />
-          <Route path="/servicemanagement" element={<ServiceManagement />}/>
+          <Route path="/servicemanagement" element={<ServiceManagement />} />
 
           <Route path="/statistic" element={<StaticPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -105,6 +112,9 @@ const App = () => {
 
 
         <Route path="/payment-test" element={<PaymentTestPage />} />
+          <Route path="/payment-cancel" element={<PaymentCancelPage />} />
+          <Route path="/payment-success" element={<PaymentSuccessPage />} />
+
         </Routes>
       </div>
 
