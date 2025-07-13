@@ -1,12 +1,11 @@
-
-const User = require('../models/User');
-const bcrypt = require('bcrypt');
-const multer = require('multer');
-const path = require('path');
-const Service = require('../models/Service');
-const ServiceOption = require('../models/ServiceOption');
-const TimeSlot = require('../models/TimeSlot');
-
+const User = require("../models/User");
+const bcrypt = require("bcrypt");
+const multer = require("multer");
+const path = require("path");
+const Service = require("../models/Service");
+const ServiceOption = require("../models/ServiceOption");
+const TimeSlot = require("../models/TimeSlot");
+const isEmailDomainValid = require("../utils/emailValidator");
 
 const Patient = require("../models/Patient");
 const Doctor = require("../models/Doctor");
@@ -17,7 +16,6 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Danh sách đen để lưu token đã logout (thay bằng Redis trong production)
 const tokenBlacklist = [];
-
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -33,7 +31,9 @@ const upload = multer({
   storage,
   fileFilter: (req, file, cb) => {
     const filetypes = /jpeg|jpg|png/;
-    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+    const extname = filetypes.test(
+      path.extname(file.originalname).toLowerCase()
+    );
     const mimetype = filetypes.test(file.mimetype);
     if (extname && mimetype) {
       return cb(null, true);
@@ -83,11 +83,23 @@ const isDoctorProfileComplete = (user, doctor) => {
 
 exports.registerUser = async (req, res, next) => {
   try {
-    const { username, password, fullname, email, phone, address, dob, gender, role } = req.body;
+    const {
+      username,
+      password,
+      fullname,
+      email,
+      phone,
+      address,
+      dob,
+      gender,
+      role,
+    } = req.body;
 
     // Validate required fields
     if (!username || !password || !fullname || !email) {
-      return res.status(400).json({ msg: "Username, password, fullname, and email are required" });
+      return res
+        .status(400)
+        .json({ msg: "Username, password, fullname, and email are required" });
     }
 
     // Validate role
@@ -96,13 +108,35 @@ exports.registerUser = async (req, res, next) => {
       return res.status(400).json({ msg: "Invalid role" });
     }
 
-    const existingUser = await User.findOne({ $or: [{ email }, { username }] }).lean();
+    // Validate password format BEFORE hashing
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*?&]{6,}$/;
+    if (!passwordRegex.test(password)) {
+      return res
+        .status(400)
+        .json({
+          msg: "Password must be at least 6 characters long and include at least one letter and one number.",
+        });
+    }
+
+    // Check for existing username or email
+    const existingUser = await User.findOne({
+      $or: [{ email }, { username }],
+    }).lean();
     if (existingUser) {
       return res.status(400).json({ msg: "Người dùng đã tồn tại!" });
     }
 
+    // Check email domain DNS
+    if (!(await isEmailDomainValid(email))) {
+      return res
+        .status(400)
+        .json({ msg: "Email domain không tồn tại hoặc không hợp lệ." });
+    }
+
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Save user
     const newUser = new User({
       username,
       password: hashedPassword,
@@ -117,6 +151,7 @@ exports.registerUser = async (req, res, next) => {
 
     const savedUser = await newUser.save();
 
+    // Save corresponding role profile
     switch (newUser.role) {
       case "patient":
         await new Patient({ userId: savedUser._id }).save();
@@ -170,9 +205,13 @@ exports.loginUser = async (req, res, next) => {
       throw new Error("JWT_SECRET is not defined");
     }
 
-    const token = jwt.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET, {
-      expiresIn: "20h",
-    });
+    const token = jwt.sign(
+      { userId: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "20h",
+      }
+    );
 
     res.status(200).json({
       msg: "Đăng nhập thành công.",
@@ -235,7 +274,6 @@ exports.googleLogin = async (req, res) => {
       token: appToken,
       user,
     });
-
   } catch (err) {
     console.error("Google login error:", err);
     res.status(500).json({ msg: "Xác thực Google thất bại." });
@@ -275,13 +313,24 @@ exports.uploadProfilePicture = async (req, res, next) => {
 exports.updateUser = async (req, res, next) => {
   try {
     const userId = req.user.userId;
-    const { fullname, email, phone, address, dateOfBirth, gender, profilePicture } = req.body;
+    const {
+      fullname,
+      email,
+      phone,
+      address,
+      dateOfBirth,
+      gender,
+      profilePicture,
+    } = req.body;
 
     if (!fullname || !email) {
       return res.status(400).json({ msg: "Fullname and email are required" });
     }
 
-    const existingUser = await User.findOne({ email, _id: { $ne: userId } }).lean();
+    const existingUser = await User.findOne({
+      email,
+      _id: { $ne: userId },
+    }).lean();
     if (existingUser) {
       return res.status(400).json({ msg: "Email already in use" });
     }
@@ -328,10 +377,18 @@ exports.updateUser = async (req, res, next) => {
 exports.getAllUserAccounts = async (req, res) => {
   try {
     if (req.user.role !== "admin") {
-      return res.status(403).json({ msg: "Access denied. Admin role required." });
+      return res
+        .status(403)
+        .json({ msg: "Access denied. Admin role required." });
     }
 
-    const { page = 1, limit = 10, search, sortBy = "createdAt", sortOrder = "desc" } = req.query;
+    const {
+      page = 1,
+      limit = 10,
+      search,
+      sortBy = "createdAt",
+      sortOrder = "desc",
+    } = req.query;
 
     const query = {};
     if (search) {
@@ -377,7 +434,9 @@ exports.getAllUserAccounts = async (req, res) => {
 exports.getUserByRole = async (req, res) => {
   try {
     if (req.user.role !== "admin") {
-      return res.status(403).json({ msg: "Access denied. Admin role required." });
+      return res
+        .status(403)
+        .json({ msg: "Access denied. Admin role required." });
     }
 
     const { page = 1, limit = 10, role } = req.query;
@@ -414,20 +473,19 @@ exports.getUserByRole = async (req, res) => {
   }
 };
 
-
-exports.getServiceDetail = async(req,res)=>{
+exports.getServiceDetail = async (req, res) => {
   try {
-    const {id}= req.params;
-    
-    const services = await Service.find({_id:id})
+    const { id } = req.params;
+
+    const services = await Service.find({ _id: id })
       .populate({
-        path: 'doctorId',
+        path: "doctorId",
         populate: {
-          path: 'userId',
-          select: 'fullname email'
-        }
+          path: "userId",
+          select: "fullname email",
+        },
       })
-      .populate('clinicId', 'clinic_name description');
+      .populate("clinicId", "clinic_name description");
 
     // Lấy options và timeslots cho từng service
     const servicesWithOptionsAndSlots = await Promise.all(
@@ -438,7 +496,7 @@ exports.getServiceDetail = async(req,res)=>{
         // Lấy timeslots của bác sĩ thuộc service này
         let timeslots = [];
         if (sv.doctorId._id) {
-          timeslots = await TimeSlot.find({doctorId: sv.doctorId._id}); 
+          timeslots = await TimeSlot.find({ doctorId: sv.doctorId._id });
         }
 
         return { ...sv.toObject(), options, timeslots };
@@ -457,7 +515,6 @@ exports.getServiceDetail = async(req,res)=>{
   }
 };
 
-
 exports.logoutUser = async (req, res) => {
   try {
     const token = req.headers.authorization?.split(" ")[1];
@@ -467,16 +524,18 @@ exports.logoutUser = async (req, res) => {
 
     // Kiểm tra nếu token đã bị blacklist (dù không cần thiết vì sẽ thêm lại)
     if (exports.isTokenBlacklisted(token)) {
-      return res.status(401).json({ msg: "Token has already been invalidated" });
+      return res
+        .status(401)
+        .json({ msg: "Token has already been invalidated" });
     }
 
     // Thêm token vào blacklist để invalidate
     tokenBlacklist.push(token);
 
     // Gửi phản hồi thành công để client thực hiện cleanup (xóa localStorage, navigate)
-    res.status(200).json({ 
-      msg: "Logged out successfully", 
-      success: true 
+    res.status(200).json({
+      msg: "Logged out successfully",
+      success: true,
     });
   } catch (error) {
     console.error("Error during logout:", error.message);
@@ -487,7 +546,6 @@ exports.logoutUser = async (req, res) => {
 exports.isTokenBlacklisted = (token) => {
   return tokenBlacklist.includes(token);
 };
-
 
 // Export multer upload for use in routes
 exports.upload = upload;

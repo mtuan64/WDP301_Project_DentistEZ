@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Container, Row, Col, Button, Spinner } from "react-bootstrap";
 import Flatpickr from "react-flatpickr";
 import "flatpickr/dist/themes/material_green.css";
@@ -20,18 +20,25 @@ const AppointmentPage = () => {
   const serviceData = [
     { id: "service1", title: "Tư Vấn", price: "500.000 VNĐ" },
     { id: "service2", title: "Làm Sạch Răng", price: "150.000 VNĐ" },
-    { id: "service3", title: "Điều Trị Tủy Răng", price: "300.000 VNĐ" }
+    { id: "service3", title: "Điều Trị Tủy Răng", price: "300.000 VNĐ" },
   ];
 
   const timeSlots = [
-    "09:00 Sáng", "10:00 Sáng", "11:00 Sáng", "12:00 Trưa", "01:00 Chiều",
-    "02:00 Chiều", "03:00 Chiều", "04:00 Chiều", "05:00 Chiều"
+    "09:00 Sáng",
+    "10:00 Sáng",
+    "11:00 Sáng",
+    "12:00 Trưa",
+    "01:00 Chiều",
+    "02:00 Chiều",
+    "03:00 Chiều",
+    "04:00 Chiều",
+    "05:00 Chiều",
   ];
 
   const paymentData = [
     { id: "pay1", name: "Thanh Toán Sau" },
     { id: "pay2", name: "Thanh Toán Trực Tuyến" },
-    { id: "pay3", name: "Thẻ Tín Dụng" }
+    { id: "pay3", name: "Thẻ Tín Dụng" },
   ];
 
   const steps = [
@@ -39,7 +46,7 @@ const AppointmentPage = () => {
     { id: "service", title: "Chọn Dịch Vụ", desc: "Lựa chọn dịch vụ" },
     { id: "datetime", title: "Ngày và Giờ", desc: "Chọn thời gian" },
     { id: "payment", title: "Thanh Toán", desc: "Chọn phương thức thanh toán" },
-    { id: "confirm", title: "Xác Nhận", desc: "Đặt lịch hoàn tất" }
+    { id: "confirm", title: "Xác Nhận", desc: "Đặt lịch hoàn tất" },
   ];
 
   const fetchDoctors = async () => {
@@ -56,20 +63,23 @@ const AppointmentPage = () => {
       }
 
       const formattedData = response.data.data
-        .filter(doctor => doctor.Status === 'active')
-        .map(doctor => ({
+        .filter((doctor) => doctor.Status === "active")
+        .map((doctor) => ({
           id: doctor._id,
-          name: doctor.userId?.fullname || 'Không xác định',
-          specialty: doctor.Specialty || 'N/A',
+          name: doctor.userId?.fullname || "Không xác định",
+          specialty: doctor.Specialty || "N/A",
           experienceYears: doctor.ExperienceYears || 0,
-          profileImage: doctor.ProfileImage || null
+          profileImage: doctor.ProfileImage || null,
         }));
 
       setDoctorData(formattedData);
       setLoading(false);
     } catch (err) {
       console.error("Lỗi khi lấy danh sách bác sĩ:", err);
-      setError(err.message || "Không thể tải danh sách bác sĩ. Vui lòng kiểm tra kết nối hoặc thử lại.");
+      setError(
+        err.message ||
+          "Không thể tải danh sách bác sĩ. Vui lòng kiểm tra kết nối hoặc thử lại."
+      );
       setLoading(false);
     }
   };
@@ -85,25 +95,57 @@ const AppointmentPage = () => {
         serviceId: selectedService,
         date: selectedDate,
         time: selectedTime,
-        paymentMethod: selectedPayment
+        paymentMethod: selectedPayment,
       };
 
-      // Placeholder API call to submit appointment
-      const response = await axios.post("http://localhost:9999/api/appointment", appointmentData, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`
-        }
-      });
+      const headers = {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      };
 
-      if (response.data.success) {
-        setStep("confirm");
+      // Bước 1: Tạo Appointment trước
+      const appointmentRes = await axios.post(
+        "http://localhost:9999/api/appointment",
+        appointmentData,
+        { headers }
+      );
+
+      if (!appointmentRes.data.success) {
+        throw new Error(
+          appointmentRes.data.message || "Không thể tạo lịch hẹn"
+        );
+      }
+
+      const appointmentId = appointmentRes.data.appointment._id;
+
+      // Nếu là thanh toán trực tuyến → gọi payment
+      if (selectedPayment === "pay2") {
+        const priceText =
+          serviceData.find((s) => s.id === selectedService)?.price || "0";
+        const amount = Number(priceText.replace(/[^\d]/g, ""));
+
+        const paymentRes = await axios.post(
+          "http://localhost:9999/api/payment/create-payment",
+          {
+            amount,
+            description: `Thanh toán cho lịch hẹn ${appointmentId}`,
+            appointmentId,
+          },
+          { headers }
+        );
+
+        if (paymentRes.data.payment?.payUrl) {
+          window.location.href = paymentRes.data.payment.payUrl;
+        } else {
+          throw new Error("Không tạo được link thanh toán");
+        }
       } else {
-        throw new Error(response.data.message || "Không thể đặt lịch hẹn");
+        // Nếu là thanh toán sau hoặc thẻ tín dụng thì xử lý confirm luôn
+        setStep("confirm");
       }
     } catch (err) {
-      console.error("Lỗi khi đặt lịch hẹn:", err);
-      setError(err.message || "Đã xảy ra lỗi khi đặt lịch hẹn. Vui lòng thử lại.");
-      setStep("payment"); // Stay on payment step to show error
+      console.error("Lỗi khi đặt lịch:", err);
+      setError(err.message || "Đã xảy ra lỗi khi đặt lịch. Vui lòng thử lại.");
+      setStep("payment");
     }
   };
 
@@ -122,10 +164,7 @@ const AppointmentPage = () => {
           return (
             <div className="text-center p-5 bg-white rounded shadow-sm">
               <p className="text-danger mb-3">{error}</p>
-              <Button
-                variant="primary"
-                onClick={fetchDoctors}
-              >
+              <Button variant="primary" onClick={fetchDoctors}>
                 Thử Lại
               </Button>
             </div>
@@ -136,12 +175,25 @@ const AppointmentPage = () => {
             <h3 className="text-primary fw-bold mb-4">Chọn Bác Sĩ</h3>
             <Row>
               {doctorData.length === 0 ? (
-                <Col className="text-center text-muted">Không có bác sĩ nào hoạt động</Col>
+                <Col className="text-center text-muted">
+                  Không có bác sĩ nào hoạt động
+                </Col>
               ) : (
                 doctorData.map((doctor) => (
-                  <Col key={doctor.id} xs={12} sm={6} md={4} lg={3} className="mb-4">
+                  <Col
+                    key={doctor.id}
+                    xs={12}
+                    sm={6}
+                    md={4}
+                    lg={3}
+                    className="mb-4"
+                  >
                     <label
-                      className={`doctor-card p-3 rounded border ${selectedDoctor === doctor.id ? 'border-primary bg-light' : 'border-secondary'}`}
+                      className={`doctor-card p-3 rounded border ${
+                        selectedDoctor === doctor.id
+                          ? "border-primary bg-light"
+                          : "border-secondary"
+                      }`}
                       onClick={() => setSelectedDoctor(doctor.id)}
                     >
                       <input type="radio" name="doctor" className="d-none" />
@@ -156,19 +208,23 @@ const AppointmentPage = () => {
                           <div
                             className="doctor-image rounded-circle d-flex align-items-center justify-content-center"
                             style={{
-                              width: '80px',
-                              height: '80px',
-                              backgroundColor: '#e0e0e0',
-                              fontSize: '1.5rem',
-                              color: '#6c757d'
+                              width: "80px",
+                              height: "80px",
+                              backgroundColor: "#e0e0e0",
+                              fontSize: "1.5rem",
+                              color: "#6c757d",
                             }}
                           >
                             {doctor.name.charAt(0)}
                           </div>
                         )}
                       </div>
-                      <h5 className="doctor-name text-dark fw-semibold mb-1">{doctor.name}</h5>
-                      <p className="doctor-specialty text-muted small mb-1">{doctor.specialty}</p>
+                      <h5 className="doctor-name text-dark fw-semibold mb-1">
+                        {doctor.name}
+                      </h5>
+                      <p className="doctor-specialty text-muted small mb-1">
+                        {doctor.specialty}
+                      </p>
                       <p className="doctor-experience text-muted small">
                         {doctor.experienceYears} năm kinh nghiệm
                       </p>
@@ -196,7 +252,9 @@ const AppointmentPage = () => {
               {serviceData.map((service) => (
                 <Col key={service.id} md={6} className="mb-4">
                   <label
-                    className={`border p-4 rounded text-center cursor-pointer hover:bg-light ${selectedService === service.id ? 'border-primary' : ''}`}
+                    className={`border p-4 rounded text-center cursor-pointer hover:bg-light ${
+                      selectedService === service.id ? "border-primary" : ""
+                    }`}
                     onClick={() => setSelectedService(service.id)}
                   >
                     <input type="radio" name="service" className="d-none" />
@@ -240,7 +298,9 @@ const AppointmentPage = () => {
                   {timeSlots.map((time) => (
                     <Button
                       key={time}
-                      variant={selectedTime === time ? 'primary' : 'outline-primary'}
+                      variant={
+                        selectedTime === time ? "primary" : "outline-primary"
+                      }
                       size="sm"
                       onClick={() => setSelectedTime(time)}
                     >
@@ -270,7 +330,9 @@ const AppointmentPage = () => {
       case "payment":
         return (
           <div className="p-4 bg-white rounded shadow-sm">
-            <h3 className="text-primary fw-bold mb-4">Chọn Phương Thức Thanh Toán</h3>
+            <h3 className="text-primary fw-bold mb-4">
+              Chọn Phương Thức Thanh Toán
+            </h3>
             {error && <p className="text-danger mb-3">{error}</p>}
             <Row>
               <Col md={6}>
@@ -278,7 +340,9 @@ const AppointmentPage = () => {
                 {paymentData.map((payment) => (
                   <div
                     key={payment.id}
-                    className={`border p-3 mb-2 rounded cursor-pointer hover:bg-light ${selectedPayment === payment.id ? 'border-primary' : ''}`}
+                    className={`border p-3 mb-2 rounded cursor-pointer hover:bg-light ${
+                      selectedPayment === payment.id ? "border-primary" : ""
+                    }`}
                     onClick={() => setSelectedPayment(payment.id)}
                   >
                     <input
@@ -295,19 +359,37 @@ const AppointmentPage = () => {
               <Col md={6}>
                 <h5 className="text-muted mb-3">Tóm Tắt Lịch Hẹn</h5>
                 <div className="border p-3 rounded">
-                  <p className="small">Bác Sĩ: {doctorData.find(d => d.id === selectedDoctor)?.name || "N/A"}</p>
-                  <p className="small">Ngày: {selectedDate ? selectedDate.toLocaleDateString('vi-VN') : "N/A"}</p>
+                  <p className="small">
+                    Bác Sĩ:{" "}
+                    {doctorData.find((d) => d.id === selectedDoctor)?.name ||
+                      "N/A"}
+                  </p>
+                  <p className="small">
+                    Ngày:{" "}
+                    {selectedDate
+                      ? selectedDate.toLocaleDateString("vi-VN")
+                      : "N/A"}
+                  </p>
                   <p className="small">Giờ: {selectedTime || "N/A"}</p>
                   <div className="mt-3 p-3 bg-light rounded">
                     <h6 className="small fw-bold">Dịch Vụ</h6>
                     <div className="d-flex justify-content-between small">
-                      <span>{serviceData.find(s => s.id === selectedService)?.title || "N/A"}</span>
-                      <span>{serviceData.find(s => s.id === selectedService)?.price || "N/A"}</span>
+                      <span>
+                        {serviceData.find((s) => s.id === selectedService)
+                          ?.title || "N/A"}
+                      </span>
+                      <span>
+                        {serviceData.find((s) => s.id === selectedService)
+                          ?.price || "N/A"}
+                      </span>
                     </div>
                   </div>
                   <div className="mt-3 d-flex justify-content-between small">
                     <strong>Tổng Chi Phí</strong>
-                    <strong className="text-primary">{serviceData.find(s => s.id === selectedService)?.price || "N/A"}</strong>
+                    <strong className="text-primary">
+                      {serviceData.find((s) => s.id === selectedService)
+                        ?.price || "N/A"}
+                    </strong>
                   </div>
                 </div>
               </Col>
@@ -332,12 +414,30 @@ const AppointmentPage = () => {
       case "confirm":
         return (
           <div className="p-4 bg-white rounded shadow-sm text-center">
-            <svg className="checkmark-animated mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
-              <circle className="checkmark__circle" cx="26" cy="26" r="25" fill="none" />
-              <path className="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" />
+            <svg
+              className="checkmark-animated mx-auto mb-4"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 52 52"
+            >
+              <circle
+                className="checkmark__circle"
+                cx="26"
+                cy="26"
+                r="25"
+                fill="none"
+              />
+              <path
+                className="checkmark__check"
+                fill="none"
+                d="M14.1 27.2l7.1 7.2 16.7-16.8"
+              />
             </svg>
-            <h3 className="text-primary fw-bold mb-3">Đặt Lịch Hẹn Thành Công!</h3>
-            <p className="text-muted small">Vui lòng kiểm tra email để xác nhận.</p>
+            <h3 className="text-primary fw-bold mb-3">
+              Đặt Lịch Hẹn Thành Công!
+            </h3>
+            <p className="text-muted small">
+              Vui lòng kiểm tra email để xác nhận.
+            </p>
             <div className="mt-4 d-flex justify-content-center gap-3">
               <Button
                 variant="primary"
@@ -352,10 +452,7 @@ const AppointmentPage = () => {
               >
                 Đặt Thêm Lịch Hẹn
               </Button>
-              <Button
-                variant="outline-secondary"
-                onClick={() => navigate('/')}
-              >
+              <Button variant="outline-secondary" onClick={() => navigate("/")}>
                 Về Trang Chủ
               </Button>
             </div>
@@ -368,7 +465,6 @@ const AppointmentPage = () => {
 
   return (
     <>
-
       {/* <div className="bg-light py-3 px-5 d-none d-lg-block border-bottom shadow-sm">
         <Row className="align-items-center justify-content-between">
           <Col md={6} className="text-start">
@@ -390,29 +486,42 @@ const AppointmentPage = () => {
         </Row>
       </div> */}
 
-      <div id="heroCarousel" className="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="4000">
+      <div
+        id="heroCarousel"
+        className="carousel slide carousel-fade"
+        data-bs-ride="carousel"
+        data-bs-interval="4000"
+      >
         <div className="carousel-inner">
           <div className="carousel-item active">
             <img
               src="https://mcohome.vn/wp-content/uploads/2023/03/z4146608990086_40d02c3b4e3dce3f26a1857fca47d952.jpg"
               className="d-block w-100"
               alt="Banner Đặt Lịch Hẹn"
-              style={{ objectFit: 'cover', height: '80vh', borderRadius: '8px' }}
+              style={{
+                objectFit: "cover",
+                height: "80vh",
+                borderRadius: "8px",
+              }}
             />
             <div
               className="carousel-caption d-flex flex-column justify-content-center align-items-center"
               style={{
-                backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                backgroundColor: "rgba(0, 0, 0, 0.6)",
                 top: 0,
                 bottom: 0,
                 left: 0,
                 right: 0,
-                position: 'absolute',
-                borderRadius: '8px'
+                position: "absolute",
+                borderRadius: "8px",
               }}
             >
-              <h1 className="display-3 fw-bold text-white mb-3">Đặt Lịch Hẹn</h1>
-              <p className="text-white fs-5">Dễ dàng đặt lịch với bác sĩ nha khoa hàng đầu</p>
+              <h1 className="display-3 fw-bold text-white mb-3">
+                Đặt Lịch Hẹn
+              </h1>
+              <p className="text-white fs-5">
+                Dễ dàng đặt lịch với bác sĩ nha khoa hàng đầu
+              </p>
             </div>
           </div>
         </div>
@@ -422,18 +531,33 @@ const AppointmentPage = () => {
         <section className="mb-5">
           <Row className="align-items-start">
             <Col lg={3} className="mb-4 mb-lg-0">
-              <div className="bg-primary text-white p-4 rounded shadow-sm sticky-top" style={{ top: '20px' }}>
+              <div
+                className="bg-primary text-white p-4 rounded shadow-sm sticky-top"
+                style={{ top: "20px" }}
+              >
                 <ul className="list-unstyled">
                   {steps.map((s, index) => (
                     <li
                       key={s.id}
-                      className={`d-flex align-items-center mb-3 ${step === s.id ? 'fw-bold' : ''}`}
+                      className={`d-flex align-items-center mb-3 ${
+                        step === s.id ? "fw-bold" : ""
+                      }`}
                     >
                       <span
-                        className={`d-inline-block rounded-circle text-center me-2 ${steps.findIndex(st => st.id === step) >= index ? 'bg-white text-primary' : 'bg-light text-white'}`}
-                        style={{ width: '24px', height: '24px', lineHeight: '24px' }}
+                        className={`d-inline-block rounded-circle text-center me-2 ${
+                          steps.findIndex((st) => st.id === step) >= index
+                            ? "bg-white text-primary"
+                            : "bg-light text-white"
+                        }`}
+                        style={{
+                          width: "24px",
+                          height: "24px",
+                          lineHeight: "24px",
+                        }}
                       >
-                        {steps.findIndex(st => st.id === step) >= index ? '✓' : '•'}
+                        {steps.findIndex((st) => st.id === step) >= index
+                          ? "✓"
+                          : "•"}
                       </span>
                       <div>
                         <div className="small fw-semibold">{s.title}</div>
@@ -444,13 +568,10 @@ const AppointmentPage = () => {
                 </ul>
               </div>
             </Col>
-            <Col lg={9}>
-              {renderStepContent()}
-            </Col>
+            <Col lg={9}>{renderStepContent()}</Col>
           </Row>
         </section>
       </Container>
-
     </>
   );
 };

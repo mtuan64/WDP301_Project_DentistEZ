@@ -33,6 +33,7 @@ import ServiceManagement from "./pages/ServiceManagement";
 import FooterComponent from "./components/FooterComponent";
 import Chatbox from "./components/Chatbox";
 import "antd/dist/reset.css";
+import PaymentTestPage from "./pages/PaymentTestPage";
 
 
 const DRAWER_WIDTH = 240;
@@ -102,6 +103,8 @@ const App = () => {
           <Route path="/verify-otp" element={<VerifyOtpPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
 
+
+        <Route path="/payment-test" element={<PaymentTestPage />} />
         </Routes>
       </div>
 
