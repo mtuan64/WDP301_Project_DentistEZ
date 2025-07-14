@@ -1,14 +1,14 @@
 const User = require("../models/User");
 const cloudinary = require("cloudinary").v2;
 
-// Configure Cloudinary
+// Cấu hình Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Get user profile
+// Lấy thông tin hồ sơ người dùng
 const getUserProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
@@ -37,12 +37,19 @@ const getUserProfile = async (req, res) => {
   }
 };
 
-// Update user profile
+// Cập nhật hồ sơ người dùng
 const updateUserProfile = async (req, res) => {
   try {
-    const { fullname, phone, address, dateOfBirth, gender } = req.body;
+    const { username, fullname, phone, address, dateOfBirth, gender } =
+      req.body;
 
-    // Validate required fields
+    // Kiểm tra các trường bắt buộc
+    if (!username) {
+      return res.status(400).json({
+        message: "Tên người dùng là bắt buộc",
+        status: "ERROR",
+      });
+    }
     if (!fullname) {
       return res.status(400).json({
         message: "Họ tên là bắt buộc",
@@ -50,7 +57,7 @@ const updateUserProfile = async (req, res) => {
       });
     }
 
-    // Validate fullname
+    // Kiểm tra họ tên
     const fullnameRegex = /^[a-zA-Z\sÀ-ỹ]{2,50}$/;
     if (!fullnameRegex.test(fullname)) {
       return res.status(400).json({
@@ -59,7 +66,29 @@ const updateUserProfile = async (req, res) => {
       });
     }
 
-    // Validate phone
+    // Kiểm tra tên người dùng
+    const usernameRegex = /^[a-zA-Z0-9_]{3,30}$/;
+    if (!usernameRegex.test(username)) {
+      return res.status(400).json({
+        message:
+          "Tên người dùng phải từ 3-30 ký tự và chỉ chứa chữ cái, số hoặc dấu gạch dưới",
+        status: "ERROR",
+      });
+    }
+
+    // Kiểm tra tên người dùng đã tồn tại
+    const existingUser = await User.findOne({
+      username,
+      _id: { $ne: req.user.id },
+    });
+    if (existingUser) {
+      return res.status(400).json({
+        message: "Tên người dùng đã tồn tại",
+        status: "ERROR",
+      });
+    }
+
+    // Kiểm tra số điện thoại
     if (phone) {
       const phoneRegex = /^0[35789][0-9]{8}$/;
       if (!phoneRegex.test(phone)) {
@@ -71,7 +100,7 @@ const updateUserProfile = async (req, res) => {
       }
     }
 
-    // Validate dateOfBirth
+    // Kiểm tra ngày sinh
     let parsedDateOfBirth;
     if (dateOfBirth) {
       parsedDateOfBirth = new Date(dateOfBirth);
@@ -89,7 +118,7 @@ const updateUserProfile = async (req, res) => {
       }
     }
 
-    // Validate gender
+    // Kiểm tra giới tính
     const validGenders = ["male", "female", "other", ""];
     if (gender && !validGenders.includes(gender)) {
       return res.status(400).json({
@@ -98,7 +127,7 @@ const updateUserProfile = async (req, res) => {
       });
     }
 
-    // Validate address
+    // Kiểm tra địa chỉ
     if (address && address.length > 200) {
       return res.status(400).json({
         message: "Địa chỉ không được vượt quá 200 ký tự",
@@ -106,8 +135,9 @@ const updateUserProfile = async (req, res) => {
       });
     }
 
-    // Prepare update data (không bao gồm email)
+    // Chuẩn bị dữ liệu cập nhật
     const updateData = {
+      username,
       fullname,
       phone: phone || undefined,
       address: address || undefined,
@@ -115,15 +145,15 @@ const updateUserProfile = async (req, res) => {
       gender: gender || undefined,
     };
 
-    // Remove undefined fields
+    // Xóa các trường undefined
     Object.keys(updateData).forEach(
       (key) => updateData[key] === undefined && delete updateData[key]
     );
 
-    console.log("Update data:", updateData);
-    console.log("User ID:", req.user.id);
+    console.log("Dữ liệu cập nhật:", updateData);
+    console.log("ID người dùng:", req.user.id);
 
-    // Check if user exists
+    // Kiểm tra người dùng tồn tại
     const currentUser = await User.findById(req.user.id).select("email");
     if (!currentUser) {
       return res.status(404).json({
@@ -132,7 +162,7 @@ const updateUserProfile = async (req, res) => {
       });
     }
 
-    // Update user
+    // Cập nhật người dùng
     const updatedUser = await User.findByIdAndUpdate(
       req.user.id,
       { $set: updateData },
@@ -165,7 +195,7 @@ const updateUserProfile = async (req, res) => {
   }
 };
 
-// Upload profile picture to Cloudinary
+// Tải ảnh đại diện lên Cloudinary
 const uploadPictureProfile = async (req, res) => {
   try {
     if (!req.file) {
@@ -175,7 +205,7 @@ const uploadPictureProfile = async (req, res) => {
       });
     }
 
-    // Validate file size (max 5MB)
+    // Kiểm tra kích thước file (tối đa 5MB)
     if (req.file.size > 5 * 1024 * 1024) {
       return res.status(400).json({
         message: "Kích thước ảnh không được vượt quá 5MB",
@@ -183,7 +213,7 @@ const uploadPictureProfile = async (req, res) => {
       });
     }
 
-    // Validate file type
+    // Kiểm tra loại file
     if (!req.file.mimetype.startsWith("image/")) {
       return res.status(400).json({
         message: "Vui lòng chọn file ảnh (jpg, png, ...)",
@@ -191,9 +221,9 @@ const uploadPictureProfile = async (req, res) => {
       });
     }
 
-    console.log("Received file:", req.file);
+    console.log("File nhận được:", req.file);
 
-    // Upload to Cloudinary
+    // Tải lên Cloudinary
     const result = await new Promise((resolve, reject) => {
       cloudinary.uploader
         .upload_stream(
@@ -216,7 +246,7 @@ const uploadPictureProfile = async (req, res) => {
         .end(req.file.buffer);
     });
 
-    // Update user's profile picture URL
+    // Cập nhật URL ảnh đại diện của người dùng
     const updatedUser = await User.findByIdAndUpdate(
       req.user.id,
       { $set: { profilePicture: result.secure_url } },
