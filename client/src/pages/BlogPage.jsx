@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
+import { Pagination, Box } from "@mui/material";
 import "../assets/css/Blog/BlogPage.css";
 
 const BlogPage = () => {
@@ -141,8 +142,8 @@ const BlogPage = () => {
   );
   const totalPages = Math.ceil(filteredListBlogs.length / blogsPerPage);
 
-  const paginate = (pageNumber) => {
-    setCurrentPage(pageNumber);
+  const handlePageChange = (event, value) => {
+    setCurrentPage(value);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -339,7 +340,7 @@ const BlogPage = () => {
             )}
 
             <section className="blogpage-list-blogs">
-              <h2 className="blogpage-section-title">Recent Posts</h2>
+              <h2 className="blogpage-section-title">Tin tức</h2>
               <div className="blogpage-category-filter">
                 <button
                   className={`blogpage-category-btn ${
@@ -403,38 +404,41 @@ const BlogPage = () => {
                 ))}
               </div>
               {totalPages > 1 && (
-                <div className="blogpage-pagination">
-                  <button
-                    onClick={() => paginate(currentPage - 1)}
-                    disabled={currentPage === 1}
-                    className="blogpage-pagination-btn"
-                    aria-label="Previous page"
-                  >
-                    &lt;
-                  </button>
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                    (number) => (
-                      <button
-                        key={number}
-                        onClick={() => paginate(number)}
-                        className={`blogpage-pagination-btn ${
-                          currentPage === number ? "active" : ""
-                        }`}
-                        aria-label={`Page ${number}`}
-                      >
-                        {number}
-                      </button>
-                    )
-                  )}
-                  <button
-                    onClick={() => paginate(currentPage + 1)}
-                    disabled={currentPage === totalPages}
-                    className="blogpage-pagination-btn"
-                    aria-label="Next page"
-                  >
-                    &gt;
-                  </button>
-                </div>
+                <Box
+                  className="pagination-container"
+                  sx={{
+                    display: "flex",
+                    justifyContent: "center",
+                    mt: 4,
+                    "& .MuiPagination-ul": {
+                      gap: "8px",
+                    },
+                    "& .MuiPaginationItem-root": {
+                      borderRadius: "4px",
+                      minWidth: "36px",
+                      height: "36px",
+                      fontSize: "1rem",
+                      "&.Mui-selected": {
+                        backgroundColor: "#1976d2",
+                        color: "#fff",
+                        "&:hover": {
+                          backgroundColor: "#115293",
+                        },
+                      },
+                    },
+                  }}
+                >
+                  <Pagination
+                    count={totalPages}
+                    page={currentPage}
+                    onChange={handlePageChange}
+                    color="primary"
+                    showFirstButton
+                    showLastButton
+                    siblingCount={1}
+                    boundaryCount={1}
+                  />
+                </Box>
               )}
             </section>
           </div>
