@@ -16,9 +16,9 @@ const LoginPage = () => {
     if (window.google) {
       window.google.accounts.id.initialize({
         client_id:
-          "575081316588-sve5ogv2kmn25hcgj9t6bg1817c9tmdg.apps.googleusercontent.com",
+          "1003280842-hd4tp4najthm4sqal9akmqah10nrevfa.apps.googleusercontent.com",
         callback: handleGoogleResponse,
-        
+
         ux_mode: "popup",
         auto_select: false,
         context: "signin",

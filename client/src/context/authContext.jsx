@@ -40,25 +40,45 @@ export const AuthProvider = ({ children }) => {
     try {
       const token = localStorage.getItem("token");
       if (token) {
-        await axios.post(
-          "/api/logout",
-          {},
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        ).catch(error => {
-          console.warn("Logout API call failed:", error);
-          // Tiếp tục logout ở client ngay cả khi API thất bại
-        });
+        await axios
+          .post(
+            "/api/logout",
+            {},
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          )
+          .catch((error) => {
+            console.warn("Logout API call failed:", error);
+            // Tiếp tục logout ở client ngay cả khi API thất bại
+          });
       }
+
+      // Xóa các tin nhắn AI từ localStorage
+      const aiMessagePrefix = `chatMessages_ai-session-${user?.id}`;
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith(aiMessagePrefix)) {
+          localStorage.removeItem(key);
+        }
+      });
+
       setUser(null);
       localStorage.removeItem("user");
       localStorage.removeItem("token");
       navigate("/");
     } catch (error) {
       console.error("Error during logout:", error);
+
+      // Xóa các tin nhắn AI từ localStorage ngay cả khi có lỗi
+      const aiMessagePrefix = `chatMessages_ai-session-${user?.id}`;
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith(aiMessagePrefix)) {
+          localStorage.removeItem(key);
+        }
+      });
+
       setUser(null);
       localStorage.removeItem("user");
       localStorage.removeItem("token");
