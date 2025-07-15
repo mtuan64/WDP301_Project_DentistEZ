@@ -17,6 +17,17 @@ const {
   uploadPictureProfile,
   changePassword,
 } = require("../controllers/userController");
+
+const {
+  getAppointmentTrend,
+  getRevenueTrend,
+  getAppointmentStatusStats,
+  getRevenueByMethod,
+  getRevenueByType,
+  getDashboardSummaries,
+  getAppointmentByClinic,
+  getAppointmentByService
+} = require("../controllers/statisticController");
  
 
 const { getTimeslotById, getAvailableTimeslots, createTimeslot, updateTimeslot } = require("../controllers/timeslotController");
@@ -101,6 +112,29 @@ router.put('/appointments/:appointmentId', editAppointment);
 // Xóa lịch hẹn theo id
 router.delete('/:id', deleteAppointment);
 
+// Route to get daily appointment count (last 30 days)
+router.get('/appointment-trend', getAppointmentTrend);
+
+// Route to get daily revenue (last 30 days)
+router.get('/revenue-trend', getRevenueTrend);
+
+// Route to get appointment status distribution (last 30 days)
+router.get('/appointment-status-stats', getAppointmentStatusStats);
+
+// Route to get revenue breakdown by payment method (last 30 days)
+router.get('/revenue-by-method', getRevenueByMethod);
+
+// Route to get revenue breakdown by payment type (last 30 days)
+router.get('/revenue-by-type', getRevenueByType);
+
+// Route to get dashboard summary KPIs
+router.get('/summaries', getDashboardSummaries);
+
+// Route to get appointment distribution by clinic (last 30 days)
+router.get('/appointment-by-clinic', getAppointmentByClinic);
+
+// Route to get appointment distribution by service (last 30 days)
+router.get('/appointment-by-service', getAppointmentByService);
 
 // doctor 
 router.post("/doctor/create-schedule", authDentistMiddleware, createSchedule);

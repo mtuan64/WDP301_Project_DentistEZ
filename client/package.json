@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@ant-design/icons": "^6.0.0",
+    "@ant-design/plots": "^2.6.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@fortawesome/fontawesome-free": "^6.7.2",
@@ -18,7 +19,7 @@
     "@mui/material": "^7.1.1",
     "@mui/x-data-grid": "^8.5.1",
     "@payos/payos-checkout": "^1.0.8",
-    "antd": "^5.25.4",
+    "antd": "^5.26.5",
     "axios": "^1.10.0",
     "bootstrap": "^5.3.6",
     "chart.js": "^4.5.0",

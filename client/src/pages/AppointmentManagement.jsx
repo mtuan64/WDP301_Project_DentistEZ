@@ -13,15 +13,18 @@ import {
   FormControl,
   Select,
   MenuItem,
+  Chip,
 } from "@mui/material";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import dayjs from "dayjs";
 import "../assets/css/AppointmentPage.css";
 
 const AppointmentManagement = () => {
   const [appointments, setAppointments] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   // Kiểm tra xác thực và lấy dữ liệu
@@ -38,6 +41,7 @@ const AppointmentManagement = () => {
   }, [navigate]);
 
   const fetchData = async () => {
+    setLoading(true);
     const token = localStorage.getItem("token");
     try {
       const appointmentRes = await axios.get("http://localhost:9999/api/admin/appointments", {
@@ -47,6 +51,22 @@ const AppointmentManagement = () => {
       setAppointments(appointmentRes.data.success ? appointmentRes.data.data : []);
     } catch (error) {
       console.error("Error fetching data:", error.message);
+    }
+    setLoading(false);
+  };
+
+  // Xử lý thay đổi trạng thái
+  const handleStatusChange = async (appointmentId, newStatus) => {
+    const token = localStorage.getItem("token");
+    try {
+      await axios.put(
+        `http://localhost:9999/api/admin/appointments/${appointmentId}/status`,
+        { status: newStatus },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      fetchData(); // Cập nhật lại danh sách sau khi thay đổi trạng thái
+    } catch (error) {
+      console.error("Error updating status:", error.message);
     }
   };
 
@@ -61,9 +81,24 @@ const AppointmentManagement = () => {
     return matchesSearch && matchesStatus;
   });
 
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "pending":
+        return "warning";
+      case "confirmed":
+        return "info";
+      case "completed":
+        return "success";
+      case "cancelled":
+        return "error";
+      default:
+        return "default";
+    }
+  };
+
   return (
-    <div className="user-list-page">
-      <h1 className="page-title">Appointment Management</h1>
+    <div className="p-4 max-w-screen-xl mx-auto">
+      <h1 className="text-2xl font-bold mb-4">Appointment Management</h1>
       <Box display="flex" justifyContent="flex-end" mb={2}>
         <Box display="flex" gap={2}>
           <TextField
@@ -80,28 +115,29 @@ const AppointmentManagement = () => {
               label="Status"
             >
               <MenuItem value="">All</MenuItem>
+              <MenuItem value="pending">Pending</MenuItem>
               <MenuItem value="confirmed">Confirmed</MenuItem>
-              <MenuItem value="cancelled">Cancelled</MenuItem>
               <MenuItem value="completed">Completed</MenuItem>
-              <MenuItem value="fully_paid">Fully Paid</MenuItem>
+              <MenuItem value="cancelled">Cancelled</MenuItem>
             </Select>
           </FormControl>
         </Box>
       </Box>
-      <p className="total-count">Total appointments: {filteredAppointments.length}</p>
+      <p className="total-count mb-4">Total appointments: {filteredAppointments.length}</p>
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
             <TableRow style={{ backgroundColor: "#f5f5f5" }}>
-              <TableCell>No.</TableCell>
-              <TableCell>Patient</TableCell>
-              <TableCell>Doctor</TableCell>
-              <TableCell>Service</TableCell>
-              <TableCell>Clinic</TableCell>
-              <TableCell>Date</TableCell>
-              <TableCell>Time</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Note</TableCell>
+              <TableCell width={60}>STT</TableCell>
+              <TableCell>Bệnh nhân</TableCell>
+              <TableCell>Dịch vụ</TableCell>
+              <TableCell>Phòng khám</TableCell>
+              <TableCell>Bác sĩ</TableCell>
+              <TableCell>Ngày khám</TableCell>
+              <TableCell>Giờ khám</TableCell>
+              <TableCell>Trạng thái</TableCell>
+              <TableCell>Ngày đặt</TableCell>
+              <TableCell>Hành động</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -114,20 +150,45 @@ const AppointmentManagement = () => {
                 <TableRow key={appointment._id}>
                   <TableCell>{index + 1}</TableCell>
                   <TableCell>{appointment.patientId?.userId?.fullname || "N/A"}</TableCell>
-                  <TableCell>{appointment.doctorId?.userId?.fullname || "N/A"}</TableCell>                  <TableCell>{appointment.serviceId?.serviceName || "N/A"}</TableCell>
+                  <TableCell>{appointment.serviceId?.serviceName || "N/A"}</TableCell>
                   <TableCell>{appointment.clinicId?.clinic_name || "N/A"}</TableCell>
+                  <TableCell>{appointment.doctorId?.userId?.fullname || "N/A"}</TableCell>
                   <TableCell>
                     {appointment.timeslotId?.date
-                      ? new Date(appointment.timeslotId.date).toLocaleDateString("en-US", {
-                          month: "2-digit",
-                          day: "2-digit",
-                          year: "numeric",
-                        })
+                      ? dayjs(appointment.timeslotId.date).format("DD/MM/YYYY")
                       : "N/A"}
                   </TableCell>
-                  <TableCell>{appointment.timeslotId?.start_time || "N/A"}</TableCell>
-                  <TableCell>{appointment.status}</TableCell>
-                  <TableCell>{appointment.note || "N/A"}</TableCell>
+                  <TableCell>
+                    {appointment.timeslotId
+                      ? `${appointment.timeslotId.start_time} - ${appointment.timeslotId.end_time}`
+                      : "N/A"}
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={appointment.status.toUpperCase()}
+                      color={getStatusColor(appointment.status)}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    {appointment.createdAt
+                      ? dayjs(appointment.createdAt).format("DD/MM/YYYY HH:mm")
+                      : "N/A"}
+                  </TableCell>
+                  <TableCell>
+                    <FormControl size="small" style={{ minWidth: 120 }}>
+                      <InputLabel>Change Status</InputLabel>
+                      <Select
+                        value={appointment.status}
+                        onChange={(e) => handleStatusChange(appointment._id, e.target.value)}
+                        label="Change Status"
+                      >
+                        <MenuItem value="pending">Pending</MenuItem>
+                        <MenuItem value="confirmed">Confirmed</MenuItem>
+                        <MenuItem value="completed">Completed</MenuItem>
+                        <MenuItem value="cancelled">Cancelled</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </TableCell>
                 </TableRow>
               ))
             )}

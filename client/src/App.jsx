@@ -18,7 +18,7 @@ import UserListPage from "./pages/UserListManage";
 import AppointmentPage from "./pages/AppointmentPage";
 import AppointmentManagement from "./pages/AppointmentManagement";
 import DoctorAccountManagement from "./pages/DoctorAccountManagement";
-import StaticPage from "./pages/StatisticPage";
+import AppointmentStats from "./pages/StatisticPage";
 import Header from "./components/HeaderComponent";
 import Topbar from "./components/Topbar";
 import MenuComponent from "./components/MenuComponent";
@@ -108,7 +108,7 @@ const App = () => {
           <Route path="/services" element={<ServiceCard />} />
           <Route path="/service-detail/:id" element={<ServiceDetail />} />
           <Route path="/servicemanagement" element={<ServiceManagement />} />
-          <Route path="/statistic" element={<StaticPage />} />
+          <Route path="/statistic" element={<AppointmentStats />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/verify-otp" element={<VerifyOtpPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
