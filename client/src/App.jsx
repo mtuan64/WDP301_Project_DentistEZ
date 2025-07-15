@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import DoctorPage from "./pages/DoctorPage";
 import LoginPage from "./pages/LoginPage";
@@ -22,7 +23,8 @@ import StaticPage from "./pages/StatisticPage";
 import Header from "./components/HeaderComponent";
 import Topbar from "./components/Topbar";
 import MenuComponent from "./components/MenuComponent";
-import PatientAppointment from "./pages/PatientAppointment";
+
+import "antd/dist/reset.css";
 import AccountManagement from "./pages/AccountManagement";
 import ScheduleManagement from "./pages/ScheduleManagement";
 import ServiceCard from "./pages/ServiceCard ";
@@ -33,6 +35,9 @@ import PaymentSuccessPage from "./pages/PaymentSuccessPage";
 import FooterComponent from "./components/FooterComponent";
 import Chatbox from "./components/Chatbox";
 import "antd/dist/reset.css";
+import PaymentTestPage from "./pages/PaymentTestPage";
+import PatientAppointmentPage from "./pages/PatientAppointmentPage";
+import ChangePasswordPage from "./pages/ChangePass";
 
 const DRAWER_WIDTH = 240;
 
@@ -63,7 +68,6 @@ const App = () => {
           isOpen={menuOpen}
           onClose={() => setMenuOpen(false)}
           role={role}
-          userId={user?.id} 
         />
       )}
 
@@ -76,6 +80,7 @@ const App = () => {
       >
         <Routes>
           <Route path="/" element={<HomePage />} />
+
           <Route path="/doctor" element={<DoctorPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
@@ -84,22 +89,31 @@ const App = () => {
           <Route path="/appointment" element={<AppointmentPage />} />
           <Route path="/userlist" element={<UserListPage />} />
           <Route path="/doctor/:doctorId" element={<DoctorDetail />} />
-          <Route path="/admin/blogs" element={<BlogListPage />} />
+          <Route path="admin/blogs" element={<BlogListPage />} />
           <Route path="/admin/categories" element={<CategoryBlog />} />
           <Route path="/blog" element={<BlogPage />} />
           <Route path="/blog/:slug" element={<BlogDetail />} />
           <Route path="/doctoraccount" element={<DoctorAccountManagement />} />
-          <Route path="/admin/appointments" element={<AppointmentManagement />} />
+          <Route path="/myappointment" element={<PatientAppointmentPage />} />
+
+          <Route path="/changepass" element={<ChangePasswordPage />} />
+          <Route
+            path="/admin/appointments"
+            element={<AppointmentManagement />}
+          />
           <Route path="/accountmanagement" element={<AccountManagement />} />
-          <Route path="/patient/:userId" element={<PatientAppointment />} />
+
           <Route path="/doctor/schedule" element={<ScheduleManagement />} />
           <Route path="/services" element={<ServiceCard />} />
           <Route path="/service-detail/:id" element={<ServiceDetail />} />
           <Route path="/servicemanagement" element={<ServiceManagement />} />
+
           <Route path="/statistic" element={<StaticPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/verify-otp" element={<VerifyOtpPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
+
+          <Route path="/payment-test" element={<PaymentTestPage />} />
           <Route path="/payment-cancel" element={<PaymentCancelPage />} />
           <Route path="/payment-success" element={<PaymentSuccessPage />} />
         </Routes>

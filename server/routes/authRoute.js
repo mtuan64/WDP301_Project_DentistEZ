@@ -3,7 +3,7 @@ const router = express.Router();
 
 const { authMiddleware, authAdminMiddleware, authDentistMiddleware, authPatientMiddleware } = require("../middleware/authMiddleware");
 const {registerUser,loginUser,uploadProfilePicture,updateUser,upload, getServiceDetail,logoutUser,googleLogin} = require("../controllers/authController");
-const {getAllDoctors,getDoctorById,updateDoctorStatus, createSchedule, getSchedule, getScheduleByWeek, getSchedulebydoctorId ,updateDoctor} = require("../controllers/doctorController");
+const {getAllDoctors,getDoctorById,updateDoctorStatus, createSchedule, getSchedule, getScheduleByWeek, getSchedulebydoctorId, updateDoctor} = require("../controllers/doctorController");
 const {getAllBlogs,getAllBlogsForAdmin,createBlog,updateBlog,deleteBlog,uploadImage,getAllCategories,getAllCategoriesForAdmin, createCategory,updateCategory,deleteCategory,getBlogBySlug,getTopViewedBlogs,incrementBlogViews} = require("../controllers/blogController");
 const {
   getAllAppointment,
@@ -15,6 +15,7 @@ const {
   getUserProfile,
   updateUserProfile,
   uploadPictureProfile,
+  changePassword,
 } = require("../controllers/userController");
  
 
@@ -28,6 +29,13 @@ const chatbotController = require("../controllers/chat/chatbotController");
 const chatboxController = require("../controllers/chat/chatboxController");
 const { requestPasswordReset, verifyOTP, resetPassword } = require("../controllers/otpController");
 
+const {
+  createPayment,
+  getPaymentStatus,
+  getAllPayments,
+  getPaymentByOrderCode,
+  cancelPayment,
+} = require("../controllers/paymentController");
 
 // Configure multer for file uploads (used for profile pictures and blog images)
 const storage = multer.diskStorage({
@@ -71,6 +79,7 @@ router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.get("/view/service", getAllService);
 router.get("/view-detail/service/:id", getServiceDetail);
+router.post("/changepass", authMiddleware, changePassword);
 
 // update profile
 router.get("/user/profile", authMiddleware, getUserProfile);
@@ -85,9 +94,6 @@ router.post(
 //appointment
 // Lấy tất cả lịch hẹn
 router.get('/admin/appointments', getAllAppointment);
-
-// Lấy lịch hẹn theo PatientId
-router.get('/patient/:userId', getAppointmentByUserId);
 
 // Sửa lịch hẹn theo PatientId và id
 router.put('/appointments/:appointmentId', editAppointment);
@@ -107,6 +113,8 @@ router.post("/reset-pass", requestPasswordReset);
 router.post("/verify", verifyOTP);
 router.post("/confirm-reset", resetPassword);
 router.post("/gg-login", googleLogin);
+router.put("/changepass", authMiddleware, changePassword);
+
 
 
 // Timeslot

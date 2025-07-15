@@ -9,6 +9,7 @@ const patientAppController = require("../controllers/appointment/patientAppContr
 const multer = require("multer");
 const cloudinary = require("cloudinary").v2;
 const streamifier = require("streamifier");
+const { getAllAppointment, getAppointmentsByPatient, cancelAppointmentWithRefund } = require("../controllers/appointmentController");
 
 
 // Multer để nhận file vào memory
@@ -51,8 +52,13 @@ router.post("/upload-file", upload.single("file"), async (req, res) => {
 
 // API tạo payment (cọc) - cần xác thực bệnh nhân
 router.post("/create-payment", authPatientMiddleware, paymentController.createPayment);
-
+router.post("/webhook/payos", paymentController.handlePaymentWebhook);
 // API callback PayOS (webhook) - không cần xác thực
 router.post("/payos-callback", patientAppController.payosCallback);
+
+//appointment routes
+router.get("/patient/:userId", getAppointmentsByPatient);
+router.put("/cancel/:id", authPatientMiddleware, cancelAppointmentWithRefund);
+
 
 module.exports = router;

@@ -1,7 +1,7 @@
 const User = require("../models/User");
 const cloudinary = require("cloudinary").v2;
-
-// Cấu hình Cloudinary
+const bcrypt = require("bcryptjs");
+// Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -278,8 +278,36 @@ const uploadPictureProfile = async (req, res) => {
   }
 };
 
+const changePassword = async (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+  const userId = req.user.id;
+  console.log("User ID:", userId);
+  
+  try {
+    const user = await User.findById(userId);
+    if (!user || !user.password) {
+      return res.status(404).json({ status: "FAILED", message: "Người dùng không tồn tại hoặc đăng nhập bằng Google." });
+    }
+
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ status: "FAILED", message: "Mật khẩu hiện tại không đúng." });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    await user.save();
+
+    res.json({ status: "SUCCESS", message: "Đổi mật khẩu thành công." });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ status: "FAILED", message: "Đổi mật khẩu thất bại." });
+  }
+};
+
 module.exports = {
   getUserProfile,
   updateUserProfile,
   uploadPictureProfile,
+  changePassword,
 };
