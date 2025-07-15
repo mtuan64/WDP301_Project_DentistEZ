@@ -1,0 +1,64 @@
+.patientappointment-page {
+  padding: 20px;
+}
+
+.patientappointment-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.patientappointment-header {
+  margin-bottom: 20px;
+}
+
+.patientappointment-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.patientappointment-info {
+  margin-bottom: 20px;
+  padding: 15px;
+  border: 1px solid #e8e8e8;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+}
+
+.patientappointment-info p {
+  margin: 5px 0;
+}
+
+.patientappointment-content {
+  margin-top: 20px;
+}
+
+.patientappointment-loading,
+.patientappointment-error {
+  text-align: center;
+  padding: 50px;
+}
+
+.table-responsive {
+  width: 100%;
+}
+
+.btn-primary {
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+  border-color: #004085;
+}
+
+.patientappointment-modal .ant-modal-content {
+  border-radius: 8px;
+}
+
+.patientappointment-form .ant-form-item {
+  margin-bottom: 16px;
+}

@@ -1,13 +1,27 @@
 const Doctor = require("../models/Doctor");
 const TimeSlot = require("../models/TimeSlot");
+const cloudinary = require("cloudinary").v2;
+const fs = require("fs").promises;
+const path = require("path");
+const multer = require("multer");
+
+const uploadDir = path.join(__dirname, "../Uploads");
+fs.mkdir(uploadDir, { recursive: true })
+  .then(() => console.log("Uploads directory created or exists"))
+  .catch((err) => console.error("Error creating uploads directory:", err));
+
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 exports.getAllDoctors = async (req, res) => {
   try {
-
-    // Chỉ lấy doctor đã có chuyên ngành
-    const doctors = await Doctor.find({Specialty: { $exists: true, $ne: '' }}).populate('userId').populate('clinic_id','clinic_name');
-
-
+    const doctors = await Doctor.find()
+      .populate("userId", "fullname")
+      .populate("clinic_id", "clinic_name");
     res.status(200).json({
       success: true,
       data: doctors,
@@ -21,76 +35,60 @@ exports.getAllDoctors = async (req, res) => {
   }
 };
 
-
 exports.getDoctorById = async (req, res) => {
   try {
     const doctor = await Doctor.findById(req.params.doctorId)
-      .populate('userId', 'fullname')
-      .populate('clinic_id', 'clinic_name');
+      .populate("userId", "fullname")
+      .populate("clinic_id", "clinic_name");
     if (!doctor) {
-      return res.status(404).json({ message: 'Doctor not found' });
+      return res.status(404).json({ message: "Doctor not found" });
     }
     res.status(200).json({ data: doctor });
   } catch (error) {
-    console.error('Error in getDoctorById:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
-
-exports.getAllDoctors = async (req, res) => {
-  try {
-    const doctors = await Doctor.find()
-      .populate('userId', 'fullname')
-      .populate('clinic_id', 'clinic_name');
-    res.status(200).json({ data: doctors });
-  } catch (error) {
-    console.error('Error in getAllDoctors:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error("Error in getDoctorById:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
 exports.updateDoctorStatus = async (req, res, next) => {
   try {
-    const doctorId = req.params.doctorId; // ID dạng string
+    const doctorId = req.params.doctorId;
     const { Status } = req.body;
 
-    // Kiểm tra trạng thái hợp lệ
-    if (!['active', 'inactive'].includes(Status)) {
+    if (!["active", "inactive"].includes(Status)) {
       return res.status(400).json({
         success: false,
-        message: "Trạng thái không hợp lệ. Chỉ chấp nhận 'active' hoặc 'inactive'."
+        message: "Trạng thái không hợp lệ. Chỉ chấp nhận 'active' hoặc 'inactive'.",
       });
     }
 
-    // Tìm và cập nhật bác sĩ
     const doctor = await Doctor.findByIdAndUpdate(
       doctorId,
       { Status },
       { new: true, runValidators: true }
-    ).populate('userId', 'fullname');
+    ).populate("userId", "fullname");
 
     if (!doctor) {
       return res.status(404).json({
         success: false,
-        message: "Không tìm thấy bác sĩ"
+        message: "Không tìm thấy bác sĩ",
       });
     }
 
     return res.status(200).json({
       success: true,
-      data: doctor
+      data: doctor,
     });
   } catch (error) {
     console.error("Error in updateDoctorStatus:", error);
     return next(error);
   }
-
 };
 
 exports.updateDoctor = async (req, res) => {
   try {
     const doctorId = req.params.doctorId;
-    const { Specialty, Degree, ExperienceYears, Description, ProfileImage } = req.body;
+    const { Specialty, Degree, ExperienceYears, Description } = req.body;
 
     // Validate input
     if (!Specialty || !Degree || ExperienceYears === undefined || ExperienceYears === null) {
@@ -109,6 +107,29 @@ exports.updateDoctor = async (req, res) => {
       });
     }
 
+    // Handle ProfileImage upload
+    let profileImageUrl = req.body.ProfileImage || "";
+    console.log("Received ProfileImage (body):", req.body.ProfileImage);
+    console.log("Received file:", req.file);
+    if (req.file) {
+      console.log("Uploading to Cloudinary:", req.file.path);
+      try {
+        const result = await cloudinary.uploader.upload(req.file.path, {
+          folder: "doctor_profiles",
+        });
+        profileImageUrl = result.secure_url;
+        console.log("Cloudinary URL:", profileImageUrl);
+        await fs.unlink(req.file.path).catch(console.error);
+      } catch (cloudinaryError) {
+        console.error("Cloudinary upload failed:", cloudinaryError);
+        return res.status(500).json({
+          success: false,
+          message: "Failed to upload image to Cloudinary",
+          error: cloudinaryError.message,
+        });
+      }
+    }
+
     // Find and update doctor
     const doctor = await Doctor.findByIdAndUpdate(
       doctorId,
@@ -117,7 +138,7 @@ exports.updateDoctor = async (req, res) => {
         Degree,
         ExperienceYears: parsedExperienceYears,
         Description,
-        ProfileImage,
+        ProfileImage: profileImageUrl,
       },
       { new: true, runValidators: true }
     )
@@ -131,6 +152,7 @@ exports.updateDoctor = async (req, res) => {
       });
     }
 
+    console.log("Updated doctor:", doctor);
     return res.status(200).json({
       success: true,
       message: "Cập nhật thông tin bác sĩ thành công",
@@ -138,6 +160,9 @@ exports.updateDoctor = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in updateDoctor:", error);
+    if (req.file) {
+      await fs.unlink(req.file.path).catch(console.error);
+    }
     return res.status(500).json({
       success: false,
       message: "Lỗi server khi cập nhật thông tin bác sĩ",
@@ -146,7 +171,6 @@ exports.updateDoctor = async (req, res) => {
   }
 };
 
-// POST /api/doctor/create-schedule
 exports.createSchedule = async (req, res) => {
   try {
     const { selected_slots, dates } = req.body;
@@ -155,7 +179,7 @@ exports.createSchedule = async (req, res) => {
     if (!userId) {
       return res.status(400).json({
         success: false,
-        message: 'Không tìm thấy thông tin user!',
+        message: "Không tìm thấy thông tin user!",
       });
     }
 
@@ -163,7 +187,7 @@ exports.createSchedule = async (req, res) => {
     if (!doctor) {
       return res.status(404).json({
         success: false,
-        message: 'Không tìm thấy thông tin bác sĩ!',
+        message: "Không tìm thấy thông tin bác sĩ!",
       });
     }
 
@@ -172,27 +196,27 @@ exports.createSchedule = async (req, res) => {
     if (!Array.isArray(selected_slots) || !Array.isArray(dates) || !selected_slots.length || !dates.length) {
       return res.status(400).json({
         success: false,
-        message: 'Vui lòng chọn slot và ngày!',
+        message: "Vui lòng chọn slot và ngày!",
       });
     }
 
-    if (!selected_slots.every(slot => typeof slot === 'number' && slot >= 1 && slot <= 9)) {
+    if (!selected_slots.every((slot) => typeof slot === "number" && slot >= 1 && slot <= 9)) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid slot indices!',
+        message: "Invalid slot indices!",
       });
     }
 
     const defaultSlots = [
-      { slot_index: 1, start_time: '08:00', end_time: '09:00' },
-      { slot_index: 2, start_time: '09:00', end_time: '10:00' },
-      { slot_index: 3, start_time: '10:00', end_time: '11:00' },
-      { slot_index: 4, start_time: '14:00', end_time: '15:00' },
-      { slot_index: 5, start_time: '15:00', end_time: '16:00' },
-      { slot_index: 6, start_time: '16:00', end_time: '17:00' },
-      { slot_index: 7, start_time: '17:00', end_time: '18:00' },
-      { slot_index: 8, start_time: '18:00', end_time: '19:00' },
-      { slot_index: 9, start_time: '19:00', end_time: '20:00' },
+      { slot_index: 1, start_time: "08:00", end_time: "09:00" },
+      { slot_index: 2, start_time: "09:00", end_time: "10:00" },
+      { slot_index: 3, start_time: "10:00", end_time: "11:00" },
+      { slot_index: 4, start_time: "14:00", end_time: "15:00" },
+      { slot_index: 5, start_time: "15:00", end_time: "16:00" },
+      { slot_index: 6, start_time: "16:00", end_time: "17:00" },
+      { slot_index: 7, start_time: "17:00", end_time: "18:00" },
+      { slot_index: 8, start_time: "18:00", end_time: "19:00" },
+      { slot_index: 9, start_time: "19:00", end_time: "20:00" },
     ];
 
     const slots = [];
@@ -207,7 +231,7 @@ exports.createSchedule = async (req, res) => {
       }
 
       for (const slotIndex of selected_slots) {
-        const defaultSlot = defaultSlots.find(s => s.slot_index === slotIndex);
+        const defaultSlot = defaultSlots.find((s) => s.slot_index === slotIndex);
         if (defaultSlot) {
           const exists = await TimeSlot.exists({ doctorId, date, slot_index: slotIndex });
           if (!exists) {
@@ -218,7 +242,7 @@ exports.createSchedule = async (req, res) => {
               start_time: defaultSlot.start_time,
               end_time: defaultSlot.end_time,
               isAvailable: true,
-              status: 'active',
+              status: "active",
             });
           }
         }
@@ -228,7 +252,7 @@ exports.createSchedule = async (req, res) => {
     if (slots.length === 0) {
       return res.status(200).json({
         success: true,
-        message: 'Tất cả các slot đã tồn tại. Không có slot mới được tạo.',
+        message: "Tất cả các slot đã tồn tại. Không có slot mới được tạo.",
         created_count: 0,
       });
     }
@@ -243,13 +267,12 @@ exports.createSchedule = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: 'Lỗi server!',
+      message: "Lỗi server!",
       error: error.message,
     });
   }
 };
 
-// GET /api/doctor/getScheduleByWeek
 exports.getScheduleByWeek = async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -260,7 +283,7 @@ exports.getScheduleByWeek = async (req, res) => {
     if (isNaN(start.getTime()) || isNaN(end.getTime())) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid startDate or endDate!',
+        message: "Invalid startDate or endDate!",
       });
     }
 
@@ -268,7 +291,7 @@ exports.getScheduleByWeek = async (req, res) => {
     if (!doctor) {
       return res.status(404).json({
         success: false,
-        message: 'Không tìm thấy bác sĩ!',
+        message: "Không tìm thấy bác sĩ!",
       });
     }
 
@@ -287,7 +310,7 @@ exports.getScheduleByWeek = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: 'Lỗi server!',
+      message: "Lỗi server!",
       error: error.message,
     });
   }

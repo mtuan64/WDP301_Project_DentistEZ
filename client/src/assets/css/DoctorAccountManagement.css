@@ -211,6 +211,130 @@
   opacity: 0.5;
 }
 
+/********** Dialog Styling **********/
+.doctor-account-management .MuiDialog-root {
+  z-index: 10000 !important; /* High z-index to override header */
+}
+
+.doctor-account-management .MuiBackdrop-root {
+  z-index: 9999 !important; /* Ensure backdrop is below dialog but above header */
+}
+
+.doctor-account-management .MuiDialog-paper {
+  background-color: var(--white);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  margin-top: 100px !important; /* Offset for header height (adjust if needed) */
+  position: relative;
+  max-width: 600px;
+  width: 90%;
+}
+
+.doctor-account-management .MuiDialogTitle-root {
+  font-family: 'Jost', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--primary);
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--light-blue);
+}
+
+.doctor-account-management .MuiDialogContent-root {
+  font-family: 'Jost', sans-serif;
+  padding: 24px;
+  color: var(--dark);
+}
+
+.doctor-account-management .MuiTextField-root {
+  margin-bottom: 16px;
+}
+
+.doctor-account-management .MuiInputBase-root {
+  font-family: 'Jost', sans-serif;
+  font-size: 0.95rem;
+  border-radius: 8px;
+}
+
+.doctor-account-management .MuiOutlinedInput-notchedOutline {
+  border-color: var(--primary);
+}
+
+.doctor-account-management .Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: var(--secondary);
+}
+
+.doctor-account-management .MuiInputLabel-root {
+  font-family: 'Jost', sans-serif;
+  color: var(--gray);
+}
+
+.doctor-account-management .MuiDialogActions-root {
+  padding: 16px 24px;
+  border-top: 1px solid var(--light-blue);
+}
+
+.doctor-account-management .MuiButton-root {
+  font-family: 'Jost', sans-serif;
+  font-weight: 600;
+  text-transform: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+}
+
+.doctor-account-management .MuiButton-containedPrimary {
+  background-color: var(--primary);
+  color: var(--white);
+}
+
+.doctor-account-management .MuiButton-containedPrimary:hover {
+  background-color: var(--secondary);
+}
+
+.doctor-account-management .MuiButton-textSecondary {
+  color: var(--secondary);
+}
+
+.doctor-account-management .MuiButton-textSecondary:hover {
+  background-color: var(--light-blue);
+}
+
+/********** File Input Styling **********/
+.doctor-account-management input[type="file"] {
+  font-family: 'Jost', sans-serif;
+  font-size: 0.95rem;
+  padding: 8px;
+  border: 1px solid var(--primary);
+  border-radius: 8px;
+  background-color: var(--white);
+  width: 100%;
+  cursor: pointer;
+}
+
+.doctor-account-management input[type="file"]::-webkit-file-upload-button {
+  background-color: var(--primary);
+  color: var(--white);
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-family: 'Jost', sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.doctor-account-management input[type="file"]::-webkit-file-upload-button:hover {
+  background-color: var(--secondary);
+}
+
+/********** Current Profile Image Preview **********/
+.doctor-account-management .MuiDialogContent-root img {
+  max-width: 100px;
+  height: auto;
+  border-radius: 4px;
+  margin-top: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
 /********** Responsive Adjustments **********/
 @media (max-width: 600px) {
   .doctor-account-management {
@@ -255,5 +379,33 @@
     font-size: 0.9rem;
     min-width: 28px;
     height: 28px;
+  }
+
+  .doctor-account-management .MuiDialog-paper {
+    margin-top: 80px !important; /* Adjust for mobile header height */
+    width: 95%;
+    max-width: 100%;
+  }
+
+  .doctor-account-management .MuiDialogTitle-root {
+    font-size: 1.2rem;
+    padding: 12px 16px;
+  }
+
+  .doctor-account-management .MuiDialogContent-root {
+    padding: 16px;
+  }
+
+  .doctor-account-management .MuiDialogActions-root {
+    padding: 12px 16px;
+  }
+
+  .doctor-account-management .MuiButton-root {
+    font-size: 0.9rem;
+    padding: 6px 12px;
+  }
+
+  .doctor-account-management input[type="file"] {
+    font-size: 0.85rem;
   }
 }

@@ -2,64 +2,60 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Drawer } from "antd";
 import {
-  HomeOutlined, UserOutlined, LockOutlined, CloseOutlined,
-  TeamOutlined, FileTextOutlined, SettingOutlined
+  HomeOutlined,
+  UserOutlined,
+  LockOutlined,
+  CloseOutlined,
+  TeamOutlined,
+  FileTextOutlined,
+  SettingOutlined,
 } from "@ant-design/icons";
 
 const DRAWER_WIDTH = 240;
 
-// Định nghĩa menu theo từng vai trò với đường dẫn rõ ràng
-const menuByRole = {
-  admin: [
-    { title: "Home", path: "/", icon: <HomeOutlined /> },
+// ✅ Định nghĩa menu động theo role và userId
+const menuByRole = (role, userId) => {
+  const menus = {
+    admin: [
+      { title: "Home", path: "/", icon: <HomeOutlined /> },
+      { title: "Manage Users", path: "/accountmanagement", icon: <TeamOutlined /> },
+      { title: "Manage Doctor Account", path: "/doctoraccount", icon: <FileTextOutlined /> },
+      { title: "Manage Service", path: "/servicemanagement", icon: <FileTextOutlined /> },
+      { title: "Settings", path: "/settings", icon: <SettingOutlined /> },
+      { title: "Manage Blogs", path: "/admin/blogs", icon: <FileTextOutlined /> },
+      { title: "Manage Revenue", path: "/admin/payments", icon: <FileTextOutlined /> },
+      { title: "Statistic Dashboard", path: "/statistic", icon: <FileTextOutlined /> },
+      { title: "Manage Appointments", path: "/admin/appointments", icon: <FileTextOutlined /> },
+    ],
+    doctor: [
+      { title: "Home", path: "/", icon: <HomeOutlined /> },
+      { title: "Schedule Management", path: "/doctor/schedule", icon: <LockOutlined /> },
+      { title: "Report Management", path: "/report", icon: <LockOutlined /> },
+      { title: "Message Management", path: "/message-management", icon: <LockOutlined /> },
+      { title: "Attendance Management", path: "/attendance-management", icon: <LockOutlined /> },
+      { title: "Recruitment Management", path: "/recruitment-management-mentor", icon: <LockOutlined /> },
+    ],
+    staff: [
+      { title: "Home", path: "/", icon: <HomeOutlined /> },
+      { title: "Addresses", path: "/addresses", icon: <UserOutlined /> },
+      { title: "Change Password", path: "/change-password", icon: <LockOutlined /> },
+    ],
+    patient: [
+      { title: "Home", path: "/", icon: <HomeOutlined /> },
+      { title: "My Appointment", path: `/patient/${userId}`, icon: <HomeOutlined /> },
+      { title: "Report Management", path: "/report-management", icon: <FileTextOutlined /> },
+      { title: "Schedule", path: "/schedule", icon: <FileTextOutlined /> },
+      { title: "Attendance", path: "/attendance", icon: <FileTextOutlined /> },
+      { title: "Mark Report", path: "/attendance", icon: <FileTextOutlined /> },
+    ],
+  };
 
-    { title: "Manage Users", path: "/accountmanagement", icon: <TeamOutlined />, },
-    { title: "Manage Doctor Account", path: "/doctoraccount", icon: <FileTextOutlined /> },
-    { title: "Manage Service", path: "/servicemanagement", icon: <FileTextOutlined />, },
-    { title: "Settings", path: "/settings", icon: <SettingOutlined /> },
-    { title: "Manage Blogs", path: "/admin/blogs", icon: <FileTextOutlined /> },
-    {
-      title: "Statistic Dashboard",
-      path: "/statistic",
-      icon: <FileTextOutlined />,
-    },
-    { title: "Manage Appointments", path: "/admin/appointments", icon: <FileTextOutlined /> },
-    
-    
-
-  ],
-  doctor: [
-    { title: "Home", path: "/", icon: <HomeOutlined /> },
-    { title: "Schedule Management", path: "/doctor/schedule", icon: <LockOutlined /> },
-    { title: "Report Management", path: "/report", icon: <LockOutlined /> },
-    { title: "Message Management", path: "/message-management", icon: <LockOutlined />, },
-    { title: "Attendance Management", path: "/attendance-management", icon: <LockOutlined />, },
-    { title: "Recruitment Management", path: "/recruitment-management-mentor", icon: <LockOutlined />, },
-  ],
-  staff: [
-    { title: "Home", path: "/", icon: <HomeOutlined /> },
-    { title: "Addresses", path: "/addresses", icon: <UserOutlined /> },
-    {
-      title: "Change Password", path: "/change-password", icon: <LockOutlined />,
-    },
-  ],
-  patient: [
-    { title: "Home", path: "/", icon: <HomeOutlined /> },
-    { title: "My Appointment", path: "/myappointment", icon: <HomeOutlined /> },
-    {
-      title: "Report Management",
-      path: "/report-management",
-      icon: <FileTextOutlined />,
-    },
-    { title: "Schedule", path: "/schedule", icon: <FileTextOutlined /> },
-    { title: "Attendance", path: "/attendance", icon: <FileTextOutlined /> },
-    { title: "Mark Report", path: "/attendance", icon: <FileTextOutlined /> },
-  ],
+  return menus[role] || [];
 };
 
-const MenuComponent = ({ isOpen, onClose, role }) => {
-  const navigations = menuByRole[role] || [];
+const MenuComponent = ({ isOpen, onClose, role, userId }) => {
   const location = useLocation();
+  const navigations = menuByRole(role, userId); // ✅ gọi hàm đúng chỗ
 
   return (
     <Drawer
@@ -75,10 +71,9 @@ const MenuComponent = ({ isOpen, onClose, role }) => {
         body: {
           scrollbarWidth: "none",
           msOverflowStyle: "none",
-        }
+        },
       }}
       className="custom-drawer"
-
     >
       <nav
         style={{
@@ -91,11 +86,8 @@ const MenuComponent = ({ isOpen, onClose, role }) => {
           overflowY: "auto",
           paddingTop: 4,
           paddingBottom: 4,
-          
         }}
-
       >
-
         {navigations.map(({ title, path, icon }) => {
           const isActive = location.pathname === path;
           return (
@@ -116,7 +108,7 @@ const MenuComponent = ({ isOpen, onClose, role }) => {
                 fontWeight: isActive ? 600 : 400,
                 margin: "2px 0",
                 cursor: "pointer",
-                transition: "background 0.2s,color 0.2s"
+                transition: "background 0.2s,color 0.2s",
               }}
             >
               {React.cloneElement(icon, { style: { fontSize: 20 } })}

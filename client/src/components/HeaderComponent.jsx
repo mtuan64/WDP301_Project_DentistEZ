@@ -116,7 +116,7 @@ const Header = ({ onMenuClick }) => {
                 <Avatar
                   size={32}
                   icon={<UserOutlined />}
-                  src={user.avatar || undefined}
+                  src={user.profilePicture || undefined}
                   style={{ marginRight: 8 }}
                 />
                 {user.username}

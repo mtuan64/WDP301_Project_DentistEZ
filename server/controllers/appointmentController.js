@@ -1,21 +1,54 @@
-const mongoose = require("mongoose");
-const Appointment = require("../models/Appointment");
-const TimeSlot = require("../models/TimeSlot");
-const User = require("../models/User");
-const Patient = require("../models/Patient");
-const Service = require("../models/Service");
-const Clinic = require("../models/Clinic");
-// Lấy tất cả lịch hẹn (admin)
+const mongoose = require('mongoose');
+const Appointment = require('../models/Appointment');
+const TimeSlot = require('../models/TimeSlot');
+const User = require('../models/User');
+const Patient = require('../models/Patient')
+const Service = require('../models/Service');
+const Clinic = require('../models/Clinic');
+// Lấy tất cả lịch hẹn
+
 const getAllAppointment = async (req, res) => {
   try {
     const appointments = await Appointment.find()
-      .populate("patientId", "name")
-      .populate("doctorId", "name")
-      .populate("staffId", "name")
-      .populate("serviceId", "name")
-      .populate("clinicId", "name")
-      .populate("timeslotId")
-      .sort({ createdAt: -1 });
+      .populate({
+        path: "patientId",
+        select: "userId",
+        populate: {
+          path: "userId",
+          model: "User",
+          select: "fullname",
+        },
+      })
+      .populate({
+        path: "doctorId",
+        select: "userId",
+        populate: {
+          path: "userId",
+          model: "User",
+          select: "fullname",
+        },
+      })
+      .populate({
+        path: "staffId",
+        select: "userId",
+        populate: {
+          path: "userId",
+          model: "User",
+          select: "fullname",
+        },
+      })
+      .populate({
+        path: "serviceId",
+        select: "serviceName",
+      })
+      .populate({
+        path: "clinicId",
+        select: "clinic_name",
+      })
+      .populate({
+        path: "timeslotId",
+        select: "date start_time end_time",
+      });
 
     res.status(200).json({ success: true, data: appointments });
   } catch (error) {
@@ -113,64 +146,268 @@ const getAppointmentsByPatient = async (req, res) => {
 // Tạo lịch hẹn mới
 const createAppointment = async (req, res) => {
   try {
-    const data = req.body;
+    const { patientId, doctorId, serviceId, serviceOptionId, clinicId, timeslotId, note } = req.body;
 
-    const newAppointment = await Appointment.create(data);
+    if (!patientId || !doctorId || !serviceId || !clinicId || !timeslotId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Vui lòng cung cấp đầy đủ thông tin bắt buộc',
+      });
+    }
+
+    // Kiểm tra timeslot có trống không
+    const timeslot = await TimeSlot.findById(timeslotId);
+    if (!timeslot || !timeslot.isAvailable) {
+      return res.status(400).json({
+        success: false,
+        message: 'Khung giờ không tồn tại hoặc đã được đặt',
+      });
+    }
+
+    const newAppointment = await Appointment.create({
+      patientId,
+      doctorId,
+      serviceId,
+      serviceOptionId,
+      clinicId,
+      timeslotId,
+      note,
+      createdBy: req.user.id,
+    });
+
+    // Cập nhật timeslot thành không trống
+    timeslot.isAvailable = false;
+    await timeslot.save();
 
     const populatedAppointment = await Appointment.findById(newAppointment._id)
-      .populate("patientId", "name")
-      .populate("doctorId", "name")
-      .populate("staffId", "name")
-      .populate("serviceId", "name")
-      .populate("clinicId", "name");
+      .populate('patientId', 'name')
+      .populate('doctorId', 'name')
+      .populate('serviceId', 'serviceName')
+      .populate('clinicId', 'name')
+      .populate('timeslotId', 'date start_time end_time');
 
     res.status(201).json({
       success: true,
       data: populatedAppointment,
-      message: "Tạo lịch hẹn thành công",
+      message: 'Tạo lịch hẹn thành công',
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Lỗi khi tạo lịch hẹn",
+      message: 'Lỗi khi tạo lịch hẹn',
       error: error.message,
     });
   }
 };
 
-// Sửa lịch hẹn
 const editAppointment = async (req, res) => {
   try {
-    const { id } = req.params;
-    const updateData = req.body;
+    console.log('Entering editAppointment');
+    const { appointmentId } = req.params;
+    console.log('Received appointmentId:', appointmentId);
+    console.log('Request body:', req.body);
+    const { timeslotId, note } = req.body;
 
-    const appointment = await Appointment.findById(id);
+    // Validate appointmentId
+    if (!appointmentId) {
+      console.log('Missing appointmentId');
+      return res.status(400).json({
+        success: false,
+        message: 'appointmentId is missing or undefined',
+      });
+    }
+    if (!mongoose.Types.ObjectId.isValid(appointmentId)) {
+      console.log('Invalid appointmentId:', appointmentId);
+      return res.status(400).json({
+        success: false,
+        message: `appointmentId không hợp lệ: ${appointmentId}`,
+      });
+    }
+
+    // Check if appointment exists
+    console.log('Checking if appointment exists');
+    const appointment = await Appointment.findById(appointmentId);
+    console.log('Appointment found:', !!appointment);
     if (!appointment) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Không tìm thấy lịch hẹn" });
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy lịch hẹn',
+      });
+    }
+
+    // Validate timeslotId
+    console.log('Validating timeslotId');
+    if (!mongoose.Types.ObjectId.isValid(timeslotId)) {
+      console.log('Invalid timeslotId:', timeslotId);
+      return res.status(400).json({
+        success: false,
+        message: 'timeslotId không hợp lệ',
+      });
+    }
+
+    // Check if timeslot exists and is available
+    console.log('Checking if timeslot exists');
+    const timeslot = await TimeSlot.findById(timeslotId); // Fixed: Use TimeSlot (uppercase 'S')
+    console.log('Timeslot found:', !!timeslot);
+    if (!timeslot) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy khung giờ',
+      });
+    }
+
+    // Check if timeslot is available (not booked by another appointment)
+    console.log('Checking for existing appointment with timeslot');
+    const existingAppointment = await Appointment.findOne({
+      timeslotId,
+      _id: { $ne: appointmentId },
+      status: { $ne: 'cancelled' },
+    });
+    console.log('Existing appointment check:', !!existingAppointment);
+    if (existingAppointment) {
+      return res.status(400).json({
+        success: false,
+        message: 'Khung giờ này đã được đặt, vui lòng chọn khung giờ khác',
+      });
+    }
+
+    // Update appointment
+    console.log('Updating appointment');
+    const updatedAppointment = await Appointment.findByIdAndUpdate(
+      appointmentId,
+      {
+        timeslotId,
+        note,
+        updatedAt: new Date(),
+      },
+      { new: true, runValidators: true }
+    )
+      .populate({
+        path: 'patientId',
+        select: 'userId',
+        populate: {
+          path: 'userId',
+          model: 'User',
+          select: 'fullname email phone address dateOfBirth gender',
+        },
+      })
+      .populate({
+        path: 'doctorId',
+        select: 'userId',
+        populate: {
+          path: 'userId',
+          model: 'User',
+          select: 'fullname',
+        },
+      })
+      .populate({
+        path: 'staffId',
+        select: 'userId',
+        populate: {
+          path: 'userId',
+          model: 'User',
+          select: 'fullname',
+        },
+      })
+      .populate({
+        path: 'serviceId',
+        select: 'serviceName',
+      })
+      .populate({
+        path: 'clinicId',
+        select: 'clinic_name',
+      })
+      .populate({
+        path: 'timeslotId',
+        select: 'date start_time end_time',
+      });
+
+    console.log('Appointment updated:', !!updatedAppointment);
+    if (!updatedAppointment) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy lịch hẹn để cập nhật',
+      });
+    }
+
+    console.log('Sending response');
+    res.status(200).json({
+      success: true,
+      data: updatedAppointment,
+      message: 'Cập nhật lịch hẹn thành công',
+    });
+  } catch (error) {
+    console.error('Error in editAppointment:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi khi cập nhật lịch hẹn',
+      error: error.message,
+    });
+  }
+};
+// Sửa lịch hẹn theo patientId
+const editAppointmentByPatientId = async (req, res) => {
+  try {
+    const { patientId, id } = req.params;
+    const { timeslotId, note } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(patientId) || !mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'patientId hoặc ID lịch hẹn không hợp lệ',
+      });
+    }
+
+    const appointment = await Appointment.findOne({ _id: id, patientId });
+    if (!appointment) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy lịch hẹn cho bệnh nhân này',
+      });
+    }
+
+    // Nếu cập nhật timeslotId, kiểm tra và cập nhật trạng thái timeslot
+    if (timeslotId && timeslotId !== appointment.timeslotId.toString()) {
+      const newTimeslot = await TimeSlot.findById(timeslotId);
+      if (!newTimeslot || !newTimeslot.isAvailable) {
+        return res.status(400).json({
+          success: false,
+          message: 'Khung giờ mới không tồn tại hoặc đã được đặt',
+        });
+      }
+
+      // Khôi phục trạng thái trống cho timeslot cũ
+      const oldTimeslot = await TimeSlot.findById(appointment.timeslotId);
+      if (oldTimeslot) {
+        oldTimeslot.isAvailable = true;
+        await oldTimeslot.save();
+      }
+
+      // Cập nhật timeslot mới
+      newTimeslot.isAvailable = false;
+      await newTimeslot.save();
     }
 
     const updatedAppointment = await Appointment.findByIdAndUpdate(
       id,
-      { $set: updateData },
+      { $set: { timeslotId, note } },
       { new: true, runValidators: true }
     )
-      .populate("patientId", "name")
-      .populate("doctorId", "name")
-      .populate("staffId", "name")
-      .populate("serviceId", "name")
-      .populate("clinicId", "name");
+      .populate('patientId', 'name')
+      .populate('doctorId', 'name')
+      .populate('serviceId', 'serviceName')
+      .populate('clinicId', 'name')
+      .populate('timeslotId', 'date start_time end_time');
 
     res.status(200).json({
       success: true,
       data: updatedAppointment,
-      message: "Cập nhật lịch hẹn thành công",
+      message: 'Cập nhật lịch hẹn thành công',
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Lỗi khi cập nhật lịch hẹn",
+      message: 'Lỗi khi cập nhật lịch hẹn theo patientId',
       error: error.message,
     });
   }
@@ -181,11 +418,26 @@ const deleteAppointment = async (req, res) => {
   try {
     const { id } = req.params;
 
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'ID lịch hẹn không hợp lệ',
+      });
+    }
+
     const appointment = await Appointment.findById(id);
     if (!appointment) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Không tìm thấy lịch hẹn" });
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy lịch hẹn',
+      });
+    }
+
+    // Khôi phục trạng thái trống cho timeslot
+    const timeslot = await TimeSlot.findById(appointment.timeslotId);
+    if (timeslot) {
+      timeslot.isAvailable = true;
+      await timeslot.save();
     }
 
     await Appointment.findByIdAndDelete(id);
@@ -256,11 +508,13 @@ const cancelAppointmentWithRefund = async (req, res) => {
   }
 };
 
+
 module.exports = {
   getAllAppointment,
   getAppointmentsByPatient,
+  cancelAppointmentWithRefund,
   createAppointment,
   editAppointment,
+  editAppointmentByPatientId,
   deleteAppointment,
-  cancelAppointmentWithRefund,
 };

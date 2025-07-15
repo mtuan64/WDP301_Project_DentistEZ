@@ -5,7 +5,12 @@ const { authMiddleware, authAdminMiddleware, authDentistMiddleware, authPatientM
 const {registerUser,loginUser,uploadProfilePicture,updateUser,upload, getServiceDetail,logoutUser,googleLogin} = require("../controllers/authController");
 const {getAllDoctors,getDoctorById,updateDoctorStatus, createSchedule, getSchedule, getScheduleByWeek, getSchedulebydoctorId, updateDoctor} = require("../controllers/doctorController");
 const {getAllBlogs,getAllBlogsForAdmin,createBlog,updateBlog,deleteBlog,uploadImage,getAllCategories,getAllCategoriesForAdmin, createCategory,updateCategory,deleteCategory,getBlogBySlug,getTopViewedBlogs,incrementBlogViews} = require("../controllers/blogController");
-
+const {
+  getAllAppointment,
+  getAppointmentByUserId,
+  editAppointment,
+  deleteAppointment,
+} = require('../controllers/appointmentController');
 const {
   getUserProfile,
   updateUserProfile,
@@ -14,6 +19,7 @@ const {
 } = require("../controllers/userController");
  
 
+const { getTimeslotById, getAvailableTimeslots, createTimeslot, updateTimeslot } = require("../controllers/timeslotController");
 
 const multer = require("multer");
 const path = require("path");
@@ -85,10 +91,24 @@ router.post(
   uploadPictureProfile
 );
 
+//appointment
+// Lấy tất cả lịch hẹn
+router.get('/admin/appointments', getAllAppointment);
+
+// Lấy lịch hẹn theo PatientId
+router.get('/patient/:userId', getAppointmentByUserId);
+
+// Sửa lịch hẹn theo PatientId và id
+router.put('/appointments/:appointmentId', editAppointment);
+
+// Xóa lịch hẹn theo id
+router.delete('/:id', deleteAppointment);
+
 
 // doctor 
 router.post("/doctor/create-schedule", authDentistMiddleware, createSchedule);
 router.get("/doctor/getScheduleByWeek", authDentistMiddleware, getScheduleByWeek);
+
 
 // Authentication
 router.post("/logout", authMiddleware, logoutUser);
@@ -99,11 +119,23 @@ router.post("/gg-login", googleLogin);
 router.put("/changepass", authMiddleware, changePassword);
 
 
+
+// Timeslot
+router.get("/timeslots/available", authMiddleware, getAvailableTimeslots);
+router.get("/timeslots/:timeslotId", authMiddleware, getTimeslotById);
+router.post("/timeslots", authDentistMiddleware, createTimeslot); // Chỉ bác sĩ hoặc admin
+router.put("/timeslots/:timeslotId", authDentistMiddleware, updateTimeslot); // Chỉ bác sĩ hoặc admin
+
 // Doctor
 router.get("/doctor", getAllDoctors);
 router.get("/doctor/:doctorId", getDoctorById);
-router.put('/doctors/:doctorId',authAdminMiddleware, updateDoctor);
-router.get("/docroraccount", authAdminMiddleware, getAllDoctors);
+router.put(
+  "/doctor/:doctorId",
+  authAdminMiddleware,
+  uploadMulter.single("ProfileImage"), 
+  updateDoctor
+);
+router.get("/doctoraccount", authAdminMiddleware, getAllDoctors);
 router.put("/doctor/:doctorId/status", authAdminMiddleware, updateDoctorStatus);
 
 // admin 
@@ -152,4 +184,3 @@ router.post("/chat/send", chatboxController.sendMessage);
 exports = router;
 
 module.exports = router;
-
