@@ -407,6 +407,14 @@ const ProfilePage = () => {
             >
               {loading ? "Đang Lưu..." : "Lưu Thay Đổi"}
             </button>
+
+            <button
+              type="button"
+              className="btn btn-warning mt-3 ms-3"
+              onClick={() => navigate("/changepass")}
+            >
+              Đổi Mật Khẩu
+            </button>
           </form>
         </div>
       </div>

@@ -127,9 +127,12 @@ const authPatientMiddleware = (req, res, next) => {
         message: "Token không hợp lệ hoặc đã hết hạn",
         status: "ERROR",
       });
+      
+      
     }
     if (decoded.role === "patient") {
       req.user = decoded;
+      console.log(decoded);
       next();
     } else {
       return res.status(403).json({

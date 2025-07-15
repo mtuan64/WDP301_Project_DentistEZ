@@ -5,6 +5,7 @@ const path = require("path");
 const Service = require("../models/Service");
 const ServiceOption = require("../models/ServiceOption");
 const TimeSlot = require("../models/TimeSlot");
+const isEmailDomainValid = require("../utils/emailValidator");
 
 const Patient = require("../models/Patient");
 const Doctor = require("../models/Doctor");
@@ -12,7 +13,6 @@ const Staff = require("../models/Staff");
 const jwt = require("jsonwebtoken");
 const { OAuth2Client } = require("google-auth-library");
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-const cloudinary = require("cloudinary").v2;
 
 // Danh sách đen để lưu token đã logout (thay bằng Redis trong production)
 const tokenBlacklist = [];
@@ -108,6 +108,17 @@ exports.registerUser = async (req, res, next) => {
       return res.status(400).json({ msg: "Invalid role" });
     }
 
+    // Validate password format BEFORE hashing
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*?&]{6,}$/;
+    if (!passwordRegex.test(password)) {
+      return res
+        .status(400)
+        .json({
+          msg: "Password must be at least 6 characters long and include at least one letter and one number.",
+        });
+    }
+
+    // Check for existing username or email
     const existingUser = await User.findOne({
       $or: [{ email }, { username }],
     }).lean();
@@ -115,8 +126,17 @@ exports.registerUser = async (req, res, next) => {
       return res.status(400).json({ msg: "Người dùng đã tồn tại!" });
     }
 
+    // Check email domain DNS
+    if (!(await isEmailDomainValid(email))) {
+      return res
+        .status(400)
+        .json({ msg: "Email domain không tồn tại hoặc không hợp lệ." });
+    }
+
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Save user
     const newUser = new User({
       username,
       password: hashedPassword,
@@ -131,6 +151,7 @@ exports.registerUser = async (req, res, next) => {
 
     const savedUser = await newUser.save();
 
+    // Save corresponding role profile
     switch (newUser.role) {
       case "patient":
         await new Patient({ userId: savedUser._id }).save();
@@ -259,109 +280,99 @@ exports.googleLogin = async (req, res) => {
   }
 };
 
-// exports.uploadProfilePicture = async (req, res, next) => {
-//   try {
-//     const userId = req.user.userId;
-//     const file = req.file;
+exports.uploadProfilePicture = async (req, res, next) => {
+  try {
+    const userId = req.user.userId;
+    const file = req.file;
 
-//     if (!file) {
-//       return res.status(400).json({ msg: "No file uploaded" });
-//     }
+    if (!file) {
+      return res.status(400).json({ msg: "No file uploaded" });
+    }
 
-//     // Upload file buffer lên Cloudinary
-//     const result = await cloudinary.uploader.upload(file.path, {
-//       folder: "profile_pictures",
-//       resource_type: "image",
-//     });
+    const profilePictureUrl = `/uploads/${file.filename}`;
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { profilePicture: profilePictureUrl },
+      { new: true, runValidators: true }
+    ).lean();
 
-//     // Xóa file local nếu muốn (không bắt buộc)
-//     const fs = require("fs");
-//     fs.unlink(file.path, () => {});
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
+    }
 
-//     const profilePictureUrl = result.secure_url;
-//     const user = await User.findByIdAndUpdate(
-//       userId,
-//       { profilePicture: profilePictureUrl },
-//       { new: true, runValidators: true }
-//     ).lean();
+    res.status(200).json({
+      msg: "Profile picture uploaded successfully",
+      profilePictureUrl,
+    });
+  } catch (error) {
+    console.error("Error in uploadProfilePicture:", error.message);
+    res.status(500).json({ msg: "Failed to upload profile picture" });
+  }
+};
 
-//     if (!user) {
-//       return res.status(404).json({ msg: "User not found" });
-//     }
+exports.updateUser = async (req, res, next) => {
+  try {
+    const userId = req.user.userId;
+    const {
+      fullname,
+      email,
+      phone,
+      address,
+      dateOfBirth,
+      gender,
+      profilePicture,
+    } = req.body;
 
-//     res.status(200).json({
-//       msg: "Profile picture uploaded successfully",
-//       profilePictureUrl,
-//     });
-//   } catch (error) {
-//     console.error("Error in uploadProfilePicture:", error.message);
-//     res.status(500).json({ msg: "Failed to upload profile picture" });
-//   }
-// };
+    if (!fullname || !email) {
+      return res.status(400).json({ msg: "Fullname and email are required" });
+    }
 
-// exports.updateUser = async (req, res, next) => {
-//   try {
-//     const userId = req.user.userId;
-//     const {
-//       fullname,
-//       email,
-//       phone,
-//       address,
-//       dateOfBirth,
-//       gender,
-//       profilePicture,
-//     } = req.body;
+    const existingUser = await User.findOne({
+      email,
+      _id: { $ne: userId },
+    }).lean();
+    if (existingUser) {
+      return res.status(400).json({ msg: "Email already in use" });
+    }
 
-//     if (!fullname || !email) {
-//       return res.status(400).json({ msg: "Fullname and email are required" });
-//     }
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      {
+        fullname,
+        email,
+        phone,
+        address,
+        dateOfBirth,
+        gender,
+        profilePicture,
+      },
+      { new: true, runValidators: true }
+    ).lean();
 
-//     const existingUser = await User.findOne({
-//       email,
-//       _id: { $ne: userId },
-//     }).lean();
-//     if (existingUser) {
-//       return res.status(400).json({ msg: "Email already in use" });
-//     }
+    if (!updatedUser) {
+      return res.status(404).json({ msg: "User not found" });
+    }
 
-//     const updatedUser = await User.findByIdAndUpdate(
-//       userId,
-//       {
-//         fullname,
-//         email,
-//         phone,
-//         address,
-//         dateOfBirth,
-//         gender,
-//         profilePicture,
-//       },
-//       { new: true, runValidators: true }
-//     ).lean();
-
-//     if (!updatedUser) {
-//       return res.status(404).json({ msg: "User not found" });
-//     }
-
-//     res.status(200).json({
-//       msg: "User updated successfully",
-//       user: {
-//         id: updatedUser._id,
-//         username: updatedUser.username,
-//         fullname: updatedUser.fullname,
-//         email: updatedUser.email,
-//         phone: updatedUser.phone,
-//         address: updatedUser.address,
-//         dateOfBirth: updatedUser.dateOfBirth,
-//         gender: updatedUser.gender,
-//         role: updatedUser.role,
-//         profilePicture: updatedUser.profilePicture,
-//       },
-//     });
-//   } catch (error) {
-//     console.error("Error in updateUser:", error.message);
-//     res.status(500).json({ msg: "Failed to update user" });
-//   }
-// };
+    res.status(200).json({
+      msg: "User updated successfully",
+      user: {
+        id: updatedUser._id,
+        username: updatedUser.username,
+        fullname: updatedUser.fullname,
+        email: updatedUser.email,
+        phone: updatedUser.phone,
+        address: updatedUser.address,
+        dateOfBirth: updatedUser.dateOfBirth,
+        gender: updatedUser.gender,
+        role: updatedUser.role,
+        profilePicture: updatedUser.profilePicture,
+      },
+    });
+  } catch (error) {
+    console.error("Error in updateUser:", error.message);
+    res.status(500).json({ msg: "Failed to update user" });
+  }
+};
 
 exports.getAllUserAccounts = async (req, res) => {
   try {

@@ -1,0 +1,239 @@
+/* General page styling */
+.doctor-page {
+  font-family: 'Poppins', sans-serif;
+  background-color: #f8f9fa;
+}
+
+/* Hero Carousel */
+.carousel-inner {
+  position: relative;
+}
+
+.carousel-item img {
+  object-fit: cover;
+  height: 80vh;
+  width: 100%;
+}
+
+.carousel-caption {
+  background-color: rgba(0, 0, 0, 0.6);
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.carousel-caption h1 {
+  font-size: 3.5rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 1rem;
+}
+
+.carousel-caption p {
+  font-size: 1.25rem;
+  color: #fff;
+}
+
+.carousel-control-prev,
+.carousel-control-next {
+  width: 5%;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+  background-color: rgba(0, 91, 153, 0.8);
+  border-radius: 50%;
+  padding: 20px;
+}
+
+/* Team Section */
+.container-fluid {
+  padding: 3rem 0;
+}
+
+.team-header {
+  background: #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  text-align: center;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.team-header h5 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #005B99;
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+.team-header-underline {
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: #005B99;
+}
+
+.team-header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #333;
+}
+
+.team-header .btn-primary {
+  background-color: #005B99;
+  border: none;
+  border-radius: 10px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+}
+
+.team-header .btn-primary:hover {
+  background-color: #004080;
+}
+
+/* Search Bar */
+.doctor-search-input {
+  border-radius: 25px;
+  border: 1px solid #ced4da;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.doctor-search-input:focus {
+  border-color: #005B99;
+  box-shadow: 0 0 8px rgba(0, 91, 153, 0.3);
+  outline: none;
+}
+
+/* Doctor Cards */
+.doctor-card-col {
+  animation: fadeInUp 0.6s ease-in-out;
+}
+
+.doctor-card {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  height: 100%;
+}
+
+.doctor-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.doctor-card-image {
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+}
+
+.doctor-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* Preserve aspect ratio */
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+}
+
+.doctor-card-content {
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.doctor-card-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.doctor-card-specialty,
+.doctor-card-clinic {
+  font-size: 1rem;
+  color: #666;
+  margin-bottom: 0.5rem;
+}
+
+.doctor-card .btn-outline-primary {
+  border-color: #005B99;
+  color: #005B99;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.doctor-card .btn-outline-primary:hover {
+  background-color: #005B99;
+  color: #fff;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+  .carousel-caption h1 {
+    font-size: 2.5rem;
+  }
+  .carousel-caption p {
+    font-size: 1rem;
+  }
+  .team-header h1 {
+    font-size: 1.8rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .doctor-card-col {
+    margin-bottom: 1.5rem;
+  }
+  .carousel-item img {
+    height: 60vh;
+  }
+  .team-header {
+    padding: 2rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .carousel-caption h1 {
+    font-size: 1.8rem;
+  }
+  .carousel-caption p {
+    font-size: 0.9rem;
+  }
+  .team-header h1 {
+    font-size: 1.6rem;
+  }
+  .team-header .btn-primary {
+    font-size: 1rem;
+    padding: 0.75rem 1.5rem;
+  }
+}
