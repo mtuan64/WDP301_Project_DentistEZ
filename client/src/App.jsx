@@ -12,7 +12,7 @@ import AboutPage from "./pages/AboutPage";
 import ProfilePage from "./pages/ProfilePage";
 import HomePage from "./pages/Homepage";
 import BlogListPage from "./pages/BlogListPage";
-import CategoryBlog from "./pages/CategoryBlog"
+import CategoryBlog from "./pages/CategoryBlog";
 import BlogPage from "./pages/BlogPage";
 import BlogDetail from "./pages/BlogDetail";
 import UserListPage from "./pages/UserListManage";
@@ -36,7 +36,8 @@ import FooterComponent from "./components/FooterComponent";
 import Chatbox from "./components/Chatbox";
 import "antd/dist/reset.css";
 import PaymentTestPage from "./pages/PaymentTestPage";
-
+import PatientAppointmentPage from "./pages/PatientAppointmentPage";
+import ChangePasswordPage from "./pages/ChangePass";
 
 const DRAWER_WIDTH = 240;
 
@@ -93,12 +94,14 @@ const App = () => {
           <Route path="/blog" element={<BlogPage />} />
           <Route path="/blog/:slug" element={<BlogDetail />} />
           <Route path="/doctoraccount" element={<DoctorAccountManagement />} />
+          <Route path="/myappointment" element={<PatientAppointmentPage />} />
 
-
-          
-
-          <Route path="/admin/appointments" element={<AppointmentManagement />} />
-          <Route path="/accountmanagement"element={<AccountManagement />} />
+          <Route path="/changepass" element={<ChangePasswordPage />} />
+          <Route
+            path="/admin/appointments"
+            element={<AppointmentManagement />}
+          />
+          <Route path="/accountmanagement" element={<AccountManagement />} />
 
           <Route path="/doctor/schedule" element={<ScheduleManagement />} />
           <Route path="/services" element={<ServiceCard />} />
@@ -110,11 +113,9 @@ const App = () => {
           <Route path="/verify-otp" element={<VerifyOtpPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-
-        <Route path="/payment-test" element={<PaymentTestPage />} />
+          <Route path="/payment-test" element={<PaymentTestPage />} />
           <Route path="/payment-cancel" element={<PaymentCancelPage />} />
           <Route path="/payment-success" element={<PaymentSuccessPage />} />
-
         </Routes>
       </div>
 

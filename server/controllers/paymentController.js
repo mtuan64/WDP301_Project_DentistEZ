@@ -1,4 +1,3 @@
-// Tạo payment
 const Payment = require("../models/Payment");
 const Service = require("../models/Service");
 const TimeSlot = require("../models/TimeSlot");
@@ -14,11 +13,7 @@ const payos = new PayOS(
 // Tạo payment
 const createPayment = async (req, res) => {
   try {
-    // Lấy userId từ middleware xác thực (giả sử đã gán vào req.user.id)
     const createdBy = req.user.userId;
-    console.log("user id :", createdBy);
-
-    // Tìm patientId theo userId
     const patient = await Patient.findOne({ userId: createdBy });
     if (!patient)
       return res.status(404).json({ message: "Không tìm thấy bệnh nhân." });
@@ -40,16 +35,13 @@ const createPayment = async (req, res) => {
     if (!timeslotId) {
       return res.status(400).json({ message: "Thiếu timeslotId!" });
     }
-    // Lấy timeslot từ DB
     const timeslot = await TimeSlot.findById(timeslotId);
     if (!timeslot) {
       return res.status(404).json({ message: "Không tìm thấy timeslot." });
     }
 
-    // Kiểm tra ngày đặt lịch phải sau hôm nay ít nhất 1 ngày
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-
     const slotDate = new Date(timeslot.date);
     slotDate.setHours(0, 0, 0, 0);
 
@@ -60,7 +52,6 @@ const createPayment = async (req, res) => {
       });
     }
 
-    // Lấy thông tin dịch vụ để lấy doctorId, clinicId
     const service = await Service.findById(serviceId);
     if (!service) {
       return res.status(404).json({ message: "Không tìm thấy dịch vụ." });
@@ -68,10 +59,8 @@ const createPayment = async (req, res) => {
     const doctorId = service.doctorId;
     const clinicId = service.clinicId;
 
-    // Tạo orderCode duy nhất
     const orderCode = Math.floor(Date.now() / 1000);
 
-    // Payload gửi PayOS
     const payload = {
       orderCode,
       amount,
@@ -85,13 +74,12 @@ const createPayment = async (req, res) => {
 
     const response = await payos.createPaymentLink(payload);
 
-    // Tạo bản ghi payment
     const payment = await Payment.create({
       amount,
       description,
       orderCode,
       payUrl: response.checkoutUrl,
-      qrCode: response.qrCode,
+      qrCode: response.qrCode, // Ensure QR code string is stored
       status: "pending",
       metaData: {
         patientId,
@@ -109,9 +97,16 @@ const createPayment = async (req, res) => {
     });
 
     return res.status(201).json({
-      message:
-        "Tạo thanh toán thành công. Vui lòng thanh toán để xác nhận lịch.",
-      payment,
+      message: "Tạo thanh toán thành công. Vui lòng quét mã QR để thanh toán.",
+      payment: {
+        _id: payment._id,
+        amount: payment.amount,
+        description: payment.description,
+        orderCode: payment.orderCode,
+        qrCode: payment.qrCode,
+        payUrl: payment.payUrl,
+        status: payment.status,
+      },
     });
   } catch (error) {
     console.log(error);
@@ -156,8 +151,32 @@ const cancelPayment = async (req, res) => {
   }
 };
 
+// Webhook để cập nhật trạng thái thanh toán
+const handlePaymentWebhook = async (req, res) => {
+  try {
+    const { orderCode, status } = req.body;
+
+    const payment = await Payment.findOne({ orderCode });
+    if (!payment) {
+      return res.status(404).json({ message: "Không tìm thấy payment." });
+    }
+
+    // Cập nhật trạng thái thanh toán
+    payment.status = status.toLowerCase(); // PayOS sends status like "PAID", "CANCELLED"
+    await payment.save();
+
+    return res.status(200).json({ message: "Cập nhật trạng thái thành công." });
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(500)
+      .json({ message: "Lỗi xử lý webhook.", error: error.message });
+  }
+};
+
 module.exports = {
   createPayment,
   getPayment,
   cancelPayment,
+  handlePaymentWebhook
 };
