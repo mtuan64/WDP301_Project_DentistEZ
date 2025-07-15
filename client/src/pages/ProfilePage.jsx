@@ -8,7 +8,6 @@ const ProfilePage = () => {
   const { user, login } = useAuth();
   const navigate = useNavigate();
 
-  // State để quản lý dữ liệu form
   const [formData, setFormData] = useState({
     username: "",
     fullname: "",
@@ -24,7 +23,6 @@ const ProfilePage = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // Khởi tạo dữ liệu form từ user khi component mount
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!user || !token) {
@@ -47,15 +45,14 @@ const ProfilePage = () => {
     setProfilePicture(user.profilePicture || null);
   }, [user, navigate]);
 
-  // Hàm validate
   const validatePhone = (phone) => {
-    if (!phone) return true; // Trường không bắt buộc
-    const phoneRegex = /^0[35789][0-9]{8}$/; // Bắt đầu bằng 0, theo sau là 3,5,7,8,9 và 8 số nữa
+    if (!phone) return true;
+    const phoneRegex = /^0[35789][0-9]{8}$/;
     return phoneRegex.test(phone);
   };
 
   const validateDateOfBirth = (date) => {
-    if (!date) return true; // Trường không bắt buộc
+    if (!date) return true;
     const inputDate = new Date(date);
     const today = new Date();
     const minDate = new Date("1900-01-01");
@@ -70,18 +67,24 @@ const ProfilePage = () => {
     );
   };
 
+  const validateUsername = (username) => {
+    return (
+      username.length >= 3 &&
+      username.length <= 30 &&
+      /^[a-zA-Z0-9_]+$/.test(username)
+    );
+  };
+
   const validateAddress = (address) => {
-    if (!address) return true; // Trường không bắt buộc
+    if (!address) return true;
     return address.length <= 200;
   };
 
-  // Xử lý thay đổi input
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Xử lý upload file ảnh
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
     if (selectedFile) {
@@ -98,7 +101,6 @@ const ProfilePage = () => {
     }
   };
 
-  // Xử lý submit form
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -111,14 +113,23 @@ const ProfilePage = () => {
         throw new Error("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.");
       }
 
-      const userId = user?.id || JSON.parse(localStorage.getItem("user"))?.id;
+      const userId =
+        user?._id ||
+        user?.id ||
+        JSON.parse(localStorage.getItem("user"))?._id ||
+        JSON.parse(localStorage.getItem("user"))?.id;
       if (!userId) {
         throw new Error(
           "Không tìm thấy ID người dùng. Vui lòng đăng nhập lại."
         );
       }
 
-      // Validate các trường
+      if (!validateUsername(formData.username)) {
+        throw new Error(
+          "Tên người dùng phải từ 3-30 ký tự và chỉ chứa chữ cái, số hoặc dấu gạch dưới."
+        );
+      }
+
       if (!validateFullname(formData.fullname)) {
         throw new Error("Họ tên phải từ 2-50 ký tự và chỉ chứa chữ cái.");
       }
@@ -142,8 +153,8 @@ const ProfilePage = () => {
         throw new Error("Giới tính không hợp lệ.");
       }
 
-      // Chuẩn bị dữ liệu gửi API (không bao gồm email)
       const updateData = {
+        username: formData.username,
         fullname: formData.fullname,
         phone: formData.phone || undefined,
         address: formData.address || undefined,
@@ -153,7 +164,6 @@ const ProfilePage = () => {
         gender: formData.gender || undefined,
       };
 
-      // Xóa các trường undefined
       Object.keys(updateData).forEach(
         (key) => updateData[key] === undefined && delete updateData[key]
       );
@@ -174,6 +184,8 @@ const ProfilePage = () => {
           }
         );
 
+        console.log("Upload API response:", uploadResponse.data); // Debug
+
         if (uploadResponse.data.status !== "SUCCESS") {
           throw new Error(
             uploadResponse.data.message || "Lỗi khi upload ảnh đại diện."
@@ -193,16 +205,19 @@ const ProfilePage = () => {
         }
       );
 
+      console.log("Profile API response:", profileResponse.data); // Debug
+
       if (profileResponse.data.status !== "SUCCESS") {
         throw new Error(
           profileResponse.data.message || "Lỗi khi cập nhật hồ sơ."
         );
       }
 
-      // Cập nhật thông tin user
       const updatedUser = {
         ...user,
         ...profileResponse.data.data,
+        _id: profileResponse.data.data._id || user?._id || user?.id,
+        id: user?.id || user?._id || profileResponse.data.data._id,
         profilePicture:
           updatedProfilePicture || profileResponse.data.data.profilePicture,
         token,
@@ -277,8 +292,11 @@ const ProfilePage = () => {
                   id="username"
                   name="username"
                   value={formData.username}
+                  onChange={handleInputChange}
                   className="form-control"
-                  disabled
+                  required
+                  pattern="^[a-zA-Z0-9_]{3,30}$"
+                  title="Tên người dùng phải từ 3-30 ký tự và chỉ chứa chữ cái, số hoặc dấu gạch dưới."
                 />
               </div>
 
@@ -299,7 +317,7 @@ const ProfilePage = () => {
                 />
               </div>
 
-              <div className="col-md-6 mb UX-3">
+              <div className="col-md-6 mb-3">
                 <label htmlFor="email" className="form-label">
                   Email
                 </label>
