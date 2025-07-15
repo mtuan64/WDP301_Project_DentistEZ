@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import DoctorPage from "./pages/DoctorPage";
 import LoginPage from "./pages/LoginPage";
@@ -23,8 +22,7 @@ import StaticPage from "./pages/StatisticPage";
 import Header from "./components/HeaderComponent";
 import Topbar from "./components/Topbar";
 import MenuComponent from "./components/MenuComponent";
-
-import "antd/dist/reset.css";
+import PatientAppointment from "./pages/PatientAppointment";
 import AccountManagement from "./pages/AccountManagement";
 import ScheduleManagement from "./pages/ScheduleManagement";
 import ServiceCard from "./pages/ServiceCard ";
@@ -68,6 +66,7 @@ const App = () => {
           isOpen={menuOpen}
           onClose={() => setMenuOpen(false)}
           role={role}
+          userId={user?.id} 
         />
       )}
 
@@ -80,7 +79,6 @@ const App = () => {
       >
         <Routes>
           <Route path="/" element={<HomePage />} />
-
           <Route path="/doctor" element={<DoctorPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
@@ -89,7 +87,7 @@ const App = () => {
           <Route path="/appointment" element={<AppointmentPage />} />
           <Route path="/userlist" element={<UserListPage />} />
           <Route path="/doctor/:doctorId" element={<DoctorDetail />} />
-          <Route path="admin/blogs" element={<BlogListPage />} />
+          <Route path="/admin/blogs" element={<BlogListPage />} />
           <Route path="/admin/categories" element={<CategoryBlog />} />
           <Route path="/blog" element={<BlogPage />} />
           <Route path="/blog/:slug" element={<BlogDetail />} />
@@ -103,11 +101,13 @@ const App = () => {
           />
           <Route path="/accountmanagement" element={<AccountManagement />} />
 
+          <Route path="/admin/appointments" element={<AppointmentManagement />} />
+          <Route path="/accountmanagement" element={<AccountManagement />} />
+          <Route path="/patient/:userId" element={<PatientAppointment />} />
           <Route path="/doctor/schedule" element={<ScheduleManagement />} />
           <Route path="/services" element={<ServiceCard />} />
           <Route path="/service-detail/:id" element={<ServiceDetail />} />
           <Route path="/servicemanagement" element={<ServiceManagement />} />
-
           <Route path="/statistic" element={<StaticPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/verify-otp" element={<VerifyOtpPage />} />

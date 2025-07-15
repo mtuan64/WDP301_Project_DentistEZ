@@ -3,6 +3,8 @@ const Service = require("../models/Service");
 const TimeSlot = require("../models/TimeSlot");
 const Patient = require("../models/Patient");
 const PayOS = require("@payos/node");
+require("dotenv").config();
+
 
 const payos = new PayOS(
   process.env.PAYOS_CLIENT_ID,
