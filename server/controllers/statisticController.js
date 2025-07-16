@@ -223,3 +223,110 @@ exports.getAppointmentByService = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+// Get all payments with details and statistics
+exports.getAllPayments = async (req, res) => {
+  try {
+    const payments = await Payment.find()
+      .populate({
+        path: "metaData.patientId",
+        select: "userId",
+        populate: {
+          path: "userId",
+          model: "User",
+          select: "fullname",
+        },
+      })
+      .populate({
+        path: "metaData.doctorId",
+        select: "userId",
+        populate: {
+          path: "userId",
+          model: "User",
+          select: "fullname",
+        },
+      })
+      .populate({
+        path: "metaData.serviceId",
+        select: "serviceName price",
+      })
+      .populate({
+        path: "metaData.clinicId",
+        select: "clinic_name",
+      })
+      .lean();
+
+    const statistics = {
+      totalRevenue: 0,
+      byStatus: {
+        pending: { count: 0, amount: 0 },
+        paid: { count: 0, amount: 0 },
+        canceled: { count: 0, amount: 0 },
+      },
+      byType: {
+        deposit: { count: 0, amount: 0 },
+        final: { count: 0, amount: 0 },
+      },
+      byPaymentMethod: {
+        online: { count: 0, amount: 0 },
+        cash: { count: 0, amount: 0 },
+      },
+      totalCount: payments.length,
+    };
+
+    payments.forEach((payment) => {
+      statistics.totalRevenue += payment.amount;
+      statistics.byStatus[payment.status].count += 1;
+      statistics.byStatus[payment.status].amount += payment.amount;
+      statistics.byType[payment.type].count += 1;
+      statistics.byType[payment.type].amount += payment.amount;
+      statistics.byPaymentMethod[payment.paymentMethod].count += 1;
+      statistics.byPaymentMethod[payment.paymentMethod].amount += payment.amount;
+    });
+
+    const formattedPayments = payments.map((p) => ({
+      _id: p._id,
+      amount: p.amount,
+      description: p.description,
+      orderCode: p.orderCode,
+      status: p.status,
+      type: p.type,
+      paymentMethod: p.paymentMethod,
+      payUrl: p.payUrl,
+      qrCode: p.qrCode,
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+      metaData: {
+        patient: p.metaData.patientId?.userId?.fullname || "N/A",
+        doctor: p.metaData.doctorId?.userId?.fullname || "N/A",
+        service: p.metaData.serviceId?.serviceName || "N/A",
+        servicePrice: p.metaData.serviceId?.price || 0,
+        clinic: p.metaData.clinicId?.clinic_name || "N/A",
+        note: p.metaData.note || "N/A",
+        file: p.metaData.fileUrl
+          ? {
+              url: p.metaData.fileUrl,
+              name: p.metaData.fileName,
+              type: p.metaData.fileType,
+            }
+          : null,
+      },
+    }));
+
+    res.json({
+      success: true,
+      data: {
+        payments: formattedPayments,
+        statistics,
+      },
+    });
+  } catch (err) {
+    console.error("getAllPayments error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Server error while getting payments",
+      error: err.message,
+    });
+  }
+};
+

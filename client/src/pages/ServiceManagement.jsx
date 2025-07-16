@@ -117,18 +117,20 @@ function ServiceManagement() {
   };
 
   // Khi chọn bác sĩ, tự động lấy clinicId và set vào form
-  const handleDoctorChange = (e) => {
+const handleDoctorChange = (e) => {
     const selectedDoctorId = e.target.value;
     const doctor = doctors.find(d => d._id === selectedDoctorId);
     let clinicId = '';
-    if (doctor && doctor.clinicId) {
-      clinicId = typeof doctor.clinicId === 'object' ? doctor.clinicId._id : doctor.clinicId;
+    if (doctor && doctor.clinic_id) {
+      clinicId = typeof doctor.clinic_id === 'object' ? doctor.clinic_id._id : doctor.clinic_id;
     }
     setForm(prev => ({
       ...prev,
       doctorId: selectedDoctorId,
       clinicId
     }));
+
+    console.log(form);
   };
 
   const handleFormChange = (e) => {

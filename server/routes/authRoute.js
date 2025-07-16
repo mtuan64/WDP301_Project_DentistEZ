@@ -26,7 +26,8 @@ const {
   getRevenueByType,
   getDashboardSummaries,
   getAppointmentByClinic,
-  getAppointmentByService
+  getAppointmentByService,
+  getAllPayments,
 } = require("../controllers/statisticController");
  
 
@@ -43,7 +44,6 @@ const { requestPasswordReset, verifyOTP, resetPassword } = require("../controlle
 const {
   createPayment,
   getPaymentStatus,
-  getAllPayments,
   getPaymentByOrderCode,
   cancelPayment,
 } = require("../controllers/paymentController");
@@ -136,6 +136,11 @@ router.get('/appointment-by-clinic', getAppointmentByClinic);
 // Route to get appointment distribution by service (last 30 days)
 router.get('/appointment-by-service', getAppointmentByService);
 
+//get all payments
+router.get("/admin/payments", getAllPayments);
+
+
+
 // doctor 
 router.post("/doctor/create-schedule", authDentistMiddleware, createSchedule);
 router.get("/doctor/getScheduleByWeek", authDentistMiddleware, getScheduleByWeek);
@@ -212,6 +217,5 @@ router.post("/chat/chatwithai", chatbotController.chatWithAI);
 router.get("/chat/messages", chatboxController.getMessages);
 router.post("/chat/send", chatboxController.sendMessage);
 
-exports = router;
 
 module.exports = router;

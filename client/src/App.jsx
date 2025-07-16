@@ -28,6 +28,7 @@ import ScheduleManagement from "./pages/ScheduleManagement";
 import ServiceCard from "./pages/ServiceCard ";
 import ServiceDetail from "./pages/ServiceDetail ";
 import ServiceManagement from "./pages/ServiceManagement";
+import PaymentManage from "./pages/PaymentManage";
 import PaymentCancelPage from "./pages/PaymentCancelPage";
 import PaymentSuccessPage from "./pages/PaymentSuccessPage";
 import FooterComponent from "./components/FooterComponent";
@@ -93,7 +94,7 @@ const App = () => {
           <Route path="/blog/:slug" element={<BlogDetail />} />
           <Route path="/doctoraccount" element={<DoctorAccountManagement />} />
           <Route path="/myappointment" element={<PatientAppointmentPage />} />
-
+          <Route path="/admin/payments" element={<PaymentManage />} />
           <Route path="/changepass" element={<ChangePasswordPage />} />
           <Route
             path="/admin/appointments"

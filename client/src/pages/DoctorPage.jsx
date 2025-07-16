@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Container, Row, Col, Form, FormControl } from "react-bootstrap";
+import { Container, Row, Col, Form, FormControl, Pagination } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import "../assets/css/DoctorPage.css";
@@ -7,6 +7,8 @@ import "../assets/css/DoctorPage.css";
 const DoctorPage = () => {
   const [doctors, setDoctors] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const doctorsPerPage = 5; // 5 doctors per page to fit the 6-card layout (1 for appointment card)
 
   useEffect(() => {
     const fetchDoctors = async () => {
@@ -25,9 +27,10 @@ const DoctorPage = () => {
   // Handle search input change
   const handleSearch = (e) => {
     setSearchQuery(e.target.value);
+    setCurrentPage(1); // Reset to first page on search
   };
 
-  // Filter doctors based on search query
+  // Filter doctors based on search query and status
   const filteredDoctors = doctors
     .filter((doctor) => {
       const fullName = doctor.userId?.fullname || "";
@@ -38,12 +41,22 @@ const DoctorPage = () => {
         specialty.toLowerCase().includes(query)
       );
     })
-    .filter((doctor) => doctor.Status !== "inactive")
-    .slice(0, 5); // Limit to 5 doctors
+    .filter((doctor) => doctor.Status !== "inactive");
+
+  // Calculate pagination
+  const indexOfLastDoctor = currentPage * doctorsPerPage;
+  const indexOfFirstDoctor = indexOfLastDoctor - doctorsPerPage;
+  const currentDoctors = filteredDoctors.slice(indexOfFirstDoctor, indexOfLastDoctor);
+  const totalPages = Math.ceil(filteredDoctors.length / doctorsPerPage);
+
+  // Handle page change
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
 
   return (
     <div className="doctor-page">
-{/* Hero Section */}
+      {/* Hero Section */}
       <div id="heroCarousel" className="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="4000">
         <div className="carousel-inner">
           <div className="carousel-item active">
@@ -91,28 +104,30 @@ const DoctorPage = () => {
           </Row>
 
           <Row className="g-4">
-            {/* Text Section */}
-            <Col lg={4} md={6} className="doctor-card-col">
-              <div className="team-header bg-light rounded p-5">
-                <h5 className="text-primary text-uppercase position-relative d-inline-block">
-                  Đội ngũ bác sĩ
-                  <span className="team-header-underline"></span>
-                </h5>
-                <h1 className="display-6 mb-4">
-                  Gặp gỡ các bác sĩ có tay nghề và kinh nghiệm
-                </h1>
-                <Link
-                  to="/appointment"
-                  className="btn btn-primary py-3 px-4 d-flex align-items-center justify-content-center"
-                >
-                  <i className="bi bi-calendar3 me-2"></i>
-                  ĐẶT LỊCH KHÁM NGAY!
-                </Link>
-              </div>
-            </Col>
+            {/* Text Section (only on first page) */}
+            {currentPage === 1 && (
+              <Col lg={4} md={6} className="doctor-card-col">
+                <div className="team-header bg-light rounded p-5">
+                  <h5 className="text-primary text-uppercase position-relative d-inline-block">
+                    Đội ngũ bác sĩ
+                    <span className="team-header-underline"></span>
+                  </h5>
+                  <h1 className="display-6 mb-4">
+                    Gặp gỡ các bác sĩ có tay nghề và kinh nghiệm
+                  </h1>
+                  <Link
+                    to="/appointment"
+                    className="btn btn-primary py-3 px-4 d-flex align-items-center justify-content-center"
+                  >
+                    <i className="bi bi-calendar3 me-2"></i>
+                    ĐẶT LỊCH KHÁM NGAY!
+                  </Link>
+                </div>
+              </Col>
+            )}
 
             {/* Doctor Cards */}
-            {filteredDoctors.map((doctor, index) => (
+            {currentDoctors.map((doctor, index) => (
               <Col
                 lg={4}
                 md={6}
@@ -149,6 +164,33 @@ const DoctorPage = () => {
               </Col>
             ))}
           </Row>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <Row className="mt-5">
+              <Col className="d-flex justify-content-center">
+                <Pagination>
+                  <Pagination.Prev
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                  />
+                  {[...Array(totalPages)].map((_, index) => (
+                    <Pagination.Item
+                      key={index + 1}
+                      active={index + 1 === currentPage}
+                      onClick={() => handlePageChange(index + 1)}
+                    >
+                      {index + 1}
+                    </Pagination.Item>
+                  ))}
+                  <Pagination.Next
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                  />
+                </Pagination>
+              </Col>
+            </Row>
+          )}
         </Container>
       </div>
     </div>

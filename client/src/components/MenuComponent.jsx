@@ -48,7 +48,7 @@ const menuByRole = (role, userId) => {
     ],
     patient: [
       { title: "Home", path: "/", icon: <HomeOutlined /> },
-      { title: "My Appointment", path: `/patient/${userId}`, icon: <CalendarOutlined /> },
+      { title: "My Appointment", path: `/myappointment`, icon: <CalendarOutlined /> },
       { title: "Report Management", path: "/report-management", icon: <FileTextOutlined /> },
       { title: "Schedule", path: "/schedule", icon: <ScheduleOutlined /> },
       { title: "Attendance", path: "/attendance", icon: <UsergroupAddOutlined /> },

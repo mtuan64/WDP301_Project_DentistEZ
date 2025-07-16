@@ -1,31 +1,9 @@
-/* Checkmark animation (giữ nguyên) */
-.checkmark-animated {
-  width: 52px;
-  height: 52px;
-}
-.checkmark__circle {
-  stroke: #007bff;
-  stroke-width: 2;
-  stroke-miterlimit: 10;
-  animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
-}
-.checkmark__check {
-  stroke: #007bff;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
-}
-@keyframes stroke {
-  100% { stroke-dashoffset: 0; }
-}
-
-/* Styling for doctor selection */
+/* Styling for doctor cards in AppointmentPage */
 .doctor-card {
   border: 2px solid #e0e0e0;
   border-radius: 12px;
   padding: 20px;
-  min-height: 280px; /* Tăng chiều cao để phù hợp với 3 cột */
+  min-height: 280px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -43,9 +21,9 @@
 }
 
 .doctor-card.selected {
-  border-color: #007bff;
-  background-color: #e7f0ff;
-  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+  border-color: #007bff; /* Viền màu xanh khi được chọn */
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3); /* Đổ bóng nổi bật */
+  background-color: #e7f0ff; /* Nền sáng hơn khi chọn */
 }
 
 .doctor-image-container {
@@ -67,7 +45,7 @@
 
 .doctor-card:hover .doctor-image,
 .doctor-card.selected .doctor-image {
-  border-color: #007bff;
+  border-color: #007bff; /* Viền hình ảnh cũng đổi màu khi chọn */
 }
 
 .doctor-name {
@@ -78,8 +56,7 @@
   text-align: center;
 }
 
-.doctor-specialty,
-.doctor-experience {
+.doctor-specialty {
   font-size: 0.9rem;
   margin-bottom: 5px;
   color: #6c757d;
@@ -102,8 +79,7 @@
     font-size: 1.1rem;
   }
 
-  .doctor-specialty,
-  .doctor-experience {
+  .doctor-specialty {
     font-size: 0.85rem;
   }
 }
