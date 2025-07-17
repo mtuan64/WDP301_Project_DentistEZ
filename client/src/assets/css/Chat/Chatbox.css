@@ -214,7 +214,10 @@
   background-color: #0084ff;
   color: white;
 }
-
+.message.user {
+  background-color: #0084ff;
+  color: white;
+}
 .message.ai {
   background-color: #fff;
   color: #333;

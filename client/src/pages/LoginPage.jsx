@@ -47,9 +47,14 @@ const LoginPage = () => {
       const data = await res.json();
 
       if (res.ok) {
-        localStorage.setItem("user", JSON.stringify(data.user));
+        const user = {
+          ...data.user,
+          id: data.user._id || data.user.id, // chuẩn hóa ID
+        };
+
+        localStorage.setItem("user", JSON.stringify(user));
         localStorage.setItem("token", data.token);
-        login(data.user);
+        login(user); // ✅ truyền user đã có id
         alert(data.msg);
         navigate("/");
       } else {

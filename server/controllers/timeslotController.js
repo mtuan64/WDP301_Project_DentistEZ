@@ -1,5 +1,5 @@
-const mongoose = require('mongoose');
-const TimeSlot = require('../models/TimeSlot');
+const mongoose = require("mongoose");
+const TimeSlot = require("../models/TimeSlot");
 
 // Lấy chi tiết timeslot theo ID
 const getTimeslotById = async (req, res) => {
@@ -9,16 +9,18 @@ const getTimeslotById = async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(timeslotId)) {
       return res.status(400).json({
         success: false,
-        message: 'timeslotId không hợp lệ',
+        message: "timeslotId không hợp lệ",
       });
     }
 
-    const timeslot = await TimeSlot.findById(timeslotId)
-      .populate('doctorId', 'name'); // Populate tên bác sĩ
+    const timeslot = await TimeSlot.findById(timeslotId).populate(
+      "doctorId",
+      "name"
+    );
     if (!timeslot) {
       return res.status(404).json({
         success: false,
-        message: 'Không tìm thấy timeslot',
+        message: "Không tìm thấy timeslot",
       });
     }
 
@@ -27,10 +29,10 @@ const getTimeslotById = async (req, res) => {
       data: timeslot,
     });
   } catch (error) {
-    console.error('Error fetching timeslot:', error);
+    console.error("Error fetching timeslot:", error);
     res.status(500).json({
       success: false,
-      message: 'Lỗi khi lấy thông tin timeslot',
+      message: "Lỗi khi lấy thông tin timeslot",
       error: error.message,
     });
   }
@@ -39,8 +41,11 @@ const getTimeslotById = async (req, res) => {
 // Lấy danh sách timeslot còn trống
 const getAvailableTimeslots = async (req, res) => {
   try {
-    const timeslots = await TimeSlot.find({ isAvailable: true, status: 'active' })
-      .populate('doctorId', 'name')
+    const timeslots = await TimeSlot.find({
+      isAvailable: true,
+      status: "active",
+    })
+      .populate("doctorId", "name")
       .sort({ date: 1, start_time: 1 });
 
     res.status(200).json({
@@ -48,10 +53,10 @@ const getAvailableTimeslots = async (req, res) => {
       data: timeslots,
     });
   } catch (error) {
-    console.error('Error fetching available timeslots:', error);
+    console.error("Error fetching available timeslots:", error);
     res.status(500).json({
       success: false,
-      message: 'Lỗi khi lấy danh sách timeslot còn trống',
+      message: "Lỗi khi lấy danh sách timeslot còn trống",
       error: error.message,
     });
   }
@@ -65,7 +70,7 @@ const createTimeslot = async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(doctorId)) {
       return res.status(400).json({
         success: false,
-        message: 'doctorId không hợp lệ',
+        message: "doctorId không hợp lệ",
       });
     }
 
@@ -77,27 +82,27 @@ const createTimeslot = async (req, res) => {
       end_time,
       note,
       isAvailable: true,
-      status: 'active',
+      status: "active",
     });
 
     await timeslot.save();
 
     res.status(201).json({
       success: true,
-      message: 'Tạo timeslot thành công',
+      message: "Tạo timeslot thành công",
       data: timeslot,
     });
   } catch (error) {
     if (error.code === 11000) {
       return res.status(400).json({
         success: false,
-        message: 'Timeslot đã tồn tại cho bác sĩ này vào thời điểm này',
+        message: "Timeslot đã tồn tại cho bác sĩ này vào thời điểm này",
       });
     }
-    console.error('Error creating timeslot:', error);
+    console.error("Error creating timeslot:", error);
     res.status(500).json({
       success: false,
-      message: 'Lỗi khi tạo timeslot',
+      message: "Lỗi khi tạo timeslot",
       error: error.message,
     });
   }
@@ -112,7 +117,7 @@ const updateTimeslot = async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(timeslotId)) {
       return res.status(400).json({
         success: false,
-        message: 'timeslotId không hợp lệ',
+        message: "timeslotId không hợp lệ",
       });
     }
 
@@ -120,11 +125,10 @@ const updateTimeslot = async (req, res) => {
     if (!timeslot) {
       return res.status(404).json({
         success: false,
-        message: 'Không tìm thấy timeslot',
+        message: "Không tìm thấy timeslot",
       });
     }
 
-    // Chỉ cập nhật các trường được gửi
     if (isAvailable !== undefined) timeslot.isAvailable = isAvailable;
     if (status) timeslot.status = status;
     if (note !== undefined) timeslot.note = note;
@@ -133,14 +137,57 @@ const updateTimeslot = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Cập nhật timeslot thành công',
+      message: "Cập nhật timeslot thành công",
       data: timeslot,
     });
   } catch (error) {
-    console.error('Error updating timeslot:', error);
+    console.error("Error updating timeslot:", error);
     res.status(500).json({
       success: false,
-      message: 'Lỗi khi cập nhật timeslot',
+      message: "Lỗi khi cập nhật timeslot",
+      error: error.message,
+    });
+  }
+};
+
+// Xóa timeslot (chỉ xóa nếu chưa được đặt)
+const deleteTimeslot = async (req, res) => {
+  try {
+    const { timeslotId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(timeslotId)) {
+      return res.status(400).json({
+        success: false,
+        message: "timeslotId không hợp lệ",
+      });
+    }
+
+    const timeslot = await TimeSlot.findById(timeslotId);
+    if (!timeslot) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy timeslot",
+      });
+    }
+
+    if (!timeslot.isAvailable) {
+      return res.status(400).json({
+        success: false,
+        message: "Không thể xóa timeslot đã được đặt",
+      });
+    }
+
+    await TimeSlot.deleteOne({ _id: timeslotId });
+
+    res.status(200).json({
+      success: true,
+      message: "Xóa timeslot thành công",
+    });
+  } catch (error) {
+    console.error("Error deleting timeslot:", error);
+    res.status(500).json({
+      success: false,
+      message: "Lỗi khi xóa timeslot",
       error: error.message,
     });
   }
@@ -151,4 +198,5 @@ module.exports = {
   getAvailableTimeslots,
   createTimeslot,
   updateTimeslot,
+  deleteTimeslot,
 };
