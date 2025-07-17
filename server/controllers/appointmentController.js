@@ -60,6 +60,80 @@ const getAllAppointment = async (req, res) => {
   }
 };
 
+// Lấy lịch hẹn theo timeslotId
+const getAppointmentByTimeslot = async (req, res) => {
+  try {
+    const { timeslotId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(timeslotId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'timeslotId không hợp lệ',
+      });
+    }
+
+    const appointment = await Appointment.findOne({ timeslotId })
+      .populate({
+        path: "patientId",
+        select: "userId",
+        populate: {
+          path: "userId",
+          model: "User",
+          select: "fullname email phone address dateOfBirth gender",
+        },
+      })
+      .populate({
+        path: "doctorId",
+        select: "userId",
+        populate: {
+          path: "userId",
+          model: "User",
+          select: "fullname",
+        },
+      })
+      .populate({
+        path: "staffId",
+        select: "userId",
+        populate: {
+          path: "userId",
+          model: "User",
+          select: "fullname",
+        },
+      })
+      .populate({
+        path: "serviceId",
+        select: "serviceName",
+      })
+      .populate({
+        path: "clinicId",
+        select: "clinic_name",
+      })
+      .populate({
+        path: "timeslotId",
+        select: "date start_time end_time",
+      });
+
+    if (!appointment) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy cuộc hẹn cho timeslot này",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: appointment,
+    });
+  } catch (error) {
+    console.error("Error in getAppointmentByTimeslot:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi server",
+      error: error.message,
+    });
+  }
+};
+
 // Lấy lịch hẹn của bệnh nhân
 const getAppointmentsByPatient = async (req, res) => {
   try {
@@ -511,6 +585,7 @@ const cancelAppointmentWithRefund = async (req, res) => {
 
 module.exports = {
   getAllAppointment,
+  getAppointmentByTimeslot,
   getAppointmentsByPatient,
   cancelAppointmentWithRefund,
   createAppointment,
