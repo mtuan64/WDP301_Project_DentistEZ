@@ -498,18 +498,18 @@
   border-radius: 3px;
   display: inline-block;
   margin-bottom: 2px;
-  font-size: 14px;
+  font-size: 11px;
 }
 
 .ds-appointment-status {
   color: #28a745;
   font-weight: bold;
   margin: 2px 0;
-  font-size: 13px;
+  font-size: 11px;
 }
 
 .ds-appointment-availability {
-  font-size: 13px;
+  font-size: 11px;
   color: #666;
 }
 
@@ -528,8 +528,8 @@
   cursor: pointer;
   font-size: 18px;
   line-height: 1;
-  width: 35px;
-  height: 28px;
+  width: 30px;
+  height: 25px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -581,7 +581,7 @@
   background: #ffffff;
   padding: 24px;
   border-radius: 12px;
-  max-width: 600px;
+  max-width: 550px;
   width: 90%;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
   position: relative;
@@ -627,19 +627,19 @@
 }
 
 .ds-modal-section {
-  margin-bottom: 20px;
+  margin-bottom: 17px;
 }
 
 .ds-modal-section h4 {
   margin: 0 0 12px 0;
   color: #4a90e2;
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 600;
 }
 
 .ds-modal-body p {
   margin: 8px 0;
-  font-size: 15px;
+  font-size: 13px;
   color: #333;
   line-height: 1.6;
 }
@@ -679,7 +679,7 @@
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   transition: all 0.3s ease;
 }
@@ -691,7 +691,7 @@
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   transition: all 0.3s ease;
 }

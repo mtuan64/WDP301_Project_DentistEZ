@@ -566,7 +566,7 @@ const ScheduleManagement = () => {
               }}
               title="Xóa timeslot"
             >
-              <Delete />
+              <Delete fontSize="small" />
             </button>
           ) : (
             <button
@@ -574,7 +574,7 @@ const ScheduleManagement = () => {
               onClick={() => fetchAppointmentDetails(slot._id)}
               title="Xem chi tiết"
             >
-              <Visibility />
+              <Visibility fontSize="small" />
             </button>
           )}
         </div>
