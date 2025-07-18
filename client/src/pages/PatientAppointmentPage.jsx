@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { Table, Button, Modal, Input, message, Tag, Space } from "antd";
+import { Table, Button, Modal, Input, message, Tag } from "antd";
 import axios from "axios";
 import dayjs from "dayjs";
-import EditAppointment from "./EditAppointment"; // Import the EditAppointment component
-import "../assets/css/PatientAppointmentPage.css";
+import "../assets/css/PatientAppointmentPage.css"; // link css bạn gửi
 
 const PatientAppointmentPage = () => {
   const [appointments, setAppointments] = useState([]);
@@ -11,16 +10,16 @@ const PatientAppointmentPage = () => {
   const [loading, setLoading] = useState(false);
   const [cancelId, setCancelId] = useState(null);
   const [refundAccount, setRefundAccount] = useState("");
-  const [isCancelModalVisible, setIsCancelModalVisible] = useState(false);
-  const [isEditModalVisible, setIsEditModalVisible] = useState(false); // State for EditAppointment modal
-  const [selectedAppointment, setSelectedAppointment] = useState(null); // State for the appointment to edit
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
   const fetchAppointments = async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
       const userId = JSON.parse(atob(token.split(".")[1])).userId;
-      const res = await axios.get(`http://localhost:9999/api/appointments/patient/${userId}`);
+      const res = await axios.get(
+        `http://localhost:9999/app/patient/${userId}`
+      );
       if (res.data.success) {
         setAppointments(res.data.data.appointments);
         setPatientInfo(res.data.data.patient);
@@ -40,7 +39,7 @@ const PatientAppointmentPage = () => {
 
   const showCancelModal = (id) => {
     setCancelId(id);
-    setIsCancelModalVisible(true);
+    setIsModalVisible(true);
   };
 
   const handleCancelAppointment = async () => {
@@ -52,32 +51,17 @@ const PatientAppointmentPage = () => {
     try {
       const token = localStorage.getItem("token");
       await axios.put(
-        `http://localhost:9999/api/appointments/cancel/${cancelId}`,
+        `http://localhost:9999/app/cancel/${cancelId}`,
         { refundAccount },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       message.success("Hủy lịch thành công!");
       fetchAppointments();
-      setIsCancelModalVisible(false);
+      setIsModalVisible(false);
       setRefundAccount("");
     } catch (error) {
       message.error(error.response?.data?.message || "Hủy lịch thất bại.");
     }
-  };
-
-  const showEditModal = (appointment) => {
-    setSelectedAppointment(appointment);
-    setIsEditModalVisible(true);
-  };
-
-  const handleEditAppointment = (updatedAppointment) => {
-    setAppointments((prev) =>
-      prev.map((appt) =>
-        appt._id === updatedAppointment._id ? updatedAppointment : appt
-      )
-    );
-    setIsEditModalVisible(false);
-    setSelectedAppointment(null);
   };
 
   const columns = [
@@ -106,7 +90,8 @@ const PatientAppointmentPage = () => {
     {
       title: "Giờ khám",
       dataIndex: "timeslotId",
-      render: (timeslot) => `${timeslot.start_time} - ${timeslot.end_time}`,
+      render: (timeslot) =>
+        `${timeslot.start_time} - ${timeslot.end_time}`,
     },
     {
       title: "Trạng thái",
@@ -140,38 +125,19 @@ const PatientAppointmentPage = () => {
     {
       title: "Hành động",
       render: (text, record) => {
-        // Check if the appointment is at least 8 hours away
-        const appointmentDateTime = dayjs(
-          `${record.timeslotId.date} ${record.timeslotId.start_time}`,
-          "YYYY-MM-DD HH:mm"
-        );
-        const canEditOrCancel = appointmentDateTime.diff(dayjs(), "hour") >= 8;
+        const canCancel =
+          dayjs(record.timeslotId.date).diff(dayjs(), "hour") >= 8;
 
-        return (
-          <Space>
-            {canEditOrCancel && record.status !== "cancelled" && record.status !== "completed" ? (
-              <>
-                <Button
-                  type="primary"
-                  danger
-                  onClick={() => showCancelModal(record._id)}
-                >
-                  Huỷ lịch
-                </Button>
-                <Button
-                  type="primary"
-                  onClick={() => showEditModal(record)}
-                >
-                  Đổi lịch
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button disabled>Không thể huỷ</Button>
-                <Button disabled>Không thể sửa</Button>
-              </>
-            )}
-          </Space>
+        return canCancel ? (
+          <Button
+            type="primary"
+            danger
+            onClick={() => showCancelModal(record._id)}
+          >
+            Huỷ lịch
+          </Button>
+        ) : (
+          <Button disabled>Không thể huỷ</Button>
         );
       },
     },
@@ -206,8 +172,8 @@ const PatientAppointmentPage = () => {
 
       <Modal
         title="Nhập số tài khoản ngân hàng"
-        open={isCancelModalVisible}
-        onCancel={() => setIsCancelModalVisible(false)}
+        open={isModalVisible}
+        onCancel={() => setIsModalVisible(false)}
         onOk={handleCancelAppointment}
         okText="Xác nhận huỷ"
         cancelText="Thoát"
@@ -218,13 +184,6 @@ const PatientAppointmentPage = () => {
           onChange={(e) => setRefundAccount(e.target.value)}
         />
       </Modal>
-
-      <EditAppointment
-        visible={isEditModalVisible}
-        onCancel={() => setIsEditModalVisible(false)}
-        appointment={selectedAppointment}
-        onUpdate={handleEditAppointment}
-      />
     </div>
   );
 };
