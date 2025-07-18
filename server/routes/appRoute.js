@@ -49,9 +49,11 @@ router.post("/upload-file", upload.single("file"), async (req, res) => {
     res.status(500).json({ message: "Lỗi upload file.", error: error.message });
   }
 });
+console.log('appRoute.js loaded');
 
 // API tạo payment (cọc) - cần xác thực bệnh nhân
 router.post("/create-payment", authPatientMiddleware, paymentController.createPayment);
+
 router.post("/webhook/payos", paymentController.handlePaymentWebhook);
 // API callback PayOS (webhook) - không cần xác thực
 router.post("/payos-callback", patientAppController.payosCallback);
@@ -59,6 +61,7 @@ router.post("/payos-callback", patientAppController.payosCallback);
 //appointment routes
 router.get("/patient/:userId", getAppointmentsByPatient);
 router.put("/cancel/:id", authPatientMiddleware, cancelAppointmentWithRefund);
+
 
 
 module.exports = router;

@@ -649,7 +649,7 @@ const ServiceDetail = () => {
                 background: '#fff',
                 borderRadius: 16,
                 width: 900,
-                maxWidth: '98vw',
+                maxWidth: '88vw',
                 display: 'flex',
                 flexDirection: 'column',
                 boxShadow: '0 8px 32px rgba(0,0,0,0.18)',

@@ -11,6 +11,7 @@ const payos = new PayOS(
   process.env.PAYOS_CHECKSUM_KEY
 );
 
+
 // Tạo payment
 const createPayment = async (req, res) => {
   try {
@@ -21,15 +22,12 @@ const createPayment = async (req, res) => {
     const patientId = patient._id;
 
     const {
-      amount,
-      description,
-      serviceId,
-      serviceOptionId,
-      timeslotId,
-      note,
-      fileUrl,
-      fileName,
-      fileType,
+
+      amount, description,
+      serviceId, serviceOptionId,
+      timeslotId, note,
+      fileUrl, fileName, fileType,reExaminationOf
+
     } = req.body;
 
     // Kiểm tra timeslotId hợp lệ
@@ -60,7 +58,14 @@ const createPayment = async (req, res) => {
     const doctorId = service.doctorId;
     const clinicId = service.clinicId;
 
-    const orderCode = Math.floor(Date.now() / 1000);
+
+    // Tạo orderCode duy nhất
+    
+    const orderCode = Math.floor(Date.now() % 9007199254740991); // là number
+    console.log("orderCode:", orderCode);
+
+    
+
 
     const payload = {
       orderCode,
@@ -72,7 +77,8 @@ const createPayment = async (req, res) => {
         { name: String(description || "Dịch vụ"), quantity: 1, price: amount },
       ],
     };
-
+    console.log("Payload gửi PayOS:", payload);
+    
     const response = await payos.createPaymentLink(payload);
 
     const payment = await Payment.create({
@@ -94,8 +100,12 @@ const createPayment = async (req, res) => {
         fileUrl,
         fileName,
         fileType,
-      },
+        reExaminationOf
+      }
+
     });
+    console.log("Payment created:", payment);
+    console.log("orderCode từ callback:", orderCode);
 
     return res.status(201).json({
       message: "Tạo thanh toán thành công. Vui lòng quét mã QR để thanh toán.",
@@ -181,3 +191,4 @@ module.exports = {
   cancelPayment,
   handlePaymentWebhook
 };
+

@@ -56,7 +56,7 @@ function ServiceManagement() {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.get('http://localhost:9999/api/admin/viewallservice', {
+      const res = await axios.get('http://localhost:9999/api/admin/viewallservicebymanager', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setAllServices(res.data.data || res.data);
@@ -165,6 +165,7 @@ const handleDoctorChange = (e) => {
     if (!Array.isArray(form.options) || form.options.length === 0) {
       setFormError('Phải có ít nhất 1 option dịch vụ nhỏ!');
       return false;
+
     }
     for (const [idx, opt] of form.options.entries()) {
       if (!opt.optionName || !opt.price || !opt.image) {
@@ -410,7 +411,7 @@ const handleDoctorChange = (e) => {
 
 
 
-
+  const startIdx = (page - 1) * rowsPerPage;
 
 
 
@@ -524,6 +525,7 @@ const handleDoctorChange = (e) => {
           <table style={tableStyle}>
             <thead>
               <tr>
+                <th style={thStyle}>STT</th>
                 <th style={thStyle}>Tên dịch vụ</th>
                 <th style={thStyle}>Bác sĩ phụ trách</th>
                 <th style={thStyle}>Phòng</th>
@@ -539,10 +541,24 @@ const handleDoctorChange = (e) => {
                   <td colSpan={7} style={{ textAlign: 'center', padding: 24 }}>Không tìm thấy dịch vụ phù hợp!</td>
                 </tr>
               )}
-              {getPaginatedServices().map((sv, idx) => (
+              {getPaginatedServices().map((sv, idx, index) => (
                 <tr key={sv._id} style={{ background: idx % 2 === 1 ? '#f6fafd' : '#fff' }}>
+                  <td style={tdStyle}>{startIdx + idx + 1}</td>
                   <td style={tdStyle}>{sv.serviceName}</td>
-                  <td style={tdStyle}>{sv.doctorId?.userId?.fullname || '---'}</td>
+                  <td style={tdStyle}>
+                    {sv.doctorId?.userId?.fullname ? (
+                      <div>
+                        <div>{sv.doctorId.userId.fullname}</div>
+                        <div style={{
+                          fontSize: 13,
+                          color: sv.doctorId.Status === ' active ' ? 'red' : 'green',
+                          marginTop: 2
+                        }}>
+                          ({sv.doctorId.Status === 'active' ? 'Hoạt động' : 'Ngừng hoạt động'})
+                        </div>
+                      </div>
+                    ) : '---'}
+                  </td>
                   <td style={tdStyle}>{sv.clinicId?.clinic_name || '---'}</td>
                   <td style={tdStyle}>
                     {sv.image ? (
