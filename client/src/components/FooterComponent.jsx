@@ -49,7 +49,7 @@ const FooterComponent = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/service" className="text-light d-flex align-items-center">
+                <Link to="/services" className="text-light d-flex align-items-center">
                   <ToolOutlined className="me-2" />
                   Dịch Vụ
                 </Link>

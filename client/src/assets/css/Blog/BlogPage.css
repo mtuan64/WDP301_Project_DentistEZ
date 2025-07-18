@@ -166,7 +166,7 @@
 }
 
 .blogpage-blog-title {
-  font-size: 20px;
+  font-size: 17px;
   font-weight: 600;
   color: #1f2937;
   margin: 0 0 10px 0;
@@ -183,13 +183,13 @@
 }
 
 .blogpage-blog-excerpt {
-  font-size: 16px;
+  font-size: 14px;
   color: #6b7280;
   margin-bottom: 20px;
 }
 
 .blogpage-read-more {
-  font-size: 16px;
+  font-size: 12px;
   color: #2563eb;
   text-decoration: none;
 }

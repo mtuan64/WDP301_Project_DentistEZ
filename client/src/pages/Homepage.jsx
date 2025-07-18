@@ -21,9 +21,12 @@ const HomePage = () => {
     const fetchDoctors = async () => {
       try {
         const response = await axios.get("http://localhost:9999/api/doctor");
-        setDoctors(
-          response.data.data.filter((doctor) => doctor.Status !== "inactive")
+        const activeDoctors = response.data.data.filter(
+          (doctor) => doctor.Status !== "inactive"
         );
+        console.log("Active Doctors:", activeDoctors);
+        console.log("Active Doctors Length:", activeDoctors.length);
+        setDoctors(activeDoctors);
       } catch (error) {
         console.error("Failed to fetch doctors:", error);
       } finally {
@@ -66,11 +69,11 @@ const HomePage = () => {
           content: Array.isArray(blog.content)
             ? blog.content
             : [
-                {
-                  type: "paragraph",
-                  text: blog.content || "No content available",
-                },
-              ],
+              {
+                type: "paragraph",
+                text: blog.content || "No content available",
+              },
+            ],
         }));
 
         const sortedBlogs = transformedBlogs.sort(
@@ -103,26 +106,37 @@ const HomePage = () => {
 
   const handleDoctorNext = () => {
     setDoctorCarouselIndex((prevIndex) =>
-      prevIndex + 1 < Math.ceil(activeDoctors.length / 4)
-        ? prevIndex + 1
-        : 0
+      (prevIndex + 1) % activeDoctors.length
     );
   };
 
   const handleDoctorPrev = () => {
     setDoctorCarouselIndex((prevIndex) =>
-      prevIndex === 0 ? Math.ceil(activeDoctors.length / 4) - 1 : prevIndex - 1
+      prevIndex === 0 ? activeDoctors.length - 1 : prevIndex - 1
     );
   };
 
+  // Hàm tính toán các dịch vụ hiển thị
+  const getVisibleServices = () => {
+    const visibleServices = [];
+    const itemsPerPage = 4;
+    for (let i = 0; i < itemsPerPage; i++) {
+      const index = (serviceCarouselIndex * itemsPerPage + i) % services.length;
+      visibleServices.push(services[index]);
+    }
+    return visibleServices;
+  };
+
+  // Hàm xử lý nút Next cho dịch vụ
   const handleServiceNext = () => {
     setServiceCarouselIndex((prevIndex) =>
-      prevIndex + 1 < Math.ceil(services.length / 4)
-        ? prevIndex + 1
-        : 0
+      prevIndex + 1 >= Math.ceil(services.length / 4)
+        ? 0
+        : prevIndex + 1
     );
   };
 
+  // Hàm xử lý nút Prev cho dịch vụ
   const handleServicePrev = () => {
     setServiceCarouselIndex((prevIndex) =>
       prevIndex === 0 ? Math.ceil(services.length / 4) - 1 : prevIndex - 1
@@ -138,11 +152,7 @@ const HomePage = () => {
     return visibleDoctors;
   };
 
-  const getVisibleServices = () => {
-    const itemsPerPage = 4;
-    const startIndex = serviceCarouselIndex * itemsPerPage;
-    return services.slice(startIndex, startIndex + itemsPerPage);
-  };
+
 
   return (
     <>
@@ -399,23 +409,17 @@ const HomePage = () => {
         )}
       </Container>
 
-      {/* Services Section */}
+      {/* Service Section */}
       <Container fluid className="bg-light py-5">
         <Container>
-          <h2 className="text-center text-primary fw-bold mb-5">
-            Các loại dịch vụ
-          </h2>
+          <h2 className="text-center text-primary fw-bold mb-5">Các loại dịch vụ</h2>
           {loadingServices ? (
             <p>Loading services...</p>
           ) : services.length > 0 ? (
             <div className="services-carousel">
               <Row className="flex-nowrap services-carousel-inner">
                 {getVisibleServices().map((service) => (
-                  <Col
-                    key={service._id || service.id}
-                    md={3}
-                    className="mb-4"
-                  >
+                  <Col key={service._id || service.id} md={3} className="mb-4">
                     <div className="service-item bg-white shadow rounded text-center">
                       <img
                         src={service.image || "https://via.placeholder.com/300x200"}
@@ -435,9 +439,6 @@ const HomePage = () => {
                 type="button"
                 onClick={handleServicePrev}
               >
-                <span className="custom-carousel-control-icon" aria-hidden="true">
-                  <i className="bi bi-chevron-left"></i>
-                </span>
                 <span className="visually-hidden">Previous</span>
               </button>
               <button
@@ -445,9 +446,6 @@ const HomePage = () => {
                 type="button"
                 onClick={handleServiceNext}
               >
-                <span className="custom-carousel-control-icon" aria-hidden="true">
-                  <i className="bi bi-chevron-right"></i>
-                </span>
                 <span className="visually-hidden">Next</span>
               </button>
             </div>
@@ -457,7 +455,7 @@ const HomePage = () => {
         </Container>
       </Container>
 
-      {/* Our Doctors */}
+      {/* Doctor Section */}
       <Container className="py-5">
         <h2 className="text-center mb-4 fw-bold text-primary">Đội ngũ bác sĩ</h2>
         {loadingDoctors ? (
@@ -469,32 +467,30 @@ const HomePage = () => {
             <Row className="flex-nowrap doctors-carousel-inner">
               {getVisibleDoctors().map((doctor) => (
                 <Col key={doctor._id} md={3} className="mb-4">
-                  <div
-                    className="bg-light rounded shadow h-100"
-                    style={{ overflow: "hidden" }}
-                  >
+                  <div className="doctor-card">
                     <img
                       src={doctor.ProfileImage}
                       alt={doctor.userId?.fullname || "Doctor"}
                       className="img-fluid w-100"
                       style={{ height: "250px", objectFit: "cover" }}
                     />
-                    <div className="p-3 text-center">
+                    <div className="p-3 text-center doctor-content">
                       <h5 className="mb-1">
                         {doctor.userId
                           ? `Bác sĩ ${doctor.userId.fullname}`
                           : "Bác sĩ không rõ tên"}
                       </h5>
                       <p className="text-muted mb-2">
-                        <strong>Chuyên ngành:</strong>{" "}
-                        {doctor.Specialty || "Không rõ"}
+                        <strong>Chuyên ngành:</strong> {doctor.Specialty || "Không rõ"}
                       </p>
-                      <Link
-                        to={`/doctor/${doctor._id}`}
-                        className="btn btn-outline-primary btn-sm"
-                      >
-                        Xem chi tiết
-                      </Link>
+                      <div className="doctor-actions">
+                        <Link
+                          to={`/doctor/${doctor._id}`}
+                          className="btn btn-outline-primary btn-sm"
+                        >
+                          Xem chi tiết
+                        </Link>
+                      </div>
                     </div>
                   </div>
                 </Col>
@@ -505,9 +501,6 @@ const HomePage = () => {
               type="button"
               onClick={handleDoctorPrev}
             >
-              <span className="custom-carousel-control-icon" aria-hidden="true">
-                <i className="bi bi-chevron-left"></i>
-              </span>
               <span className="visually-hidden">Previous</span>
             </button>
             <button
@@ -515,9 +508,6 @@ const HomePage = () => {
               type="button"
               onClick={handleDoctorNext}
             >
-              <span className="custom-carousel-control-icon" aria-hidden="true">
-                <i className="bi bi-chevron-right"></i>
-              </span>
               <span className="visually-hidden">Next</span>
             </button>
           </div>

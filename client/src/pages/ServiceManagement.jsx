@@ -117,7 +117,7 @@ function ServiceManagement() {
   };
 
   // Khi chọn bác sĩ, tự động lấy clinicId và set vào form
-  const handleDoctorChange = (e) => {
+const handleDoctorChange = (e) => {
     const selectedDoctorId = e.target.value;
     const doctor = doctors.find(d => d._id === selectedDoctorId);
     let clinicId = '';

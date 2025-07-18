@@ -67,6 +67,14 @@ const ProfilePage = () => {
     );
   };
 
+  const validateUsername = (username) => {
+    return (
+      username.length >= 3 &&
+      username.length <= 30 &&
+      /^[a-zA-Z0-9_]+$/.test(username)
+    );
+  };
+
   const validateAddress = (address) => {
     if (!address) return true;
     return address.length <= 200;
@@ -116,6 +124,12 @@ const ProfilePage = () => {
         );
       }
 
+      if (!validateUsername(formData.username)) {
+        throw new Error(
+          "Tên người dùng phải từ 3-30 ký tự và chỉ chứa chữ cái, số hoặc dấu gạch dưới."
+        );
+      }
+
       if (!validateFullname(formData.fullname)) {
         throw new Error("Họ tên phải từ 2-50 ký tự và chỉ chứa chữ cái.");
       }
@@ -140,6 +154,7 @@ const ProfilePage = () => {
       }
 
       const updateData = {
+        username: formData.username,
         fullname: formData.fullname,
         phone: formData.phone || undefined,
         address: formData.address || undefined,
@@ -201,8 +216,8 @@ const ProfilePage = () => {
       const updatedUser = {
         ...user,
         ...profileResponse.data.data,
-        _id: profileResponse.data.data._id || user?._id || user?.id, // Ưu tiên _id từ API
-        id: user?.id || user?._id || profileResponse.data.data._id, // Giữ id nếu cần
+        _id: profileResponse.data.data._id || user?._id || user?.id,
+        id: user?.id || user?._id || profileResponse.data.data._id,
         profilePicture:
           updatedProfilePicture || profileResponse.data.data.profilePicture,
         token,
@@ -277,8 +292,11 @@ const ProfilePage = () => {
                   id="username"
                   name="username"
                   value={formData.username}
+                  onChange={handleInputChange}
                   className="form-control"
-                  disabled
+                  required
+                  pattern="^[a-zA-Z0-9_]{3,30}$"
+                  title="Tên người dùng phải từ 3-30 ký tự và chỉ chứa chữ cái, số hoặc dấu gạch dưới."
                 />
               </div>
 
@@ -388,6 +406,14 @@ const ProfilePage = () => {
               disabled={loading}
             >
               {loading ? "Đang Lưu..." : "Lưu Thay Đổi"}
+            </button>
+
+            <button
+              type="button"
+              className="btn btn-warning mt-3 ms-3"
+              onClick={() => navigate("/changepass")}
+            >
+              Đổi Mật Khẩu
             </button>
           </form>
         </div>

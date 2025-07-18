@@ -79,6 +79,7 @@ const DoctorAccountManagement = () => {
       const response = await axios.get("http://localhost:9999/api/doctor", {
         headers: { Authorization: `Bearer ${token}` },
       });
+      console.log("Fetched doctors:", response.data); // Debug response
       const doctorData = Array.isArray(response.data.data)
         ? response.data.data
         : Array.isArray(response.data)
@@ -163,11 +164,29 @@ const DoctorAccountManagement = () => {
     if (!selectedDoctor) return;
 
     try {
+      const formData = new FormData();
+      formData.append("Specialty", editForm.Specialty);
+      formData.append("Degree", editForm.Degree);
+      formData.append("ExperienceYears", editForm.ExperienceYears);
+      formData.append("Description", editForm.Description);
+      console.log("ProfileImage value:", editForm.ProfileImage); // Debug ProfileImage
+      if (editForm.ProfileImage instanceof File) {
+        formData.append("ProfileImage", editForm.ProfileImage);
+      } else {
+        formData.append("ProfileImage", editForm.ProfileImage); // Keep existing URL
+      }
+
       const response = await axios.put(
-        `http://localhost:9999/api/doctors/${selectedDoctor._id}`,
-        editForm,
-        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+        `http://localhost:9999/api/doctor/${selectedDoctor._id}`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
       );
+      console.log("Update response:", response.data); // Debug response
 
       if (response.data.success) {
         setDoctors(
@@ -175,6 +194,7 @@ const DoctorAccountManagement = () => {
             doctor._id === selectedDoctor._id ? { ...doctor, ...response.data.data } : doctor
           )
         );
+        await fetchDoctors(localStorage.getItem("token")); // Refresh doctor list
         setMessage("Doctor updated successfully");
         setTimeout(() => setMessage(null), 3000);
         handleCloseEditDialog();
@@ -358,15 +378,23 @@ const DoctorAccountManagement = () => {
             multiline
             rows={4}
           />
-          <TextField
-            margin="dense"
+          <input
+            type="file"
+            accept="image/*"
             name="ProfileImage"
-            label="Profile Image URL"
-            type="text"
-            fullWidth
-            value={editForm.ProfileImage}
-            onChange={handleEditFormChange}
+            onChange={(e) => {
+              console.log("Selected file:", e.target.files[0]); // Debug file selection
+              setEditForm((prev) => ({ ...prev, ProfileImage: e.target.files[0] }));
+            }}
+            style={{ marginTop: "16px" }}
           />
+          {editForm.ProfileImage && typeof editForm.ProfileImage === "string" && (
+            <img
+              src={editForm.ProfileImage}
+              alt="Current Profile"
+              style={{ maxWidth: "100px", marginTop: "10px" }}
+            />
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseEditDialog} color="secondary">

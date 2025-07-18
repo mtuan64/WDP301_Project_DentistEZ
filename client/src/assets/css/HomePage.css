@@ -234,6 +234,8 @@ p {
     }
 }
 
+
+
 /********** Hero Carousel **********/
 #heroCarousel {
     position: relative;
@@ -348,6 +350,9 @@ p {
     margin: 0 auto;
     text-align: center;
     transition: transform 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
 }
 
 .doctor-card:hover {
@@ -359,6 +364,24 @@ p {
     height: 250px;
     object-fit: cover;
     border-radius: 12px;
+}
+
+.doctor-content {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.doctor-actions {
+    margin-top: auto;
+    padding-top: 10px;
+}
+
+.doctor-card .btn-outline-primary.btn-sm {
+    display: block;
+    margin: 0 auto;
+    width: fit-content;
 }
 
 .contact-icons a {
@@ -452,8 +475,10 @@ p {
     transform: translateY(-50%);
     width: 50px;
     height: 50px;
-    background-color: var(--primary);
+    background-color: rgba(0, 0, 0, 0.3);
+    /* Background xám trong suốt */
     border-radius: 50%;
+    /* Đảm bảo hình tròn */
     border: none;
     display: flex;
     align-items: center;
@@ -461,92 +486,79 @@ p {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     transition: background-color 0.3s ease, transform 0.3s ease;
     z-index: 10;
+    cursor: pointer;
+    margin: 0 10px;
+    /* Giữ khoảng cách hợp lý */
+    font-size: 24px;
+    /* Kích thước chữ cho dấu lớn nhỏ */
+    color: var(--primary);
+    /* Màu xanh da trời (#06A3DA) */
 }
 
 .custom-carousel-control-prev {
-    left: -25px;
+    left: 10px;
+}
+
+.custom-carousel-control-prev::before {
+    content: "<";
+    /* Dấu nhỏ hơn */
 }
 
 .custom-carousel-control-next {
-    right: -25px;
+    right: 10px;
+}
+
+.custom-carousel-control-next::before {
+    content: ">";
+    /* Dấu lớn hơn */
 }
 
 .custom-carousel-control-prev:hover,
 .custom-carousel-control-next:hover {
-    background-color: var(--secondary);
+    background-color: rgba(0, 0, 0, 0.5);
+    /* Xám đậm hơn khi hover */
     transform: translateY(-50%) scale(1.1);
-}
-
-.custom-carousel-control-icon {
-    font-size: 1.5rem;
-    color: var(--white);
-}
-
-.custom-carousel-control-icon i {
-    line-height: 1;
 }
 
 /* Responsive adjustments for carousel controls */
 @media (max-width: 991.98px) {
+
     .custom-carousel-control-prev,
     .custom-carousel-control-next {
         width: 40px;
         height: 40px;
-    }
-
-    .custom-carousel-control-icon {
-        font-size: 1.2rem;
+        font-size: 20px;
+        /* Giảm kích thước chữ trên màn hình nhỏ */
+        margin: 0 5px;
     }
 
     .custom-carousel-control-prev {
-        left: -15px;
+        left: 5px;
     }
 
     .custom-carousel-control-next {
-        right: -15px;
+        right: 5px;
     }
 }
 
 @media (max-width: 575.98px) {
+
     .custom-carousel-control-prev,
     .custom-carousel-control-next {
         width: 35px;
         height: 35px;
-    }
-
-    .custom-carousel-control-icon {
-        font-size: 1rem;
+        font-size: 18px;
+        /* Giảm thêm trên thiết bị rất nhỏ */
+        margin: 0 3px;
     }
 
     .custom-carousel-control-prev {
-        left: -10px;
+        left: 3px;
     }
 
     .custom-carousel-control-next {
-        right: -10px;
+        right: 3px;
     }
-}
-
-/* Override default Bootstrap carousel controls for facilityCarousel */
-#facilityCarousel .carousel-control-prev,
-#facilityCarousel .carousel-control-next {
-    width: 5%;
-    background: none;
-    border: none;
-    opacity: 0.5;
-    transition: opacity 0.2s;
-}
-
-#facilityCarousel .carousel-control-prev:hover,
-#facilityCarousel .carousel-control-next:hover {
-    opacity: 1;
-}
-
-#facilityCarousel .carousel-control-prev-icon,
-#facilityCarousel .carousel-control-next-icon {
-    background-size: 100% 100%;
-    width: 30px;
-    height: 30px;
 }
 
 /********** Blog Section **********/
