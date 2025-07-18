@@ -272,7 +272,43 @@ const getAllService = async (req, res) => {
       }
     }).populate('clinicId', 'clinic_name');
 
+    // Lọc chỉ các service mà doctor.status == "active"
+    const activeServices = services.filter(sv =>
+      sv.doctorId && sv.doctorId.Status === 'active'
+    );
+
     // Nếu muốn trả kèm options nhỏ cho từng service:
+    const servicesWithOptions = await Promise.all(
+      activeServices.map(async (sv) => {
+        const options = await ServiceOption.find({ serviceId: sv._id });
+        return { ...sv.toObject(), options };
+      })
+    );
+    res.status(200).json({
+      success: true,
+      data: servicesWithOptions,
+
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+};
+const getAllServicebyManager = async (req, res) => {
+  try {
+    const services = await Service.find()
+      .populate({
+        path: 'doctorId',
+        populate: {
+          path: 'userId',
+          select: 'fullname email'
+        }
+      })
+      .populate('clinicId', 'clinic_name');
+
+    // Trả về ALL service, k phân biệt doctor status
     const servicesWithOptions = await Promise.all(
       services.map(async (sv) => {
         const options = await ServiceOption.find({ serviceId: sv._id });
@@ -282,7 +318,6 @@ const getAllService = async (req, res) => {
     res.status(200).json({
       success: true,
       data: servicesWithOptions,
-
     });
   } catch (error) {
     res.status(500).json({
@@ -309,6 +344,15 @@ const createService = async (req, res) => {
         message: 'Phải có ít nhất 1 option dịch vụ nhỏ'
       });
     }
+    // Tìm bác sĩ và lấy clinicId từ bác sĩ
+    const doctor = await Doctor.findById(doctorId);
+    if (!doctor) {
+      return res.status(400).json({ message: "Bác sĩ không tồn tại" });
+    }
+    if (doctor.Status !== 'active') {
+      return res.status(400).json({ message: "Bác sĩ này đã bị khóa tài khoản" });
+    }
+    const clinicId = doctor.clinic_id; // lấy từ DB, không lấy từ client
 
     // Kiểm tra mỗi bác sĩ chỉ có 1 service
     const existedService = await Service.findOne({ doctorId });
@@ -319,12 +363,7 @@ const createService = async (req, res) => {
       });
     }
 
-    // Tìm bác sĩ và lấy clinicId từ bác sĩ
-    const doctor = await Doctor.findById(doctorId);
-    if (!doctor) {
-      return res.status(400).json({ message: "Bác sĩ không tồn tại" });
-    }
-    const clinicId = doctor.clinic_id; // lấy từ DB, không lấy từ client
+    
 
     // Kiểm tra từng option nhỏ
     for (const opt of options) {
@@ -448,8 +487,8 @@ const editService = async (req, res) => {
           message: 'Bác sĩ này đã có dịch vụ khác. Không thể chuyển sang!'
         });
       }
-    
-    // Lấy clinicId mới từ bác sĩ mới
+
+      // Lấy clinicId mới từ bác sĩ mới
       const doctor = await Doctor.findById(doctorId);
       if (!doctor) {
         return res.status(400).json({ message: "Bác sĩ không tồn tại" });
@@ -504,7 +543,7 @@ const editService = async (req, res) => {
     res.status(500).json({ success: false, message: 'Sửa dịch vụ thất bại!', error: error.message });
   }
 };
- 
+
 
 
 module.exports = {
@@ -520,7 +559,8 @@ module.exports = {
   uploadImageCloudinary,
   deleteService,
   editService,
-  
+  getAllServicebyManager,
+
 
 
 }

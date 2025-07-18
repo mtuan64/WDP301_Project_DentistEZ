@@ -36,7 +36,7 @@ const { getTimeslotById, getAvailableTimeslots, createTimeslot, updateTimeslot ,
 
 const multer = require("multer");
 const path = require("path");
-const { createAcountDoctor, getAllClinic, createAcountStaff, getAllPatient, getAllStaff, getAllDoctor, changeStatus, createService, getAllService, uploadImageCloudinary, deleteService, editService } = require("../controllers/adminController");
+const { createAcountDoctor, getAllClinic, createAcountStaff, getAllPatient, getAllStaff, getAllDoctor, changeStatus, createService, getAllService, uploadImageCloudinary, deleteService, editService, getAllServicebyManager } = require("../controllers/adminController");
 const { getDefaultResultOrder } = require("dns");
 const chatbotController = require("../controllers/chat/chatbotController");
 const chatboxController = require("../controllers/chat/chatboxController");
@@ -186,11 +186,12 @@ router.get("/admin-accountpatient", authAdminMiddleware, getAllPatient);
 router.get("/admin-accountdoctor", authAdminMiddleware, getAllDoctor);
 router.get("/admin-accountstaff", authAdminMiddleware, getAllStaff);
 router.patch('/admin/update-status/:role/:recordId', authAdminMiddleware, changeStatus);
-router.get("/admin/viewallservice", authAdminMiddleware, getAllService);
+router.get("/admin/viewallservicebymanager", authAdminMiddleware, getAllServicebyManager);
 router.post("/admin/create/service", authAdminMiddleware, createService);
 router.post("/admin/upload-image", authAdminMiddleware, uploadMulter.single("image"), uploadImageCloudinary);
 router.delete("/admin/delete-service/:id", authAdminMiddleware, deleteService);
 router.put("/admin/update-service/:id", authAdminMiddleware, uploadMulter.single("image"), editService);
+
 
 // Blog
 router.get("/blogs", getAllBlogs);
