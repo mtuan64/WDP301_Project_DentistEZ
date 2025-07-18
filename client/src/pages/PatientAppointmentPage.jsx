@@ -51,7 +51,7 @@ const PatientAppointmentPage = () => {
     try {
       const token = localStorage.getItem("token");
       await axios.put(
-        `http://localhost:5000/api/appointments/cancel/${cancelId}`,
+        `http://localhost:9999/app/cancel/${cancelId}`,
         { refundAccount },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -126,8 +126,7 @@ const PatientAppointmentPage = () => {
       title: "Hành động",
       render: (text, record) => {
         const canCancel =
-          dayjs(record.timeslotId.date).diff(dayjs(), "hour") >= 24 &&
-          record.status === "pending";
+          dayjs(record.timeslotId.date).diff(dayjs(), "hour") >= 8;
 
         return canCancel ? (
           <Button
