@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal, Form, DatePicker, Input, Button, message } from 'antd';
 import axios from 'axios';
 import moment from 'moment';
-
+import '../assets/css/AppointmentPage.css'; // Reuse styles from AppointmentPage
 
 const EditAppointment = ({ visible, onCancel, appointment, onUpdate }) => {
   const [form] = Form.useForm();
@@ -10,8 +10,8 @@ const EditAppointment = ({ visible, onCancel, appointment, onUpdate }) => {
   const [loading, setLoading] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
+  const [serviceDetail, setServiceDetail] = useState(null);
 
-  // Styles similar to ServiceDetail
   const styles = {
     timeSlots: {
       display: 'grid',
@@ -40,80 +40,101 @@ const EditAppointment = ({ visible, onCancel, appointment, onUpdate }) => {
       color: '#999',
       cursor: 'not-allowed',
     },
+    infoSection: {
+      marginBottom: '20px',
+      padding: '15px',
+      backgroundColor: '#f8f9fa',
+      borderRadius: '8px',
+    },
+    infoLabel: {
+      fontWeight: 600,
+      marginRight: '8px',
+    },
   };
 
-  // Fetch available timeslots, including the current appointment's timeslot
-  const fetchAvailableTimeslots = async (selectedDate) => {
-    const doctorIdRaw = appointment?.timeslotId?.doctorId;
-    const doctorId = typeof doctorIdRaw === 'object' ? doctorIdRaw._id : doctorIdRaw;
+  // Fetch service details including timeslots
+  const fetchServiceDetail = async (serviceId) => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`http://localhost:9999/api/view-detail/service/${serviceId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (response.data && Array.isArray(response.data.data)) {
+        setServiceDetail(response.data.data[0]);
+      } else if (response.data && response.data.data) {
+        setServiceDetail(response.data.data);
+      } else if (response.data && response.data._id) {
+        setServiceDetail(response.data);
+      } else {
+        throw new Error('Dữ liệu chi tiết dịch vụ không hợp lệ');
+      }
+    } catch (err) {
+      message.error(`Không thể tải chi tiết dịch vụ: ${err.message}`);
+      setServiceDetail(null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    if (!doctorId || !selectedDate) {
+  // Fetch available timeslots from serviceDetail
+  const fetchAvailableTimeslots = (date) => {
+    if (!serviceDetail || !serviceDetail.timeslots) {
       setTimeslots([]);
       return;
     }
-
-    try {
-      const response = await axios.get('http://localhost:9999/api/timeslots/available', {
-        params: {
-          doctorId,
-          date: selectedDate.format('YYYY-MM-DD'),
-          currentAppointmentId: appointment._id,
-        },
-      });
-
-      if (response.data.success) {
-        const fetchedSlots = response.data.data || [];
-        // Filter timeslots by selected date, matching ServiceDetail logic
-        const filteredSlots = fetchedSlots.filter(
-          (slot) =>
-            new Date(slot.date).toISOString().slice(0, 10) ===
-            selectedDate.format('YYYY-MM-DD')
+    let filteredSlots = serviceDetail.timeslots || [];
+    if (date) {
+      filteredSlots = filteredSlots.filter((slot) => {
+        const slotDateTime = new Date(`${slot.date}T${slot.start_time}`);
+        const currentTime = new Date();
+        const eightHoursInMs = 8 * 60 * 60 * 1000;
+        return (
+          new Date(slot.date).toISOString().slice(0, 10) === date &&
+          (slot.isAvailable !== false || slot._id === appointment?.timeslotId?._id) &&
+          slotDateTime - currentTime >= eightHoursInMs
         );
-        setTimeslots(filteredSlots);
-        // Set the initial selected timeslot if it exists in the fetched slots
-        const currentSlot = filteredSlots.find((slot) => slot._id === appointment?.timeslotId?._id);
-        if (currentSlot) {
-          setSelectedTimeSlot(currentSlot);
-          form.setFieldsValue({ timeslotId: currentSlot._id });
-        } else {
-          setSelectedTimeSlot(null);
-          form.setFieldsValue({ timeslotId: undefined });
-        }
-      } else {
-        message.error(response.data.message || 'Không lấy được timeslots');
-        setTimeslots([]);
-      }
-    } catch (error) {
-      message.error('Lỗi khi tải danh sách khung giờ');
-      console.error('Error fetching timeslots:', error);
-      setTimeslots([]);
+      });
+    }
+    setTimeslots(filteredSlots);
+    const currentSlot = filteredSlots.find((slot) => slot._id === appointment?.timeslotId?._id);
+    if (currentSlot) {
+      setSelectedTimeSlot(currentSlot);
+      form.setFieldsValue({ timeslotId: currentSlot._id });
+    } else {
+      setSelectedTimeSlot(null);
+      form.setFieldsValue({ timeslotId: undefined });
     }
   };
 
   useEffect(() => {
     if (visible && appointment) {
-      const apptDate = appointment?.timeslotId?.date
-        ? moment(appointment.timeslotId.date)
-        : null;
+      const apptDate = appointment?.timeslotId?.date ? moment(appointment.timeslotId.date) : null;
       setSelectedDate(apptDate);
-
       form.setFieldsValue({
         date: apptDate,
         note: appointment?.note || '',
       });
-
-      if (apptDate) {
-        fetchAvailableTimeslots(apptDate);
+      if (appointment?.serviceId?._id) {
+        fetchServiceDetail(appointment.serviceId._id);
       }
     }
   }, [visible, appointment, form]);
 
+  useEffect(() => {
+    if (selectedDate && serviceDetail) {
+      fetchAvailableTimeslots(selectedDate.format('YYYY-MM-DD'));
+    } else {
+      setTimeslots([]);
+    }
+  }, [selectedDate, serviceDetail]);
+
   const handleDateChange = (newDate) => {
     setSelectedDate(newDate);
     setSelectedTimeSlot(null);
-    form.setFieldsValue({ timeslotId: undefined }); // Reset timeslot selection
+    form.setFieldsValue({ timeslotId: undefined });
     if (newDate) {
-      fetchAvailableTimeslots(newDate);
+      fetchAvailableTimeslots(newDate.format('YYYY-MM-DD'));
     } else {
       setTimeslots([]);
     }
@@ -129,11 +150,15 @@ const EditAppointment = ({ visible, onCancel, appointment, onUpdate }) => {
   const handleSubmit = async (values) => {
     setLoading(true);
     try {
-      const response = await axios.put(`http://localhost:9999/api/appointments/${appointment._id}`, {
-        timeslotId: values.timeslotId,
-        note: values.note,
-      });
-
+      const token = localStorage.getItem('token');
+      const response = await axios.put(
+        `http://localhost:9999/api/appointments/${appointment._id}`,
+        {
+          timeslotId: values.timeslotId,
+          note: values.note,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       if (response.data.success) {
         message.success('Cập nhật lịch hẹn thành công');
         onUpdate(response.data.data);
@@ -157,11 +182,21 @@ const EditAppointment = ({ visible, onCancel, appointment, onUpdate }) => {
       footer={null}
       className="edit-appointment-modal"
     >
-      <Form
-        form={form}
-        layout="vertical"
-        onFinish={handleSubmit}
-      >
+      <div style={styles.infoSection}>
+        <div>
+          <span style={styles.infoLabel}>Dịch vụ:</span>
+          {appointment?.serviceId?.serviceName || 'N/A'}
+        </div>
+        <div>
+          <span style={styles.infoLabel}>Bác sĩ:</span>
+          {appointment?.doctorId?.userId?.fullname || 'N/A'}
+        </div>
+        <div>
+          <span style={styles.infoLabel}>Phòng khám:</span>
+          {appointment?.clinicId?.clinic_name || 'N/A'}
+        </div>
+      </div>
+      <Form form={form} layout="vertical" onFinish={handleSubmit}>
         <Form.Item
           name="date"
           label="Ngày"
@@ -174,7 +209,6 @@ const EditAppointment = ({ visible, onCancel, appointment, onUpdate }) => {
             value={selectedDate}
           />
         </Form.Item>
-
         <Form.Item
           name="timeslotId"
           label="Khung giờ"
@@ -209,16 +243,11 @@ const EditAppointment = ({ visible, onCancel, appointment, onUpdate }) => {
             <span style={{ color: '#888' }}>Không có slot nào</span>
           )}
         </Form.Item>
-
-        <Form.Item
-          name="note"
-          label="Ghi chú"
-        >
+        <Form.Item name="note" label="Ghi chú">
           <Input.TextArea rows={4} placeholder="Nhập ghi chú (nếu có)" />
         </Form.Item>
-
         <Form.Item>
-          <div className="edit-appointment-buttons">
+          <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
             <Button type="primary" htmlType="submit" loading={loading}>
               Cập nhật
             </Button>

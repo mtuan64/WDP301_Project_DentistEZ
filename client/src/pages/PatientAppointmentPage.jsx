@@ -20,7 +20,7 @@ const PatientAppointmentPage = () => {
     try {
       const token = localStorage.getItem("token");
       const userId = JSON.parse(atob(token.split(".")[1])).userId;
-      const res = await axios.get(`http://localhost:9999/app/patient/${userId}`);
+      const res = await axios.get(`http://localhost:9999/api/appointments/patient/${userId}`);
       if (res.data.success) {
         setAppointments(res.data.data.appointments);
         setPatientInfo(res.data.data.patient);
@@ -52,7 +52,7 @@ const PatientAppointmentPage = () => {
     try {
       const token = localStorage.getItem("token");
       await axios.put(
-        `http://localhost:5000/api/appointments/cancel/${cancelId}`,
+        `http://localhost:9999/api/appointments/cancel/${cancelId}`,
         { refundAccount },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -140,33 +140,36 @@ const PatientAppointmentPage = () => {
     {
       title: "Hành động",
       render: (text, record) => {
-        const canCancel =
-          dayjs(record.timeslotId.date).diff(dayjs(), "hour") >= 24 &&
-          record.status === "pending";
-        const canEdit = record.status === "pending"; // Allow editing only for pending appointments
+        // Check if the appointment is at least 8 hours away
+        const appointmentDateTime = dayjs(
+          `${record.timeslotId.date} ${record.timeslotId.start_time}`,
+          "YYYY-MM-DD HH:mm"
+        );
+        const canEditOrCancel = appointmentDateTime.diff(dayjs(), "hour") >= 8;
 
         return (
           <Space>
-            {canCancel ? (
-              <Button
-                type="primary"
-                danger
-                onClick={() => showCancelModal(record._id)}
-              >
-                Huỷ lịch
-              </Button>
+            {canEditOrCancel && record.status !== "cancelled" && record.status !== "completed" ? (
+              <>
+                <Button
+                  type="primary"
+                  danger
+                  onClick={() => showCancelModal(record._id)}
+                >
+                  Huỷ lịch
+                </Button>
+                <Button
+                  type="primary"
+                  onClick={() => showEditModal(record)}
+                >
+                  Đổi lịch
+                </Button>
+              </>
             ) : (
-              <Button disabled>Không thể huỷ</Button>
-            )}
-            {canEdit ? (
-              <Button
-                type="primary"
-                onClick={() => showEditModal(record)}
-              >
-                Thay đổi lịch hẹn
-              </Button>
-            ) : (
-              <Button disabled>Không thể sửa</Button>
+              <>
+                <Button disabled>Không thể huỷ</Button>
+                <Button disabled>Không thể sửa</Button>
+              </>
             )}
           </Space>
         );

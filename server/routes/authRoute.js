@@ -108,7 +108,7 @@ router.post(
 router.get('/admin/appointments', getAllAppointment);
 
 // Sửa lịch hẹn theo PatientId và id
-router.put('/appointments/:appointmentId', editAppointment);
+router.put('/appointments/:appointmentId',authPatientMiddleware, editAppointment);
 
 // Xóa lịch hẹn theo id
 router.delete('/:id', deleteAppointment);

@@ -399,7 +399,7 @@ const HomePage = () => {
                     <h5>{blog.title}</h5>
                     <p>{getContentSummary(blog.content)}</p>
                     <Link to={`/blog/${blog.slug}`} className="btn btn-primary btn-sm">
-                      Read More
+                      Chi tiết
                     </Link>
                   </div>
                 </div>
