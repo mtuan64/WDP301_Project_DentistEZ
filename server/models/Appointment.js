@@ -18,7 +18,8 @@ const appointmentSchema = new mongoose.Schema({
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User", 
-      }
+      },
+    reExaminationOf:  { type: mongoose.Schema.Types.ObjectId, ref: "Appointment", default: null } // <-- Thêm dòng này
 
     
 

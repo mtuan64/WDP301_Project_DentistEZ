@@ -13,6 +13,7 @@ const payos = new PayOS(
   process.env.PAYOS_CHECKSUM_KEY
 );
 
+
 // Tạo payment
 const createPayment = async (req, res) => {
   try {
@@ -30,7 +31,7 @@ const createPayment = async (req, res) => {
       amount, description,
       serviceId, serviceOptionId,
       timeslotId, note,
-      fileUrl, fileName, fileType
+      fileUrl, fileName, fileType,reExaminationOf
     } = req.body;
 
     // Kiểm tra timeslotId hợp lệ
@@ -65,7 +66,9 @@ const createPayment = async (req, res) => {
     const clinicId = service.clinicId;
 
     // Tạo orderCode duy nhất
-    const orderCode = Math.floor(Date.now() / 1000);
+    
+    const orderCode = Math.floor(Date.now() % 9007199254740991); // là number
+    console.log("orderCode:", orderCode);
 
     // Payload gửi PayOS
     const payload = {
@@ -76,7 +79,8 @@ const createPayment = async (req, res) => {
       cancelUrl: "http://localhost:5173/payment-cancel",
       items: [{ name: String(description || "Dịch vụ"), quantity: 1, price: amount }]
     };
-
+    console.log("Payload gửi PayOS:", payload);
+    
     const response = await payos.createPaymentLink(payload);
 
     // Tạo bản ghi payment
@@ -98,9 +102,12 @@ const createPayment = async (req, res) => {
         createdBy,
         fileUrl,
         fileName,
-        fileType
+        fileType,
+        reExaminationOf
       }
     });
+    console.log("Payment created:", payment);
+    console.log("orderCode từ callback:", orderCode);
 
     return res.status(201).json({
       message: "Tạo thanh toán thành công. Vui lòng thanh toán để xác nhận lịch.",
@@ -141,5 +148,6 @@ const cancelPayment = async (req, res) => {
 module.exports = {
   createPayment,
   getPayment,
-  cancelPayment
+  cancelPayment,
+  
 };

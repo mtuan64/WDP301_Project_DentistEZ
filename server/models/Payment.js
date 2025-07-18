@@ -54,7 +54,8 @@ const PaymentSchema = new mongoose.Schema(
       createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
       fileUrl: { type: String },
       fileName: { type: String },
-      fileType: { type: String }
+      fileType: { type: String },
+      reExaminationOf: { type: mongoose.Schema.Types.ObjectId, ref: "Appointment", default: null }
     }
   },
   { timestamps: true }
