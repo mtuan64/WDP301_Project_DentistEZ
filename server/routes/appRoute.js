@@ -48,11 +48,14 @@ router.post("/upload-file", upload.single("file"), async (req, res) => {
     res.status(500).json({ message: "Lỗi upload file.", error: error.message });
   }
 });
+console.log('appRoute.js loaded');
 
 // API tạo payment (cọc) - cần xác thực bệnh nhân
 router.post("/create-payment", authPatientMiddleware, paymentController.createPayment);
 
-// API callback PayOS (webhook) - không cần xác thực
 router.post("/payos-callback", patientAppController.payosCallback);
+
+
+exports = router;
 
 module.exports = router;

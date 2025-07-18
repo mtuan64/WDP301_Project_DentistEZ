@@ -141,6 +141,9 @@ exports.registerUser = async (req, res, next) => {
       case "staff":
         await new Staff({ userId: savedUser._id }).save();
         break;
+      case "admin":
+        // Admin role does not require additional setup
+        break;
     }
 
     res.status(201).json({
@@ -178,6 +181,35 @@ exports.loginUser = async (req, res, next) => {
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return res.status(401).json({ msg: "Mật khẩu không đúng." });
+    }
+    // Lấy trạng thái Status ở bảng role tương ứng
+    let status;
+    switch (user.role) {
+      case 'doctor':
+        const doctor = await Doctor.findOne({ userId: user._id }).lean();
+        if (!doctor) return res.status(403).json({ msg: "Tài khoản không hợp lệ." });
+        status = doctor.Status;
+        break;
+      case 'staff':
+        const staff = await Staff.findOne({ userId: user._id }).lean();
+        if (!staff) return res.status(403).json({ msg: "Tài khoản không hợp lệ." });
+        status = staff.Status;
+        break;
+      case 'patient':
+        const patient = await Patient.findOne({ userId: user._id }).lean();
+        if (!patient) return res.status(403).json({ msg: "Tài khoản không hợp lệ." });
+        status = patient.Status;
+        break;
+      case 'admin':
+        // Admin role does not have a status field
+        status = 'active'; // Admins are always active
+        break;
+      default:
+        return res.status(400).json({ msg: "Phân quyền không hợp lệ." });
+    }
+
+    if (status !== 'active') {
+      return res.status(403).json({ msg: "Tài khoản đang bị khóa. Vui lòng liên hệ quản trị viên." });
     }
 
     if (!process.env.JWT_SECRET) {

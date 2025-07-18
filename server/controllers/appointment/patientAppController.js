@@ -1,17 +1,35 @@
-
 const Payment = require("../../models/Payment");
 const TimeSlot = require("../../models/TimeSlot");
 const Appointment = require("../../models/Appointment");
 const AppointmentFile = require("../../models/AppointmentFile");
 
+console.log("Callback route đã nhận request");
+
 const payosCallback = async (req, res) => {
+ 
+  console.log("PayOS callback body:", req.body);
+
   try {
-    const { orderCode, status } = req.body;
+    // Lấy dữ liệu từ callback mới (PayOS trả về orderCode và code bên trong data)
+    const data = req.body.data || {};
+    const orderCode = String(data.orderCode);
+    const statusCode = data.code; // '00' là thành công theo thông lệ VN Payment Gateway
+
+    // Đổi statusCode về dạng text cho logic cũ
+    const status = (statusCode === "00") ? "paid" : "failed";
+
     const payment = await Payment.findOne({ orderCode });
+    console.log("payment tìm được:", payment);
 
-    if (!payment) return res.status(404).json({ message: "Không tìm thấy payment." });
+    const allPayments = await Payment.find({});
+    console.log("Tất cả orderCode trong DB:", allPayments.map(p => p.orderCode));
+    console.log("orderCode từ callback:", orderCode);
 
-    if (status === "PAID" && payment.status !== "paid") {
+    if (!payment) {
+  return res.status(200).json({ message: "Webhook test OK" });
+}
+
+    if (status === "paid" && payment.status !== "paid") {
       const meta = payment.metaData;
 
       // Kiểm tra slot còn khả dụng không
@@ -30,7 +48,8 @@ const payosCallback = async (req, res) => {
         timeslotId: meta.timeslotId,
         note: meta.note,
         createdBy: meta.createdBy,
-        status: "confirmed"
+        status: "confirmed",
+        reExaminationOf: meta.reExaminationOf || null // Thêm trường reExaminationOf nếu có
       });
 
       // Đánh dấu slot đã được đặt
@@ -60,7 +79,7 @@ const payosCallback = async (req, res) => {
       await payment.save();
 
       return res.status(201).json({
-        message: "Đặt lịch thành công! Vui lòng xem chi tiết tại lịch của tôi ",
+        message: "Đặt lịch thành công! Vui lòng xem chi tiết tại lịch của tôi",
         appointment,
         payment
       });

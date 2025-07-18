@@ -1,9 +1,10 @@
-require("dotenv").config();
+
 const express = require("express");
 const morgan = require("morgan");
 const path = require("path");
 const connectDB = require("./config/db");
 const cors = require("cors");
+const bodyParser = require('body-parser');
 const cloudinary = require("cloudinary").v2;
 const chatboxController = require("./controllers/chat/chatboxController");
 
@@ -15,6 +16,9 @@ cloudinary.config({
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
+
+
+
 
 // Cấu hình CORS
 const corsOptions = {
@@ -29,6 +33,10 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));
+app.use(express.static('public'));
+app.use(bodyParser.json());
+require('dotenv').config();
+
 
 // Route mặc định
 app.get("/", (req, res) => {
@@ -38,6 +46,8 @@ app.get("/", (req, res) => {
 // Routes
 app.use("/api", require("./routes/authRoute"));
 app.use("/app", require("./routes/appRoute"));
+
+
 
 
 // 404 handler
