@@ -12,7 +12,7 @@ const ServiceCard = () => {
 
   // Phân trang
   const [page, setPage] = React.useState(1);
-  const [rowsPerPage, setRowsPerPage] = React.useState(4);
+  const [rowsPerPage, setRowsPerPage] = React.useState(6);
 
   // Fetch dữ liệu từ API
   React.useEffect(() => {
