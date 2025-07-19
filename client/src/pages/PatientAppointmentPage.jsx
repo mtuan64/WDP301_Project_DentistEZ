@@ -44,7 +44,7 @@ const PatientAppointmentPage = () => {
 
   const handleCancelAppointment = async () => {
     if (!refundAccount) {
-      message.warning("Vui lòng nhập số tài khoản ngân hàng.");
+      message.warning("⚠️ Vui lòng nhập số tài khoản ngân hàng để hoàn tiền.");
       return;
     }
 
@@ -55,12 +55,20 @@ const PatientAppointmentPage = () => {
         { refundAccount },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      message.success("Hủy lịch thành công!");
-      fetchAppointments();
+
+      await message.success({
+        content:
+          "✅ Hủy lịch thành công! Chúng tôi đã lưu STK để hoàn tiền cho bạn.",
+        duration: 4,
+      });
+
       setIsModalVisible(false);
       setRefundAccount("");
+      setCancelId(null);
+
+      await fetchAppointments();
     } catch (error) {
-      message.error(error.response?.data?.message || "Hủy lịch thất bại.");
+      message.error(error.response?.data?.message || "❌ Hủy lịch thất bại.");
     }
   };
 
@@ -71,8 +79,8 @@ const PatientAppointmentPage = () => {
       width: 60,
     },
     {
-      title: "Dịch vụ",
-      dataIndex: ["serviceId", "serviceName"],
+      title: "Gói dịch vụ",
+      dataIndex: ["serviceOptionId", "optionName"],
     },
     {
       title: "Phòng khám",
@@ -90,8 +98,7 @@ const PatientAppointmentPage = () => {
     {
       title: "Giờ khám",
       dataIndex: "timeslotId",
-      render: (timeslot) =>
-        `${timeslot.start_time} - ${timeslot.end_time}`,
+      render: (timeslot) => `${timeslot.start_time} - ${timeslot.end_time}`,
     },
     {
       title: "Trạng thái",
@@ -125,8 +132,13 @@ const PatientAppointmentPage = () => {
     {
       title: "Hành động",
       render: (text, record) => {
+        const isCancelled = record.status === "cancelled";
         const canCancel =
           dayjs(record.timeslotId.date).diff(dayjs(), "hour") >= 8;
+
+        if (isCancelled) {
+          return <Button disabled>Đã huỷ</Button>;
+        }
 
         return canCancel ? (
           <Button
