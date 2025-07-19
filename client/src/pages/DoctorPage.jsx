@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Container, Row, Col, Form, FormControl, Pagination } from "react-bootstrap";
+import { Container, Row, Col, Form, FormControl, Pagination, FormSelect } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import "../assets/css/DoctorPage.css";
@@ -7,15 +7,18 @@ import "../assets/css/DoctorPage.css";
 const DoctorPage = () => {
   const [doctors, setDoctors] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [clinicFilter, setClinicFilter] = useState("");
+  const [degreeFilter, setDegreeFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const doctorsPerPage = 5; // 5 doctors per page to fit the 6-card layout (1 for appointment card)
+  const doctorsPerPage = 5;
 
   useEffect(() => {
     const fetchDoctors = async () => {
       try {
         const res = await axios.get("http://localhost:9999/api/doctor");
-        setDoctors(res.data.data || []);
-        console.log("Doctors API Response:", res.data);
+        const doctorData = res.data.data || [];
+        setDoctors(doctorData);
+        console.log("Doctors API Response:", doctorData); // Debug: Log raw data
       } catch (error) {
         console.error("Error fetching doctors:", error);
       }
@@ -27,19 +30,41 @@ const DoctorPage = () => {
   // Handle search input change
   const handleSearch = (e) => {
     setSearchQuery(e.target.value);
-    setCurrentPage(1); // Reset to first page on search
+    setCurrentPage(1);
   };
 
-  // Filter doctors based on search query and status
+  // Handle clinic filter change
+  const handleClinicFilter = (e) => {
+    setClinicFilter(e.target.value);
+    setCurrentPage(1);
+  };
+
+  // Handle degree filter change
+  const handleDegreeFilter = (e) => {
+    setDegreeFilter(e.target.value);
+    setCurrentPage(1);
+  };
+
+  // Predefined degree options
+  const degrees = ["Tiến sĩ", "Thạc sĩ", "Bác sĩ chuyên khoa"];
+
+  // Get unique clinic names
+  const uniqueClinics = [...new Set(doctors.map((doctor) => doctor.clinic_id?.clinic_name).filter(Boolean))];
+
+  // Filter doctors based on search query, clinic, degree, and status
   const filteredDoctors = doctors
     .filter((doctor) => {
       const fullName = doctor.userId?.fullname || "";
-      const specialty = doctor.Specialty || "";
       const query = searchQuery.toLowerCase();
-      return (
-        fullName.toLowerCase().includes(query) ||
-        specialty.toLowerCase().includes(query)
-      );
+      return fullName.toLowerCase().includes(query);
+    })
+    .filter((doctor) => {
+      if (!clinicFilter) return true;
+      return doctor.clinic_id?.clinic_name === clinicFilter;
+    })
+    .filter((doctor) => {
+      if (!degreeFilter) return true;
+      return doctor.Degree === degreeFilter;
     })
     .filter((doctor) => doctor.Status !== "inactive");
 
@@ -88,24 +113,65 @@ const DoctorPage = () => {
       {/* Team Section */}
       <div className="container-fluid py-5">
         <Container>
-          {/* Search Bar */}
+          {/* Search and Filter Bar */}
           <Row className="mb-5">
-            <Col md={6} className="mx-auto">
+            <Col md={4}>
               <Form>
                 <FormControl
                   type="text"
-                  placeholder="Tìm kiếm bác sĩ theo tên hoặc chuyên ngành..."
+                  placeholder="Tìm kiếm bác sĩ theo tên..."
                   value={searchQuery}
                   onChange={handleSearch}
                   className="doctor-search-input"
                 />
               </Form>
             </Col>
+            <Col md={4}>
+              <Form>
+                <FormSelect
+                  value={clinicFilter}
+                  onChange={handleClinicFilter}
+                  className="doctor-search-input"
+                >
+                  <option value="">Tất cả phòng khám</option>
+                  {uniqueClinics.map((clinic, index) => (
+                    <option key={index} value={clinic}>
+                      {clinic}
+                    </option>
+                  ))}
+                </FormSelect>
+              </Form>
+            </Col>
+            <Col md={4}>
+              <Form>
+                <FormSelect
+                  value={degreeFilter}
+                  onChange={handleDegreeFilter}
+                  className="doctor-search-input"
+                >
+                  <option value="">Tất cả trình độ</option>
+                  {degrees.map((degree, index) => (
+                    <option key={index} value={degree}>
+                      {degree}
+                    </option>
+                  ))}
+                </FormSelect>
+              </Form>
+            </Col>
           </Row>
+
+          {/* No Results Message */}
+          {filteredDoctors.length === 0 && (
+            <Row className="mb-4">
+              <Col className="text-center">
+                <p className="text-muted">Không tìm thấy bác sĩ phù hợp với tiêu chí.</p>
+              </Col>
+            </Row>
+          )}
 
           <Row className="g-4">
             {/* Text Section (only on first page) */}
-            {currentPage === 1 && (
+            {currentPage === 1 && filteredDoctors.length > 0 && (
               <Col lg={4} md={6} className="doctor-card-col">
                 <div className="team-header bg-light rounded p-5">
                   <h5 className="text-primary text-uppercase position-relative d-inline-block">
@@ -152,6 +218,9 @@ const DoctorPage = () => {
                     </p>
                     <p className="doctor-card-clinic">
                       <strong>Phòng khám:</strong> {doctor.clinic_id?.clinic_name || "Không rõ"}
+                    </p>
+                    <p className="doctor-card-degree">
+                      <strong>Trình độ:</strong> {doctor.Degree ?? "Không rõ"}
                     </p>
                     <Link
                       to={`/doctor/${doctor._id}`}

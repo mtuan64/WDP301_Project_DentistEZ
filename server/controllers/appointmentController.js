@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const sanitizeHtml = require('sanitize-html');
 const Appointment = require('../models/Appointment');
 const TimeSlot = require('../models/TimeSlot');
 const User = require('../models/User');
@@ -275,12 +276,13 @@ const createAppointment = async (req, res) => {
 };
 
 const editAppointment = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
   try {
     console.log('Entering editAppointment');
     const { appointmentId } = req.params;
-    console.log('Received appointmentId:', appointmentId);
-    console.log('Request body:', req.body);
     const { timeslotId, note } = req.body;
+    const user = req.user; 
 
     // Validate appointmentId
     if (!appointmentId) {
@@ -300,7 +302,7 @@ const editAppointment = async (req, res) => {
 
     // Check if appointment exists
     console.log('Checking if appointment exists');
-    const appointment = await Appointment.findById(appointmentId);
+    const appointment = await Appointment.findById(appointmentId).session(session);
     console.log('Appointment found:', !!appointment);
     if (!appointment) {
       return res.status(404).json({
@@ -309,52 +311,105 @@ const editAppointment = async (req, res) => {
       });
     }
 
-    // Validate timeslotId
-    console.log('Validating timeslotId');
-    if (!mongoose.Types.ObjectId.isValid(timeslotId)) {
-      console.log('Invalid timeslotId:', timeslotId);
-      return res.status(400).json({
+    // Authorization check
+    const patient = await Patient.findOne({ userId: user.id }).session(session);
+    if (user.role !== 'admin' && appointment.patientId.toString() !== patient?._id?.toString()) {
+      return res.status(403).json({
         success: false,
-        message: 'timeslotId không hợp lệ',
+        message: 'Bạn không có quyền chỉnh sửa lịch hẹn này',
       });
     }
 
-    // Check if timeslot exists and is available
-    console.log('Checking if timeslot exists');
-    const timeslot = await TimeSlot.findById(timeslotId); // Fixed: Use TimeSlot (uppercase 'S')
-    console.log('Timeslot found:', !!timeslot);
-    if (!timeslot) {
-      return res.status(404).json({
+    // Check appointment status
+    if (appointment.status === 'completed' || appointment.status === 'cancelled') {
+      return res.status(400).json({
         success: false,
-        message: 'Không tìm thấy khung giờ',
+        message: 'Không thể chỉnh sửa lịch hẹn đã hoàn thành hoặc đã hủy',
       });
     }
 
-    // Check if timeslot is available (not booked by another appointment)
-    console.log('Checking for existing appointment with timeslot');
-    const existingAppointment = await Appointment.findOne({
-      timeslotId,
-      _id: { $ne: appointmentId },
-      status: { $ne: 'cancelled' },
-    });
-    console.log('Existing appointment check:', !!existingAppointment);
-    if (existingAppointment) {
+    // Validate and sanitize note
+    if (note && note.length > 500) {
       return res.status(400).json({
         success: false,
-        message: 'Khung giờ này đã được đặt, vui lòng chọn khung giờ khác',
+        message: 'Ghi chú không được vượt quá 500 ký tự',
       });
+    }
+    const sanitizedNote = note ? sanitizeHtml(note, { allowedTags: [], allowedAttributes: {} }) : note;
+
+    const updateData = { updatedAt: new Date() };
+    if (timeslotId) {
+      // Validate timeslotId
+      console.log('Validating timeslotId');
+      if (!mongoose.Types.ObjectId.isValid(timeslotId)) {
+        console.log('Invalid timeslotId:', timeslotId);
+        return res.status(400).json({
+          success: false,
+          message: 'timeslotId không hợp lệ',
+        });
+      }
+
+      // Check if timeslot exists
+      console.log('Checking if timeslot exists');
+      const timeslot = await TimeSlot.findById(timeslotId).session(session);
+      console.log('Timeslot found:', !!timeslot);
+      if (!timeslot) {
+        return res.status(404).json({
+          success: false,
+          message: 'Không tìm thấy khung giờ',
+        });
+      }
+
+      // Check if the timeslot is at least 8 hours from now (in UTC)
+      console.log('Checking timeslot timing');
+      const currentTime = new Date(); // Consider using moment.tz('UTC') for consistency
+      const timeslotDateTime = new Date(`${timeslot.date}T${timeslot.start_time}`);
+      const eightHoursInMs = 8 * 60 * 60 * 1000;
+
+      if (timeslotDateTime - currentTime < eightHoursInMs) {
+        return res.status(400).json({
+          success: false,
+          message: 'Không thể chỉnh sửa lịch hẹn trong vòng 8 tiếng trước khi bắt đầu',
+        });
+      }
+
+      // Check if timeslot is available (not booked by another appointment)
+      console.log('Checking for existing appointment with timeslot');
+      const existingAppointment = await Appointment.findOne({
+        timeslotId,
+        _id: { $ne: appointmentId },
+        status: { $ne: 'cancelled' },
+      }).session(session);
+      console.log('Existing appointment check:', !!existingAppointment);
+      if (existingAppointment) {
+        return res.status(400).json({
+          success: false,
+          message: 'Khung giờ này đã được đặt, vui lòng chọn khung giờ khác',
+        });
+      }
+
+      // If changing timeslot, restore availability of the old timeslot
+      if (timeslotId !== appointment.timeslotId.toString()) {
+        const oldTimeslot = await TimeSlot.findById(appointment.timeslotId).session(session);
+        if (oldTimeslot) {
+          oldTimeslot.isAvailable = true;
+          await oldTimeslot.save();
+        }
+        timeslot.isAvailable = false;
+        await timeslot.save();
+      }
+      updateData.timeslotId = timeslotId;
+    }
+    if (sanitizedNote) {
+      updateData.note = sanitizedNote;
     }
 
     // Update appointment
     console.log('Updating appointment');
     const updatedAppointment = await Appointment.findByIdAndUpdate(
       appointmentId,
-      {
-        timeslotId,
-        note,
-        updatedAt: new Date(),
-      },
-      { new: true, runValidators: true }
+      updateData,
+      { new: true, runValidators: true, session }
     )
       .populate({
         path: 'patientId',
@@ -404,6 +459,7 @@ const editAppointment = async (req, res) => {
       });
     }
 
+    await session.commitTransaction();
     console.log('Sending response');
     res.status(200).json({
       success: true,
@@ -411,12 +467,15 @@ const editAppointment = async (req, res) => {
       message: 'Cập nhật lịch hẹn thành công',
     });
   } catch (error) {
+    await session.abortTransaction();
     console.error('Error in editAppointment:', error);
     res.status(500).json({
       success: false,
       message: 'Lỗi khi cập nhật lịch hẹn',
       error: error.message,
     });
+  } finally {
+    session.endSession();
   }
 };
 // Sửa lịch hẹn theo patientId
