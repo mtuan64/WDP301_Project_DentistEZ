@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import { Table, Button, Modal, Input, message, Tag } from "antd";
 import axios from "axios";
 import dayjs from "dayjs";
-import "../assets/css/PatientAppointmentPage.css"; // link css bạn gửi
+import EditAppointment from "./EditAppointment"; // Import the EditAppointment component
+import "../assets/css/PatientAppointmentPage.css";
 
 const PatientAppointmentPage = () => {
   const [appointments, setAppointments] = useState([]);
@@ -10,7 +11,6 @@ const PatientAppointmentPage = () => {
   const [loading, setLoading] = useState(false);
   const [cancelId, setCancelId] = useState(null);
   const [refundAccount, setRefundAccount] = useState("");
-  const [isModalVisible, setIsModalVisible] = useState(false);
   const [isCancelModalVisible, setIsCancelModalVisible] = useState(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
@@ -42,7 +42,7 @@ const PatientAppointmentPage = () => {
 
   const showCancelModal = (id) => {
     setCancelId(id);
-    setIsModalVisible(true);
+    setIsCancelModalVisible(true);
   };
 
   const showEditModal = (appointment) => {
@@ -65,7 +65,7 @@ const PatientAppointmentPage = () => {
       );
       message.success("Hủy lịch thành công!");
       fetchAppointments();
-      setIsModalVisible(false);
+      setIsCancelModalVisible(false);
       setRefundAccount("");
     } catch (error) {
       message.error(error.response?.data?.message || "Hủy lịch thất bại.");
@@ -141,32 +141,32 @@ const PatientAppointmentPage = () => {
       render: (createdAt) => dayjs(createdAt).format("DD/MM/YYYY HH:mm"),
     },
     {
-      title: "Hành động",
-      render: (text, record) => {
-        const canCancelOrChange =
-          dayjs(record.timeslotId.date).diff(dayjs(), "hour") >= 8;
+  title: "Hành động",
+  render: (text, record) => {
+    const canCancelOrChange =
+      dayjs(record.timeslotId.date).diff(dayjs(), "hour") >= 8 && record.status !== "cancelled";
 
-        return (
-          <div className="flex space-x-2">
-            <Button
-              type="primary"
-              danger
-              onClick={() => showCancelModal(record._id)}
-              disabled={!canCancelOrChange}
-            >
-              Huỷ lịch
-            </Button>
-            <Button
-              type="primary"
-              onClick={() => showEditModal(record)}
-              disabled={!canCancelOrChange}
-            >
-              Đổi lịch
-            </Button>
-          </div>
-        );
-      },
-    },
+    return (
+      <div className="flex space-x-2">
+        <Button
+          type="primary"
+          danger
+          onClick={() => showCancelModal(record._id)}
+          disabled={!canCancelOrChange}
+        >
+          Huỷ lịch
+        </Button>
+        <Button
+          type="primary"
+          onClick={() => showEditModal(record)}
+          disabled={!canCancelOrChange}
+        >
+          Đổi lịch
+        </Button>
+      </div>
+    );
+  },
+},
   ];
 
   return (
@@ -198,8 +198,8 @@ const PatientAppointmentPage = () => {
 
       <Modal
         title="Nhập số tài khoản ngân hàng"
-        open={isModalVisible}
-        onCancel={() => setIsModalVisible(false)}
+        open={isCancelModalVisible}
+        onCancel={() => setIsCancelModalVisible(false)}
         onOk={handleCancelAppointment}
         okText="Xác nhận huỷ"
         cancelText="Thoát"
