@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "../assets/css/DoctorSchedulePage.css";
 import axios from "axios";
-import { Visibility, Delete } from "@mui/icons-material";
+import { Visibility, Delete, Edit } from "@mui/icons-material";
 
 // Notification Component
 const Notification = ({ message, type, onClose }) => {
@@ -22,7 +22,7 @@ const Notification = ({ message, type, onClose }) => {
   );
 };
 
-// Component Date Range Picker đơn giản
+// DateRangePicker Component
 const DateRangePicker = ({ onDatesChange }) => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -94,7 +94,7 @@ const DateRangePicker = ({ onDatesChange }) => {
   );
 };
 
-// Component Dropdown cho slots
+// SlotDropdown Component
 const SlotDropdown = ({ selectedSlots, onSlotsChange }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -230,7 +230,7 @@ const SlotDropdown = ({ selectedSlots, onSlotsChange }) => {
   );
 };
 
-// Component tạo lịch
+// CreateScheduleComponent
 const CreateScheduleComponent = ({ onScheduleCreated, isVisible }) => {
   const [selectedSlots, setSelectedSlots] = useState([]);
   const [selectedDates, setSelectedDates] = useState([]);
@@ -344,7 +344,7 @@ const CreateScheduleComponent = ({ onScheduleCreated, isVisible }) => {
   );
 };
 
-// Component chính
+// Main ScheduleManagement Component
 const ScheduleManagement = () => {
   const [currentYear, setCurrentYear] = useState(2025);
   const [currentWeek, setCurrentWeek] = useState(() => {
@@ -368,6 +368,10 @@ const ScheduleManagement = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [timeslotToDelete, setTimeslotToDelete] = useState(null);
   const [notification, setNotification] = useState(null);
+  const [editNote, setEditNote] = useState(false);
+  const [newNote, setNewNote] = useState("");
+  const [showConfirmCompleteModal, setShowConfirmCompleteModal] =
+    useState(false);
 
   const slots = Array.from({ length: 9 }, (_, i) => i + 1);
 
@@ -462,6 +466,7 @@ const ScheduleManagement = () => {
       );
       if (response.data.success) {
         setAppointmentDetails(response.data.data);
+        setNewNote(response.data.data.note || "");
         setShowModal(true);
       } else {
         setNotification({
@@ -491,7 +496,7 @@ const ScheduleManagement = () => {
           message: "Xóa timeslot thành công!",
           type: "success",
         });
-        await fetchScheduleData(); // Refresh schedule
+        await fetchScheduleData();
       } else {
         setNotification({
           message: response.data.message,
@@ -507,6 +512,72 @@ const ScheduleManagement = () => {
     } finally {
       setShowDeleteModal(false);
       setTimeslotToDelete(null);
+    }
+  };
+
+  const markAppointmentCompleted = async () => {
+    if (!appointmentDetails?._id) return;
+
+    try {
+      const response = await axios.put(
+        `http://localhost:9999/api/appointments/update-status-note/${appointmentDetails._id}`,
+        { status: "completed" },
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        }
+      );
+      if (response.data.success) {
+        setAppointmentDetails({ ...appointmentDetails, status: "completed" });
+        setNotification({
+          message: "Đánh dấu hoàn tất thành công!",
+          type: "success",
+        });
+        setShowConfirmCompleteModal(false);
+      } else {
+        setNotification({
+          message: response.data.message,
+          type: "error",
+        });
+      }
+    } catch (error) {
+      console.error("Error marking appointment as completed:", error);
+      setNotification({
+        message: "Không thể cập nhật trạng thái!",
+        type: "error",
+      });
+    }
+  };
+
+  const updateAppointmentNote = async () => {
+    if (!appointmentDetails?._id || !newNote) return;
+
+    try {
+      const response = await axios.put(
+        `http://localhost:9999/api/appointments/update-status-note/${appointmentDetails._id}`,
+        { note: newNote },
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        }
+      );
+      if (response.data.success) {
+        setAppointmentDetails({ ...appointmentDetails, note: newNote });
+        setEditNote(false);
+        setNotification({
+          message: "Cập nhật ghi chú thành công!",
+          type: "success",
+        });
+      } else {
+        setNotification({
+          message: response.data.message,
+          type: "error",
+        });
+      }
+    } catch (error) {
+      console.error("Error updating appointment note:", error);
+      setNotification({
+        message: "Không thể cập nhật ghi chú!",
+        type: "error",
+      });
     }
   };
 
@@ -585,11 +656,17 @@ const ScheduleManagement = () => {
   const closeModal = () => {
     setShowModal(false);
     setAppointmentDetails(null);
+    setEditNote(false);
+    setNewNote("");
   };
 
   const closeDeleteModal = () => {
     setShowDeleteModal(false);
     setTimeslotToDelete(null);
+  };
+
+  const closeConfirmCompleteModal = () => {
+    setShowConfirmCompleteModal(false);
   };
 
   return (
@@ -733,19 +810,103 @@ const ScheduleManagement = () => {
                 </p>
                 <p>
                   <strong>Trạng thái:</strong>{" "}
-                  <span className={`ds-status-${appointmentDetails.status}`}>
+                  <span
+                    className={`ds-status-${appointmentDetails.status.toLowerCase()}`}
+                  >
                     {appointmentDetails.status}
                   </span>
                 </p>
                 <p>
-                  <strong>Ghi chú:</strong>{" "}
-                  {appointmentDetails.note || "Không có"}
+                  <strong>Ghi chú:</strong>
+                  {editNote ? (
+                    <div className="ds-note-edit-container">
+                      <textarea
+                        value={newNote}
+                        onChange={(e) => setNewNote(e.target.value)}
+                        className="ds-note-input"
+                        rows="4"
+                        placeholder="Nhập ghi chú..."
+                      />
+                      <div className="ds-note-actions">
+                        <button
+                          className="ds-modal-save-note-button"
+                          onClick={updateAppointmentNote}
+                        >
+                          Lưu
+                        </button>
+                        <button
+                          className="ds-modal-cancel-note-button"
+                          onClick={() => {
+                            setNewNote(appointmentDetails.note || "");
+                            setEditNote(false);
+                          }}
+                        >
+                          Hủy
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <span>
+                      {appointmentDetails.note || "Không có"}
+                      <button
+                        className="ds-edit-note-button"
+                        onClick={() => setEditNote(true)}
+                      >
+                        <Edit fontSize="small" />
+                      </button>
+                    </span>
+                  )}
                 </p>
               </div>
             </div>
             <div className="ds-modal-footer">
+              {appointmentDetails.status === "confirmed" && (
+                <button
+                  className="ds-modal-confirm-button"
+                  onClick={() => setShowConfirmCompleteModal(true)}
+                >
+                  Hoàn tất
+                </button>
+              )}
               <button className="ds-modal-close-button" onClick={closeModal}>
                 Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showConfirmCompleteModal && (
+        <div className="ds-modal-overlay">
+          <div className="ds-modal-content">
+            <div className="ds-modal-header">
+              <h3>Xác nhận hoàn tất</h3>
+              <button
+                className="ds-modal-close-icon"
+                onClick={closeConfirmCompleteModal}
+              >
+                ×
+              </button>
+            </div>
+            <div className="ds-modal-body">
+              <p>Bạn có chắc chắn đã khám xong cho cuộc hẹn này?</p>
+              <p>
+                Lưu ý: Hành động này sẽ đánh dấu trạng thái là "Hoàn tất" và
+                không thể hoàn tác.
+              </p>
+            </div>
+            <div className="ds-modal-footer">
+              <button
+                className="ds-modal-close-button"
+                onClick={closeConfirmCompleteModal}
+              >
+                Hủy
+              </button>
+              <button
+                className="ds-modal-confirm-button"
+                onClick={markAppointmentCompleted}
+              >
+                Xác nhận
               </button>
             </div>
           </div>

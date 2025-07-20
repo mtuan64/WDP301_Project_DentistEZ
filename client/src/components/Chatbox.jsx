@@ -4,8 +4,6 @@ import axios from "axios";
 import { useAuth } from "../context/authContext";
 import io from "socket.io-client";
 import { BsChatDots } from "react-icons/bs";
-
-
 const socket = io("http://localhost:9999");
 
 const Chatbox = () => {
@@ -16,24 +14,19 @@ const Chatbox = () => {
   const [selectedChat, setSelectedChat] = useState(null);
   const [chatNotifications, setChatNotifications] = useState({});
   const [lastReadTimestamps, setLastReadTimestamps] = useState({});
+  const [patients, setPatients] = useState([]);
+  const messagesEndRef = useRef(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
   }, [selectedChat]);
-  
-  
+
   const messages = React.useMemo(() => {
     if (!selectedChat) return [];
     const roomId = selectedChat.roomId;
     return roomId && messageMap[roomId] ? messageMap[roomId] : [];
   }, [selectedChat, messageMap]);
-  
-  
 
-  const [patients, setPatients] = useState([]);
-  const messagesEndRef = useRef(null);
-
-  // Danh sách các tùy chọn chat
   const chatOptions = [
     {
       id: "1",
@@ -63,7 +56,7 @@ const Chatbox = () => {
         id: patient._id.toString(),
         type: "user",
         name: patient.fullname,
-        avatar: "👤",
+        avatar: patient.profilePicture || "👤",
         role: "patient",
         lastMessage: "",
         timestamp: "",
@@ -72,33 +65,31 @@ const Chatbox = () => {
     });
   }
 
-  // Load tin nhắn khi chọn chat
   useEffect(() => {
     if (!user || !selectedChat) return;
-
     const loadMessages = async () => {
       let newMessages = [];
-
       if (selectedChat.type === "ai") {
-        // Load tin nhắn AI từ localStorage
         const savedMessages = localStorage.getItem(
           `chatMessages_${selectedChat.roomId}`
         );
         newMessages = savedMessages ? JSON.parse(savedMessages) : [];
       } else {
-        // Load tin nhắn giữa người với người từ database
         try {
           const userId = user.role === "patient" ? user.id : selectedChat.id;
           const response = await axios.get(
             `http://localhost:9999/api/chat/messages?userId=${userId}`
           );
-
           newMessages = response.data.map((msg) => ({
             text: msg.message,
             sender:
               msg.senderId._id.toString() === user.id.toString()
                 ? "user"
                 : msg.senderId.fullname,
+            avatar:
+              msg.senderId._id.toString() === user.id.toString()
+                ? user.profilePicture
+                : msg.senderId.profilePicture || "👤",
             timestamp: new Date(msg.timestamp).toLocaleTimeString("en-US", {
               timeZone: "Asia/Ho_Chi_Minh",
             }),
@@ -109,34 +100,26 @@ const Chatbox = () => {
           newMessages = [];
         }
       }
-
-      // Gán tin nhắn vào messageMap cho room hiện tại
       setMessageMap((prev) => ({
         ...prev,
         [selectedChat.roomId]: newMessages,
       }));
-
-      // ✅ Đoạn thay thế ở đây: tính số tin chưa đọc
       if (selectedChat.type !== "ai") {
         const lastRead = lastReadTimestamps[selectedChat.roomId] || 0;
-
         const unreadCount = newMessages.filter(
           (msg) =>
             msg.sender !== "user" &&
             new Date(msg.timestampRaw).getTime() > lastRead
         ).length;
-
         setChatNotifications((prev) => ({
           ...prev,
           [selectedChat.roomId]: unreadCount,
         }));
       }
     };
-
     loadMessages();
-  }, [user, selectedChat, lastReadTimestamps, setChatNotifications]);
+  }, [user, selectedChat, lastReadTimestamps]);
 
-  // Lưu tin nhắn AI vào localStorage khi có thay đổi
   useEffect(() => {
     if (
       !user ||
@@ -145,59 +128,54 @@ const Chatbox = () => {
       !selectedChat.roomId
     )
       return;
-
     const aiMessages = messageMap[selectedChat.roomId] || [];
     if (aiMessages.length === 0) return;
-
     localStorage.setItem(
       `chatMessages_${selectedChat.roomId}`,
       JSON.stringify(aiMessages)
     );
   }, [messageMap, user, selectedChat]);
 
-  // Xử lý Socket.IO cho chat người với người
   useEffect(() => {
     if (!user) return;
-
     socket.emit("joinRoom", {
       userId: user.id?.toString() || "unknown",
       role: user.role,
     });
-
     const handleUpdatePatients = (patientList) => {
       setPatients(patientList);
       console.log("Updated patients:", patientList);
     };
-
     const handleReceiveMessage = (data) => {
       const roomId = data.roomId.toString();
       const currentChatRoomId = selectedChat?.roomId?.toString() || "";
-
+      let senderAvatar = user.profilePicture;
+      if (data.senderId !== user.id?.toString()) {
+        const senderPatient = patients.find(
+          (p) => p._id.toString() === data.senderId
+        );
+        senderAvatar = senderPatient?.profilePicture || "👤";
+      }
       const newMessage = {
         text: data.message,
         sender:
           data.senderId === user.id?.toString() ? "user" : data.senderName,
+        avatar: senderAvatar,
         timestamp: new Date(data.timestamp).toLocaleTimeString("en-US", {
           timeZone: "Asia/Ho_Chi_Minh",
         }),
         timestampRaw: data.timestamp,
       };
-
-      // ✅ Thêm vào message map
       setMessageMap((prev) => ({
         ...prev,
         [roomId]: [...(prev[roomId] || []), newMessage],
       }));
-
-      // ✅ Tăng badge nếu đang KHÔNG mở đúng khung chat
       if (roomId !== currentChatRoomId) {
         setChatNotifications((prev) => ({
           ...prev,
           [roomId]: (prev[roomId] || 0) + 1,
         }));
       }
-
-      // ✅ Cập nhật lastReadTimestamps nếu đang mở đúng phòng
       if (roomId === currentChatRoomId) {
         setLastReadTimestamps((prev) => ({
           ...prev,
@@ -205,23 +183,18 @@ const Chatbox = () => {
         }));
       }
     };
-    
-    
     socket.on("updatePatients", handleUpdatePatients);
     socket.on("receiveMessage", handleReceiveMessage);
-
     return () => {
       socket.off("updatePatients", handleUpdatePatients);
       socket.off("receiveMessage", handleReceiveMessage);
     };
-  }, [user, selectedChat]);
+  }, [user, selectedChat, patients]);
 
-  // Tự động cuộn xuống tin nhắn mới nhất
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Gửi tin nhắn
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || !selectedChat || !user) {
       console.error("Cannot send message:", {
@@ -231,18 +204,15 @@ const Chatbox = () => {
       });
       return;
     }
-
     const timestamp = new Date().toLocaleTimeString("en-US", {
       timeZone: "Asia/Ho_Chi_Minh",
     });
-
     const userMessage = {
       text: inputMessage,
       sender: "user",
+      avatar: user.profilePicture || "👤",
       timestamp,
     };
-
-    // Cập nhật messageMap theo roomId
     setMessageMap((prev) => ({
       ...prev,
       [selectedChat.roomId]: [
@@ -250,11 +220,8 @@ const Chatbox = () => {
         userMessage,
       ],
     }));
-
     setInputMessage("");
-
     if (selectedChat.type === "ai") {
-      // Gửi tin nhắn đến AI
       try {
         const response = await axios.post(
           "http://localhost:9999/api/chat/chatwithai",
@@ -266,18 +233,16 @@ const Chatbox = () => {
             headers: { "Content-Type": "application/json" },
           }
         );
-
         let formattedReply = response.data.reply.replace(/\*\*/g, "<br>");
         formattedReply = formattedReply.replace(/\*/g, "");
-
         const aiMessage = {
           text: formattedReply,
           sender: "ai",
+          avatar: "🤖",
           timestamp: new Date().toLocaleTimeString("en-US", {
             timeZone: "Asia/Ho_Chi_Minh",
           }),
         };
-
         setMessageMap((prev) => ({
           ...prev,
           [selectedChat.roomId]: [
@@ -293,6 +258,7 @@ const Chatbox = () => {
         const errorMessage = {
           text: "Sorry, something went wrong.",
           sender: "ai",
+          avatar: "🤖",
           timestamp: new Date().toLocaleTimeString("en-US", {
             timeZone: "Asia/Ho_Chi_Minh",
           }),
@@ -306,12 +272,10 @@ const Chatbox = () => {
         }));
       }
     } else {
-      // Gửi tin nhắn giữa người với người qua socket
       const roomId =
         user.role === "patient" ? `chat-${user.id}` : `chat-${selectedChat.id}`;
       const receiverId =
         selectedChat.role === "patient" ? selectedChat.id : null;
-
       socket.emit("sendMessage", {
         senderId: user.id?.toString() || "unknown",
         senderName: user.fullname,
@@ -323,15 +287,39 @@ const Chatbox = () => {
     }
   };
 
+  const groupMessages = (messages) => {
+    const grouped = [];
+    let currentGroup = [];
+
+    messages.forEach((msg, index) => {
+      if (index === 0 || msg.sender !== messages[index - 1].sender) {
+        if (currentGroup.length > 0) {
+          grouped.push(currentGroup);
+        }
+        currentGroup = [msg];
+      } else {
+        currentGroup.push(msg);
+      }
+    });
+
+    if (currentGroup.length > 0) {
+      grouped.push(currentGroup);
+    }
+
+    return grouped;
+  };
+
+  const groupedMessages = groupMessages(messages);
+
   if (!user) {
     return <div>Loading user data...</div>;
   }
- 
+
   return (
     <div className="chat-container">
       {!isOpen && (
         <button onClick={() => setIsOpen(true)} className="chat-toggle">
-          <BsChatDots className="chat-icon" /> {/* Sử dụng BsChatDots */}
+          <BsChatDots className="chat-icon" />
           {Object.values(chatNotifications).reduce((a, b) => a + b, 0) > 0 && (
             <span className="notification-badge toggle-badge">
               {Object.values(chatNotifications).reduce((a, b) => a + b, 0)}
@@ -339,7 +327,6 @@ const Chatbox = () => {
           )}
         </button>
       )}
-
       {isOpen && (
         <div className="chat-box">
           <button className="close-button" onClick={() => setIsOpen(false)}>
@@ -365,11 +352,22 @@ const Chatbox = () => {
                     }));
                     setLastReadTimestamps((prev) => ({
                       ...prev,
-                      [chat.roomId]: Date.now(), // lưu thời gian mở chat
+                      [chat.roomId]: Date.now(),
                     }));
                   }}
                 >
-                  <span className="user-avatar">{chat.avatar}</span>
+                  {chat.avatar.startsWith("http") ? (
+                    <img
+                      src={chat.avatar}
+                      alt="avatar"
+                      className="user-avatar"
+                      onError={(e) =>
+                        (e.target.src = "https://via.placeholder.com/30")
+                      }
+                    />
+                  ) : (
+                    <span className="user-avatar">{chat.avatar}</span>
+                  )}
                   <div className="user-info">
                     <div className="user-name">{chat.name}</div>
                     <div className="user-last-message">
@@ -401,33 +399,65 @@ const Chatbox = () => {
                   <span className="chat-title">{selectedChat.name}</span>
                 </div>
                 <div className="messages-area">
-                  {messages.map((msg, index) => (
-                    <div
-                      key={index}
-                      className={`message-container ${
-                        msg.sender === "user" ? "user" : "other"
-                      }`}
-                    >
-                      <div
-                        className={`message ${
-                          msg.sender === "user" ? "user" : "other"
-                        }`}
-                      >
-                        <p
-                          className="message-text"
-                          dangerouslySetInnerHTML={{ __html: msg.text }}
-                        ></p>
-                        {msg.sender === "user" && (
-                          <span className="message-status">✓✓</span>
-                        )}
-                      </div>
-                      <span
-                        className={`message-timestamp ${
-                          msg.sender === "user" ? "user" : "other"
-                        }`}
-                      >
-                        {msg.timestamp}
-                      </span>
+                  {groupedMessages.map((group, groupIndex) => (
+                    <div key={groupIndex} className="message-group">
+                      {group.map((msg, index) => (
+                        <div
+                          key={index}
+                          className={`message-container ${
+                            msg.sender === "user" ? "user" : "other"
+                          }`}
+                        >
+                          {index === 0 && (
+                            <div className="message-sender-info">
+                              {msg.sender !== "user" && (
+                                <>
+                                  {msg.avatar.startsWith("http") ? (
+                                    <img
+                                      src={msg.avatar}
+                                      alt="avatar"
+                                      className="message-avatar"
+                                      onError={(e) =>
+                                        (e.target.src =
+                                          "https://via.placeholder.com/30")
+                                      }
+                                    />
+                                  ) : (
+                                    <span className="message-avatar">
+                                      {msg.avatar}
+                                    </span>
+                                  )}
+                                  <span className="message-sender-name">
+                                    {msg.sender}
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                          )}
+                          <div
+                            className={`message ${
+                              msg.sender === "user" ? "user" : "other"
+                            }`}
+                          >
+                            <p
+                              className="message-text"
+                              dangerouslySetInnerHTML={{ __html: msg.text }}
+                            ></p>
+                            {msg.sender === "user" && (
+                              <span className="message-status">✓✓</span>
+                            )}
+                          </div>
+                          {index === group.length - 1 && (
+                            <span
+                              className={`message-timestamp ${
+                                msg.sender === "user" ? "user" : "other"
+                              }`}
+                            >
+                              {msg.timestamp}
+                            </span>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   ))}
                   <div ref={messagesEndRef} />

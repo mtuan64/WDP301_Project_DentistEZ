@@ -228,7 +228,7 @@ const BlogPage = () => {
       <div className="blogpage-page">
         <div className="blogpage-layout">
           <aside className="blogpage-sidebar">
-            <h3 className="blogpage-sidebar-title">Bài viết mới nhất</h3>
+            <h3 className="blogpage-sidebar-title">Tin tức được xem nhiều nhất</h3>
             <div className="blogpage-featured-posts">
               {topViewedBlogs.slice(0, 5).map((blog) => (
                 <div key={blog._id} className="blogpage-featured-post-card">

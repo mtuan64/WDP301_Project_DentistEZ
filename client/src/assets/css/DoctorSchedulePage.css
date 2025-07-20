@@ -1,5 +1,3 @@
-/* DoctorSchedulePage.css */
-
 /* Container chính */
 .ds-schedule-page {
   padding: 20px;
@@ -589,6 +587,7 @@
   max-height: 80vh;
   display: flex;
   flex-direction: column;
+  margin-top: 50px;
 }
 
 .ds-modal-header {
@@ -650,19 +649,25 @@
 }
 
 .ds-status-confirmed {
-  color: #28a745;
+  color: #28a745; /* xanh lá */
   font-weight: bold;
 }
 
 .ds-status-cancelled {
-  color: #ff4d4f;
+  color: #ff4d4f; /* đỏ */
   font-weight: bold;
 }
 
-.ds-status-pending {
-  color: #ffa500;
+.ds-status-completed {
+  color: #357abd; /* xanh dương đậm */
   font-weight: bold;
 }
+
+.ds-status-fully_paid {
+  color: #ff9800; /* cam */
+  font-weight: bold;
+}
+
 
 .ds-modal-footer {
   display: flex;
@@ -704,6 +709,90 @@
 
 .ds-modal-confirm-button:hover {
   box-shadow: 0 2px 8px rgba(74, 144, 226, 0.3);
+}
+
+/* Note Editing Styles */
+.ds-note-edit-container {
+  background: #f8f9fa;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  margin-top: 8px;
+  transition: all 0.3s ease;
+}
+
+.ds-note-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  line-height: 1.5;
+  resize: vertical;
+  min-height: 80px;
+  background: white;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+.ds-note-input:focus {
+  outline: none;
+  border-color: #4a90e2;
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+}
+
+.ds-note-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  justify-content: flex-end;
+}
+
+.ds-modal-save-note-button {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.ds-modal-cancel-note-button {
+  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.ds-modal-save-note-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+}
+
+.ds-modal-cancel-note-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(107, 114, 128, 0.3);
+}
+
+.ds-edit-note-button {
+  margin-left: 8px;
+  background: none;
+  border: none;
+  color: #4a90e2;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.ds-edit-note-button:hover {
+  color: #357abd;
 }
 
 /* Notification styles */
@@ -826,7 +915,7 @@
     padding: 4px;
     width: 24px;
     height: 24px;
-    font-size: 16px; /* Adjusted for responsive */
+    font-size: 16px;
   }
 
   .ds-modal-content {
@@ -841,6 +930,11 @@
   .ds-modal-footer {
     flex-direction: column;
     gap: 8px;
+  }
+
+  .ds-note-actions {
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .ds-notification {
