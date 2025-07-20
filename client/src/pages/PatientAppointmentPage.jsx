@@ -56,11 +56,7 @@ const PatientAppointmentPage = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      await message.success({
-        content:
-          "✅ Hủy lịch thành công! Chúng tôi đã lưu STK để hoàn tiền cho bạn.",
-        duration: 4,
-      });
+      message.success("✅ Hủy lịch thành công! Chúng tôi sẽ hoàn trả tiền trong thời gian ngắn.");
 
       setIsModalVisible(false);
       setRefundAccount("");

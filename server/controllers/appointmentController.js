@@ -507,38 +507,63 @@ const editAppointmentByPatientId = async (req, res) => {
 // Xóa lịch hẹn
 const deleteAppointment = async (req, res) => {
   try {
-    const { id } = req.params;
+    const appointmentId = req.params.id;
+    const { refundAccount } = req.body;
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        success: false,
-        message: "ID lịch hẹn không hợp lệ",
-      });
-    }
+    const appointment = await Appointment.findById(appointmentId).populate(
+      "userId"
+    );
 
-    const appointment = await Appointment.findById(id);
     if (!appointment) {
-      return res.status(404).json({
-        success: false,
-        message: "Không tìm thấy lịch hẹn",
+      return res.status(404).json({ message: "Không tìm thấy lịch hẹn" });
+    }
+
+    if (appointment.status === "cancelled") {
+      return res.status(400).json({ message: "Lịch hẹn đã bị hủy trước đó" });
+    }
+
+    const patient = appointment.userId;
+    const payment = await Payment.findOne({ appointmentId: appointment._id });
+
+    // Nếu có thanh toán, thực hiện thao tác hoàn tiền
+    if (payment) {
+      const timeslotId = payment.metaData?.timeslotId;
+
+      if (timeslotId) {
+        // Cập nhật lại timeslot là có thể đặt
+        await TimeSlot.findByIdAndUpdate(timeslotId, {
+          isAvailable: true,
+        });
+      }
+
+      // Tạo bản ghi hoàn tiền
+      await Refund.create({
+        appointmentId: appointment._id,
+        patientId: patient._id,
+        amount: payment.amount,
+        refundAccount,
+        status: "pending",
       });
+    } else {
+      // Không tìm thấy thanh toán, vẫn cho hủy nhưng không hoàn tiền
+      console.log("Không tìm thấy payment, chỉ hủy lịch.");
     }
 
-    // Khôi phục trạng thái trống cho timeslot
-    const timeslot = await TimeSlot.findById(appointment.timeslotId);
-    if (timeslot) {
-      timeslot.isAvailable = true;
-      await timeslot.save();
-    }
+    // Cập nhật trạng thái lịch hẹn
+    appointment.status = "cancelled";
+    appointment.refundAccount = refundAccount;
+    await appointment.save();
 
-    await Appointment.findByIdAndDelete(id);
-
-    res.status(200).json({ success: true, message: "Xóa lịch hẹn thành công" });
+    // Phản hồi thành công
+    return res.status(200).json({
+      success: true,
+      message: "Hủy lịch hẹn thành công",
+    });
   } catch (error) {
-    res.status(500).json({
+    console.error("Lỗi khi hủy lịch hẹn:", error);
+    return res.status(500).json({
       success: false,
-      message: "Lỗi khi xóa lịch hẹn",
-      error: error.message,
+      message: "Đã xảy ra lỗi khi hủy lịch hẹn",
     });
   }
 };
@@ -585,7 +610,7 @@ const cancelAppointmentWithRefund = async (req, res) => {
         isAvailable: true,
       });
     }
-
+    
     // Cập nhật trạng thái và STK
     appointment.status = "cancelled";
     appointment.refundAccount = refundAccount;
@@ -601,8 +626,7 @@ const cancelAppointmentWithRefund = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message:
-        "Hủy lịch hẹn thành công, đã cập nhật TimeSlot và lưu STK hoàn tiền",
+      message: "Hủy lịch hẹn thành công",
     });
   } catch (error) {
     res.status(500).json({
@@ -610,6 +634,7 @@ const cancelAppointmentWithRefund = async (req, res) => {
       message: "Lỗi khi hủy lịch hẹn",
       error: error.message,
     });
+    console.log(error);
   }
 };
 
