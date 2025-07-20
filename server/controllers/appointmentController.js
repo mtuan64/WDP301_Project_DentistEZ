@@ -5,6 +5,7 @@ const User = require('../models/User');
 const Patient = require('../models/Patient')
 const Service = require('../models/Service');
 const Clinic = require('../models/Clinic');
+const Doctor = require("../models/Doctor");
 // Lấy tất cả lịch hẹn
 
 const getAllAppointment = async (req, res) => {
@@ -582,6 +583,107 @@ const cancelAppointmentWithRefund = async (req, res) => {
   }
 };
 
+// Cập nhật trạng thái và ghi chú của lịch hẹn
+const updateAppointmentStatusAndNote = async (req, res) => {
+  try {
+    const { appointmentId } = req.params;
+    const { status, note } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(appointmentId)) {
+      return res.status(400).json({
+        success: false,
+        message: "appointmentId không hợp lệ",
+      });
+    }
+
+    const appointment = await Appointment.findById(appointmentId);
+    if (!appointment) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy lịch hẹn",
+      });
+    }
+
+    // Thêm log để debug
+    console.log("Token userId:", req.user.id);
+    console.log("Appointment doctorId:", appointment.doctorId.toString());
+
+    // Cập nhật trạng thái nếu được cung cấp
+    if (status) {
+      if (
+        !["confirmed", "cancelled", "completed", "fully_paid"].includes(status)
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Trạng thái không hợp lệ",
+        });
+      }
+      appointment.status = status;
+    }
+
+    // Cập nhật ghi chú nếu được cung cấp
+    if (note !== undefined) {
+      appointment.note = note;
+    }
+
+    await appointment.save();
+
+    const updatedAppointment = await Appointment.findById(appointmentId)
+      .populate({
+        path: "patientId",
+        select: "userId",
+        populate: {
+          path: "userId",
+          model: "User",
+          select: "fullname email phone address dateOfBirth gender",
+        },
+      })
+      .populate({
+        path: "doctorId",
+        select: "userId",
+        populate: {
+          path: "userId",
+          model: "User",
+          select: "fullname",
+        },
+      })
+      .populate({
+        path: "staffId",
+        select: "userId",
+        populate: {
+          path: "userId",
+          model: "User",
+          select: "fullname",
+        },
+      })
+      .populate({
+        path: "serviceId",
+        select: "serviceName",
+      })
+      .populate({
+        path: "clinicId",
+        select: "clinic_name",
+      })
+      .populate({
+        path: "timeslotId",
+        select: "date start_time end_time",
+      });
+
+    res.status(200).json({
+      success: true,
+      data: updatedAppointment,
+      message: "Cập nhật trạng thái và ghi chú thành công",
+    });
+  } catch (error) {
+    console.error("Error in updateAppointmentStatusAndNote:", error);
+    res.status(500).json({
+      success: false,
+      message: "Lỗi khi cập nhật trạng thái và ghi chú",
+      error: error.message,
+    });
+  }
+};
+
 
 module.exports = {
   getAllAppointment,
@@ -592,4 +694,5 @@ module.exports = {
   editAppointment,
   editAppointmentByPatientId,
   deleteAppointment,
+  updateAppointmentStatusAndNote,
 };
