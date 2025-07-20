@@ -99,7 +99,6 @@ const DoctorDetail = () => {
                 <p><strong>Trình độ:</strong> {doctor.Degree || "Không rõ"}</p>
                 <p><strong>Kinh nghiệm:</strong> {doctor.ExperienceYears ? `${doctor.ExperienceYears} năm` : "Không rõ"}</p>
                 <p><strong>Mô tả:</strong> {doctor.Description || "Không có mô tả"}</p>
-                <p><strong>Trạng thái:</strong> {doctor.Status === "active" ? "Hoạt động" : "Không hoạt động"}</p>
                 <Link to="/doctor" className="doctordetail-read-more">Quay lại đội ngũ</Link>
               </div>
             </div>

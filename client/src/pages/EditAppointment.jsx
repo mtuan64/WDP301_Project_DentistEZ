@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal, Form, DatePicker, Input, Button, message } from 'antd';
 import axios from 'axios';
 import moment from 'moment';
-import '../assets/css/AppointmentPage.css'; // Reuse styles from AppointmentPage
+import '../assets/css/AppointmentPage.css';
 
 const EditAppointment = ({ visible, onCancel, appointment, onUpdate }) => {
   const [form] = Form.useForm();
@@ -60,6 +60,7 @@ const EditAppointment = ({ visible, onCancel, appointment, onUpdate }) => {
       const response = await axios.get(`http://localhost:9999/api/view-detail/service/${serviceId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      console.log('API Response:', response.data);
       if (response.data && Array.isArray(response.data.data)) {
         setServiceDetail(response.data.data[0]);
       } else if (response.data && response.data.data) {
@@ -77,28 +78,26 @@ const EditAppointment = ({ visible, onCancel, appointment, onUpdate }) => {
     }
   };
 
-  // Fetch available timeslots from serviceDetail
+  // Fetch available timeslots from serviceDetail, filtered by selected date
   const fetchAvailableTimeslots = (date) => {
     if (!serviceDetail || !serviceDetail.timeslots) {
+      console.log('No serviceDetail or timeslots:', serviceDetail);
       setTimeslots([]);
       return;
     }
     let filteredSlots = serviceDetail.timeslots || [];
     if (date) {
       filteredSlots = filteredSlots.filter((slot) => {
-        const slotDateTime = new Date(`${slot.date}T${slot.start_time}`);
-        const currentTime = new Date();
-        const eightHoursInMs = 8 * 60 * 60 * 1000;
-        return (
-          new Date(slot.date).toISOString().slice(0, 10) === date &&
-          (slot.isAvailable !== false || slot._id === appointment?.timeslotId?._id) &&
-          slotDateTime - currentTime >= eightHoursInMs
-        );
+        const slotDate = moment(slot.date).format('YYYY-MM-DD');
+        const selectedDateStr = date;
+        console.log('Comparing:', slotDate, selectedDateStr, slot);
+        return slotDate === selectedDateStr && slot.status === 'active';
       });
     }
+    console.log('Filtered Timeslots:', filteredSlots);
     setTimeslots(filteredSlots);
     const currentSlot = filteredSlots.find((slot) => slot._id === appointment?.timeslotId?._id);
-    if (currentSlot) {
+    if (currentSlot && date === moment(appointment?.timeslotId?.date).format('YYYY-MM-DD')) {
       setSelectedTimeSlot(currentSlot);
       form.setFieldsValue({ timeslotId: currentSlot._id });
     } else {
@@ -109,11 +108,13 @@ const EditAppointment = ({ visible, onCancel, appointment, onUpdate }) => {
 
   useEffect(() => {
     if (visible && appointment) {
-      const apptDate = appointment?.timeslotId?.date ? moment(appointment.timeslotId.date) : null;
+      const apptDate = appointment?.timeslotId?.date ? moment(appointment.timeslotId.date, 'YYYY-MM-DD') : null;
+      console.log('Initial apptDate:', apptDate);
       setSelectedDate(apptDate);
       form.setFieldsValue({
         date: apptDate,
         note: appointment?.note || '',
+        timeslotId: appointment?.timeslotId?._id,
       });
       if (appointment?.serviceId?._id) {
         fetchServiceDetail(appointment.serviceId._id);
@@ -123,11 +124,14 @@ const EditAppointment = ({ visible, onCancel, appointment, onUpdate }) => {
 
   useEffect(() => {
     if (selectedDate && serviceDetail) {
+      console.log('Fetching timeslots for date:', selectedDate.format('YYYY-MM-DD'));
       fetchAvailableTimeslots(selectedDate.format('YYYY-MM-DD'));
     } else {
       setTimeslots([]);
+      setSelectedTimeSlot(null);
+      form.setFieldsValue({ timeslotId: undefined });
     }
-  }, [selectedDate, serviceDetail]);
+  }, [selectedDate, serviceDetail, appointment, form]);
 
   const handleDateChange = (newDate) => {
     setSelectedDate(newDate);

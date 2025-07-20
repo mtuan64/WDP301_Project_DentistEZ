@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Container, Row, Col, Button, Form } from "react-bootstrap";
+import { Container, Row, Col, Button } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import MilestoneSection from "../components/MilestoneSection";
@@ -151,8 +151,6 @@ const HomePage = () => {
     }
     return visibleDoctors;
   };
-
-
 
   return (
     <>
@@ -420,17 +418,19 @@ const HomePage = () => {
               <Row className="flex-nowrap services-carousel-inner">
                 {getVisibleServices().map((service) => (
                   <Col key={service._id || service.id} md={3} className="mb-4">
-                    <div className="service-item bg-white shadow rounded text-center">
-                      <img
-                        src={service.image || "https://via.placeholder.com/300x200"}
-                        alt={service.serviceName || service.title}
-                        className="img-fluid rounded-top"
-                        style={{ width: "100%", height: "200px", objectFit: "cover" }}
-                      />
-                      <div className="p-3">
-                        <h5>{service.serviceName || service.title}</h5>
+                    <Link to={`/service-detail/${service._id || service.id}`} className="text-decoration-none">
+                      <div className="service-item bg-white shadow rounded text-center">
+                        <img
+                          src={service.image || "https://via.placeholder.com/300x200"}
+                          alt={service.serviceName || service.title}
+                          className="img-fluid rounded-top"
+                          style={{ width: "100%", height: "200px", objectFit: "cover" }}
+                        />
+                        <div className="p-3">
+                          <h5>{service.serviceName || service.title}</h5>
+                        </div>
                       </div>
-                    </div>
+                    </Link>
                   </Col>
                 ))}
               </Row>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Table, Button, Modal, Input, message, Tag, Space } from "antd";
+import { Table, Button, Modal, Input, message, Tag } from "antd";
 import axios from "axios";
 import dayjs from "dayjs";
 import EditAppointment from "./EditAppointment"; // Import the EditAppointment component
@@ -12,15 +12,17 @@ const PatientAppointmentPage = () => {
   const [cancelId, setCancelId] = useState(null);
   const [refundAccount, setRefundAccount] = useState("");
   const [isCancelModalVisible, setIsCancelModalVisible] = useState(false);
-  const [isEditModalVisible, setIsEditModalVisible] = useState(false); // State for EditAppointment modal
-  const [selectedAppointment, setSelectedAppointment] = useState(null); // State for the appointment to edit
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
 
   const fetchAppointments = async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
       const userId = JSON.parse(atob(token.split(".")[1])).userId;
-      const res = await axios.get(`http://localhost:9999/api/appointments/patient/${userId}`);
+      const res = await axios.get(
+        `http://localhost:9999/app/patient/${userId}`
+      );
       if (res.data.success) {
         setAppointments(res.data.data.appointments);
         setPatientInfo(res.data.data.patient);
@@ -43,6 +45,11 @@ const PatientAppointmentPage = () => {
     setIsCancelModalVisible(true);
   };
 
+  const showEditModal = (appointment) => {
+    setSelectedAppointment(appointment);
+    setIsEditModalVisible(true);
+  };
+
   const handleCancelAppointment = async () => {
     if (!refundAccount) {
       message.warning("Vui lòng nhập số tài khoản ngân hàng.");
@@ -52,7 +59,7 @@ const PatientAppointmentPage = () => {
     try {
       const token = localStorage.getItem("token");
       await axios.put(
-        `http://localhost:9999/api/appointments/cancel/${cancelId}`,
+        `http://localhost:9999/app/cancel/${cancelId}`,
         { refundAccount },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -65,12 +72,7 @@ const PatientAppointmentPage = () => {
     }
   };
 
-  const showEditModal = (appointment) => {
-    setSelectedAppointment(appointment);
-    setIsEditModalVisible(true);
-  };
-
-  const handleEditAppointment = (updatedAppointment) => {
+  const handleUpdateAppointment = (updatedAppointment) => {
     setAppointments((prev) =>
       prev.map((appt) =>
         appt._id === updatedAppointment._id ? updatedAppointment : appt
@@ -106,7 +108,8 @@ const PatientAppointmentPage = () => {
     {
       title: "Giờ khám",
       dataIndex: "timeslotId",
-      render: (timeslot) => `${timeslot.start_time} - ${timeslot.end_time}`,
+      render: (timeslot) =>
+        `${timeslot.start_time} - ${timeslot.end_time}`,
     },
     {
       title: "Trạng thái",
@@ -140,38 +143,27 @@ const PatientAppointmentPage = () => {
     {
       title: "Hành động",
       render: (text, record) => {
-        // Check if the appointment is at least 8 hours away
-        const appointmentDateTime = dayjs(
-          `${record.timeslotId.date} ${record.timeslotId.start_time}`,
-          "YYYY-MM-DD HH:mm"
-        );
-        const canEditOrCancel = appointmentDateTime.diff(dayjs(), "hour") >= 8;
+        const canCancelOrChange =
+          dayjs(record.timeslotId.date).diff(dayjs(), "hour") >= 8;
 
         return (
-          <Space>
-            {canEditOrCancel && record.status !== "cancelled" && record.status !== "completed" ? (
-              <>
-                <Button
-                  type="primary"
-                  danger
-                  onClick={() => showCancelModal(record._id)}
-                >
-                  Huỷ lịch
-                </Button>
-                <Button
-                  type="primary"
-                  onClick={() => showEditModal(record)}
-                >
-                  Đổi lịch
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button disabled>Không thể huỷ</Button>
-                <Button disabled>Không thể sửa</Button>
-              </>
-            )}
-          </Space>
+          <div className="flex space-x-2">
+            <Button
+              type="primary"
+              danger
+              onClick={() => showCancelModal(record._id)}
+              disabled={!canCancelOrChange}
+            >
+              Huỷ lịch
+            </Button>
+            <Button
+              type="primary"
+              onClick={() => showEditModal(record)}
+              disabled={!canCancelOrChange}
+            >
+              Đổi lịch
+            </Button>
+          </div>
         );
       },
     },
@@ -223,7 +215,7 @@ const PatientAppointmentPage = () => {
         visible={isEditModalVisible}
         onCancel={() => setIsEditModalVisible(false)}
         appointment={selectedAppointment}
-        onUpdate={handleEditAppointment}
+        onUpdate={handleUpdateAppointment}
       />
     </div>
   );

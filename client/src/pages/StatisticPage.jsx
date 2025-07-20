@@ -6,15 +6,11 @@ import { DatePicker } from "antd";
 import dayjs from "dayjs";
 import { debounce } from "lodash";
 
-
 const AppointmentStats = () => {
   const [appointmentData, setAppointmentData] = useState([]);
   const [appointmentStatusData, setAppointmentStatusData] = useState([]);
   const [revenueData, setRevenueData] = useState([]);
-  const [paymentMethodData, setPaymentMethodData] = useState([]);
   const [paymentTypeData, setPaymentTypeData] = useState([]);
-  const [clinicData, setClinicData] = useState([]);
-  const [serviceData, setServiceData] = useState([]);
   const [summaries, setSummaries] = useState({
     totalAppointments: 0,
     totalRevenue: 0,
@@ -25,10 +21,7 @@ const AppointmentStats = () => {
     appointmentTrend: false,
     appointmentStatus: false,
     revenueTrend: false,
-    paymentMethod: false,
     paymentType: false,
-    clinic: false,
-    service: false,
     summaries: false,
   });
   const [dateRange, setDateRange] = useState([
@@ -51,10 +44,7 @@ const AppointmentStats = () => {
       appointmentTrend: true,
       appointmentStatus: true,
       revenueTrend: true,
-      paymentMethod: true,
       paymentType: true,
-      clinic: true,
-      service: true,
       summaries: true,
     });
 
@@ -67,10 +57,7 @@ const AppointmentStats = () => {
         appointmentRes,
         statusRes,
         revenueRes,
-        paymentMethodRes,
         paymentTypeRes,
-        clinicRes,
-        serviceRes,
         summaryRes,
       ] = await Promise.all([
         axios
@@ -83,17 +70,8 @@ const AppointmentStats = () => {
           .get(`http://localhost:9999/api/revenue-trend${query}`, { headers })
           .catch(err => { throw new Error(`Revenue Trend: ${err.message}`); }),
         axios
-          .get(`http://localhost:9999/api/revenue-by-method${query}`, { headers })
-          .catch(err => { throw new Error(`Payment Method: ${err.message}`); }),
-        axios
           .get(`http://localhost:9999/api/revenue-by-type${query}`, { headers })
           .catch(err => { throw new Error(`Payment Type: ${err.message}`); }),
-        axios
-          .get(`http://localhost:9999/api/appointment-by-clinic${query}`, { headers })
-          .catch(err => { throw new Error(`Clinic: ${err.message}`); }),
-        axios
-          .get(`http://localhost:9999/api/appointment-by-service${query}`, { headers })
-          .catch(err => { throw new Error(`Service: ${err.message}`); }),
         axios
           .get(`http://localhost:9999/api/summaries${query}`, { headers })
           .catch(err => { throw new Error(`Summaries: ${err.message}`); }),
@@ -104,10 +82,7 @@ const AppointmentStats = () => {
         appointment: appointmentRes.data,
         status: statusRes.data,
         revenue: revenueRes.data,
-        paymentMethod: paymentMethodRes.data,
         paymentType: paymentTypeRes.data,
-        clinic: clinicRes.data,
-        service: serviceRes.data,
         summaries: summaryRes.data,
       });
 
@@ -133,32 +108,11 @@ const AppointmentStats = () => {
               .map(item => ({ date: item._id, revenue: item.totalRevenue }))
           : []
       );
-      setPaymentMethodData(
-        Array.isArray(paymentMethodRes.data.data || paymentMethodRes.data)
-          ? (paymentMethodRes.data.data || paymentMethodRes.data)
-              .filter(item => item._id && typeof item.total === "number")
-              .map(item => ({ method: item._id, total: item.total }))
-          : []
-      );
       setPaymentTypeData(
         Array.isArray(paymentTypeRes.data.data || paymentTypeRes.data)
           ? (paymentTypeRes.data.data || paymentTypeRes.data)
               .filter(item => item._id && typeof item.total === "number")
               .map(item => ({ type: item._id, total: item.total }))
-          : []
-      );
-      setClinicData(
-        Array.isArray(clinicRes.data.data || clinicRes.data)
-          ? (clinicRes.data.data || clinicRes.data)
-              .filter(item => item.clinicName && typeof item.count === "number")
-              .map(item => ({ clinic: item.clinicName, count: item.count }))
-          : []
-      );
-      setServiceData(
-        Array.isArray(serviceRes.data.data || serviceRes.data)
-          ? (serviceRes.data.data || serviceRes.data)
-              .filter(item => item.serviceName && typeof item.count === "number")
-              .map(item => ({ service: item.serviceName, count: item.count }))
           : []
       );
       setSummaries(
@@ -178,20 +132,14 @@ const AppointmentStats = () => {
       setAppointmentData([]);
       setAppointmentStatusData([]);
       setRevenueData([]);
-      setPaymentMethodData([]);
       setPaymentTypeData([]);
-      setClinicData([]);
-      setServiceData([]);
       setSummaries({ totalAppointments: 0, totalRevenue: 0, completedAppointments: 0, fullyPaidAppointments: 0 });
     } finally {
       setLoading({
         appointmentTrend: false,
         appointmentStatus: false,
         revenueTrend: false,
-        paymentMethod: false,
         paymentType: false,
-        clinic: false,
-        service: false,
         summaries: false,
       });
     }
@@ -252,17 +200,6 @@ const AppointmentStats = () => {
     label: false,
   };
 
-  const paymentMethodConfig = {
-    data: paymentMethodData,
-    xField: "method",
-    yField: "total",
-    height: 250,
-    columnWidthRatio: 0.6,
-    colorField: "method",
-    color: ["#1890ff", "#ff4d4f"],
-    label: false,
-  };
-
   const paymentTypeConfig = {
     data: paymentTypeData,
     xField: "type",
@@ -271,26 +208,6 @@ const AppointmentStats = () => {
     columnWidthRatio: 0.6,
     colorField: "type",
     color: ["#1890ff", "#52c41a"],
-    label: false,
-  };
-
-  const clinicConfig = {
-    data: clinicData,
-    xField: "clinic",
-    yField: "count",
-    height: 250,
-    columnWidthRatio: 0.6,
-    colorField: "clinic",
-    label: false,
-  };
-
-  const serviceConfig = {
-    data: serviceData,
-    xField: "service",
-    yField: "count",
-    height: 250,
-    columnWidthRatio: 0.6,
-    colorField: "service",
     label: false,
   };
 
@@ -349,22 +266,6 @@ const AppointmentStats = () => {
     },
   ];
 
-  const paymentMethodColumns = [
-    {
-      title: "Payment Method",
-      dataIndex: "method",
-      key: "method",
-      sorter: (a, b) => a.method.localeCompare(b.method),
-    },
-    {
-      title: "Total Revenue",
-      dataIndex: "total",
-      key: "total",
-      sorter: (a, b) => a.total - b.total,
-      render: (value) => `${value.toLocaleString()} VND`,
-    },
-  ];
-
   const paymentTypeColumns = [
     {
       title: "Payment Type",
@@ -378,36 +279,6 @@ const AppointmentStats = () => {
       key: "total",
       sorter: (a, b) => a.total - b.total,
       render: (value) => `${value.toLocaleString()} VND`,
-    },
-  ];
-
-  const clinicColumns = [
-    {
-      title: "Clinic",
-      dataIndex: "clinic",
-      key: "clinic",
-      sorter: (a, b) => a.clinic.localeCompare(b.clinic),
-    },
-    {
-      title: "Number of Appointments",
-      dataIndex: "count",
-      key: "count",
-      sorter: (a, b) => a.count - b.count,
-    },
-  ];
-
-  const serviceColumns = [
-    {
-      title: "Service",
-      dataIndex: "service",
-      key: "service",
-      sorter: (a, b) => a.service.localeCompare(b.service),
-    },
-    {
-      title: "Number of Appointments",
-      dataIndex: "count",
-      key: "count",
-      sorter: (a, b) => a.count - b.count,
     },
   ];
 
@@ -494,7 +365,7 @@ const AppointmentStats = () => {
         </Col>
         <Col xs={24} sm={12} md={6}>
           <Card
-            title="Completed Appointments"
+            title="Completed Examinations"
             loading={loading.summaries}
             style={{ borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.07)" }}
           >
@@ -578,71 +449,6 @@ const AppointmentStats = () => {
         </Col>
       </Row>
 
-      <Row gutter={[16, 16]} style={{ marginTop: "20px" }}>
-        <Col xs={24} md={12}>
-          <Card
-            title="Revenue by Payment Method"
-            loading={loading.paymentMethod}
-            style={{ borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.07)" }}
-          >
-            {paymentMethodData.length > 0 ? (
-              <Bar {...paymentMethodConfig} />
-            ) : (
-              <div style={{ textAlign: "center", padding: 24 }}>
-                Không có dữ liệu cho khoảng thời gian này
-              </div>
-            )}
-          </Card>
-        </Col>
-        <Col xs={24} md={12}>
-          <Card
-            title="Revenue by Payment Type"
-            loading={loading.paymentType}
-            style={{ borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.07)" }}
-          >
-            {paymentTypeData.length > 0 ? (
-              <Bar {...paymentTypeConfig} />
-            ) : (
-              <div style={{ textAlign: "center", padding: 24 }}>
-                Không có dữ liệu cho khoảng thời gian này
-              </div>
-            )}
-          </Card>
-        </Col>
-      </Row>
-
-      <Row gutter={[16, 16]} style={{ marginTop: "20px" }}>
-        <Col xs={24} md={12}>
-          <Card
-            title="Appointments by Clinic"
-            loading={loading.clinic}
-            style={{ borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.07)" }}
-          >
-            {clinicData.length > 0 ? (
-              <Bar {...clinicConfig} />
-            ) : (
-              <div style={{ textAlign: "center", padding: 24 }}>
-                Không có dữ liệu cho khoảng thời gian này
-              </div>
-            )}
-          </Card>
-        </Col>
-        <Col xs={24} md={12}>
-          <Card
-            title="Appointments by Service"
-            loading={loading.service}
-            style={{ borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.07)" }}
-          >
-            {serviceData.length > 0 ? (
-              <Bar {...serviceConfig} />
-            ) : (
-              <div style={{ textAlign: "center", padding: 24 }}>
-                Không có dữ liệu cho khoảng thời gian này
-              </div>
-            )}
-          </Card>
-        </Col>
-      </Row>
 
       <div style={tableWrapperStyle}>
         <Row gutter={[16, 16]}>
@@ -681,100 +487,6 @@ const AppointmentStats = () => {
         </Row>
       </div>
 
-      <div style={tableWrapperStyle}>
-        <Row gutter={[16, 16]}>
-          <Col xs={24} md={12}>
-            <Card
-              title="Appointment Status Data"
-              loading={loading.appointmentStatus}
-              style={{ borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.07)" }}
-            >
-              <Table
-                columns={appointmentStatusColumns}
-                dataSource={appointmentStatusData}
-                rowKey="status"
-                pagination={false}
-                bordered
-                locale={{ emptyText: "Không có dữ liệu cho khoảng thời gian này" }}
-              />
-            </Card>
-          </Col>
-          <Col xs={24} md={12}>
-            <Card
-              title="Payment Method Data"
-              loading={loading.paymentMethod}
-              style={{ borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.07)" }}
-            >
-              <Table
-                columns={paymentMethodColumns}
-                dataSource={paymentMethodData}
-                rowKey="method"
-                pagination={false}
-                bordered
-                locale={{ emptyText: "Không có dữ liệu cho khoảng thời gian này" }}
-              />
-            </Card>
-          </Col>
-        </Row>
-      </div>
-
-      <div style={tableWrapperStyle}>
-        <Row gutter={[16, 16]}>
-          <Col xs={24} md={12}>
-            <Card
-              title="Payment Type Data"
-              loading={loading.paymentType}
-              style={{ borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.07)" }}
-            >
-              <Table
-                columns={paymentTypeColumns}
-                dataSource={paymentTypeData}
-                rowKey="type"
-                pagination={false}
-                bordered
-                locale={{ emptyText: "Không có dữ liệu cho khoảng thời gian này" }}
-              />
-            </Card>
-          </Col>
-          <Col xs={24} md={12}>
-            <Card
-              title="Appointments by Clinic Data"
-              loading={loading.clinic}
-              style={{ borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.07)" }}
-            >
-              <Table
-                columns={clinicColumns}
-                dataSource={clinicData}
-                rowKey="clinic"
-                pagination={false}
-                bordered
-                locale={{ emptyText: "Không có dữ liệu cho khoảng thời gian này" }}
-              />
-            </Card>
-          </Col>
-        </Row>
-      </div>
-
-      <div style={tableWrapperStyle}>
-        <Row gutter={[16, 16]}>
-          <Col xs={24} md={12}>
-            <Card
-              title="Appointments by Service Data"
-              loading={loading.service}
-              style={{ borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.07)" }}
-            >
-              <Table
-                columns={serviceColumns}
-                dataSource={serviceData}
-                rowKey="service"
-                pagination={false}
-                bordered
-                locale={{ emptyText: "Không có dữ liệu cho khoảng thời gian này" }}
-              />
-            </Card>
-          </Col>
-        </Row>
-      </div>
     </div>
   );
 };
