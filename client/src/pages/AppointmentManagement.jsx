@@ -115,7 +115,7 @@ const AppointmentManagement = () => {
               label="Status"
             >
               <MenuItem value="">All</MenuItem>
-              <MenuItem value="pending">Pending</MenuItem>
+              <MenuItem value="fully_paid">Fully_paid</MenuItem>
               <MenuItem value="confirmed">Confirmed</MenuItem>
               <MenuItem value="completed">Completed</MenuItem>
               <MenuItem value="cancelled">Cancelled</MenuItem>
@@ -137,7 +137,6 @@ const AppointmentManagement = () => {
               <TableCell>Giờ khám</TableCell>
               <TableCell>Trạng thái</TableCell>
               <TableCell>Ngày đặt</TableCell>
-              <TableCell>Hành động</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -173,21 +172,6 @@ const AppointmentManagement = () => {
                     {appointment.createdAt
                       ? dayjs(appointment.createdAt).format("DD/MM/YYYY HH:mm")
                       : "N/A"}
-                  </TableCell>
-                  <TableCell>
-                    <FormControl size="small" style={{ minWidth: 120 }}>
-                      <InputLabel>Change Status</InputLabel>
-                      <Select
-                        value={appointment.status}
-                        onChange={(e) => handleStatusChange(appointment._id, e.target.value)}
-                        label="Change Status"
-                      >
-                        <MenuItem value="pending">Pending</MenuItem>
-                        <MenuItem value="confirmed">Confirmed</MenuItem>
-                        <MenuItem value="completed">Completed</MenuItem>
-                        <MenuItem value="cancelled">Cancelled</MenuItem>
-                      </Select>
-                    </FormControl>
                   </TableCell>
                 </TableRow>
               ))
