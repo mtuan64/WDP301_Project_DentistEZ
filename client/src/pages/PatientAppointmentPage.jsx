@@ -3,6 +3,7 @@ import { Table, Button, Modal, Input, message, Tag } from "antd";
 import axios from "axios";
 import dayjs from "dayjs";
 import "../assets/css/PatientAppointmentPage.css"; // link css bạn gửi
+import EditAppointment from "./EditAppointment";
 
 const PatientAppointmentPage = () => {
   const [appointments, setAppointments] = useState([]);
