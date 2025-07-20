@@ -1,0 +1,13 @@
+.passwordWrapper {
+  position: relative;
+}
+
+.passwordToggleIcon {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: #555;
+  font-size: 1.25rem;
+}

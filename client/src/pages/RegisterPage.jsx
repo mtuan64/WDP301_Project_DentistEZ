@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../assets/css/Register.css";
+import "../assets/css/AuthPages.css";
+import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
 
 const RegisterPage = () => {
   const [username, setUsername] = useState("");
@@ -13,7 +15,7 @@ const RegisterPage = () => {
   const [gender, setGender] = useState("");
   const roleid = 1;
   const navigate = useNavigate();
-
+  const [showPassword, setShowPassword] = useState(false);
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -36,8 +38,10 @@ const RegisterPage = () => {
       });
       const data = await response.json();
       if (response.ok) {
-        alert("Registration successful!");
-        navigate("/login");
+        alert("Registration successful! We have sent a verification email to your email address. Please check your email.");
+        console.log("Res data:", data);
+        navigate("/verify-email", { state: { email: data.email } });
+
       } else {
         alert(data.msg);
       }
@@ -81,14 +85,24 @@ const RegisterPage = () => {
               <label htmlFor="password" className="label">
                 Mật Khẩu
               </label>
-              <input
-                type="password"
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="input"
-                required
-              />
+              <div className="formGroup">
+                <div className="passwordWrapper">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    id="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="input"
+                    required
+                  />
+                  <span
+                    className="passwordToggleIcon"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <AiFillEyeInvisible /> : <AiFillEye />}
+                  </span>
+                </div>
+              </div>
             </div>
             <div className="formGroup">
               <label htmlFor="fullname" className="label">
@@ -183,6 +197,7 @@ const RegisterPage = () => {
       </div>
     </div>
   );
+  s;
 };
 
 export default RegisterPage;

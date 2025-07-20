@@ -52,7 +52,7 @@ const PatientAppointmentPage = () => {
 
   const handleCancelAppointment = async () => {
     if (!refundAccount) {
-      message.warning("Vui lòng nhập số tài khoản ngân hàng.");
+      message.warning("⚠️ Vui lòng nhập số tài khoản ngân hàng để hoàn tiền.");
       return;
     }
 
@@ -63,12 +63,18 @@ const PatientAppointmentPage = () => {
         { refundAccount },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      message.success("Hủy lịch thành công!");
-      fetchAppointments();
+
+      message.success(
+        "✅ Hủy lịch thành công! Chúng tôi sẽ hoàn trả tiền trong thời gian ngắn."
+      );
+
       setIsModalVisible(false);
       setRefundAccount("");
+      setCancelId(null);
+
+      await fetchAppointments();
     } catch (error) {
-      message.error(error.response?.data?.message || "Hủy lịch thất bại.");
+      message.error(error.response?.data?.message || "❌ Hủy lịch thất bại.");
     }
   };
 
@@ -89,8 +95,8 @@ const PatientAppointmentPage = () => {
       width: 60,
     },
     {
-      title: "Dịch vụ",
-      dataIndex: ["serviceId", "serviceName"],
+      title: "Gói dịch vụ",
+      dataIndex: ["serviceOptionId", "optionName"],
     },
     {
       title: "Phòng khám",
@@ -108,8 +114,7 @@ const PatientAppointmentPage = () => {
     {
       title: "Giờ khám",
       dataIndex: "timeslotId",
-      render: (timeslot) =>
-        `${timeslot.start_time} - ${timeslot.end_time}`,
+      render: (timeslot) => `${timeslot.start_time} - ${timeslot.end_time}`,
     },
     {
       title: "Trạng thái",
@@ -143,19 +148,27 @@ const PatientAppointmentPage = () => {
     {
       title: "Hành động",
       render: (text, record) => {
+        const isCancelled = record.status === "cancelled";
         const canCancelOrChange =
           dayjs(record.timeslotId.date).diff(dayjs(), "hour") >= 8;
 
+        if (isCancelled) {
+          return <Button disabled>Đã huỷ</Button>;
+        }
+
         return (
           <div className="flex space-x-2">
-            <Button
-              type="primary"
-              danger
-              onClick={() => showCancelModal(record._id)}
-              disabled={!canCancelOrChange}
-            >
-              Huỷ lịch
-            </Button>
+            {canCancelOrChange ? (
+              <Button
+                type="primary"
+                danger
+                onClick={() => showCancelModal(record._id)}
+              >
+                Huỷ lịch
+              </Button>
+            ) : (
+              <Button disabled>Không thể huỷ</Button>
+            )}
             <Button
               type="primary"
               onClick={() => showEditModal(record)}

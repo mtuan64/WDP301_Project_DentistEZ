@@ -6,14 +6,15 @@ const Service = require("../models/Service");
 const ServiceOption = require("../models/ServiceOption");
 const TimeSlot = require("../models/TimeSlot");
 const isEmailDomainValid = require("../utils/emailValidator");
-
+const Otp = require("../models/Otp");
 const Patient = require("../models/Patient");
 const Doctor = require("../models/Doctor");
 const Staff = require("../models/Staff");
 const jwt = require("jsonwebtoken");
 const { OAuth2Client } = require("google-auth-library");
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-
+const {generateOTP} = require("./otpController");
+const sendEmail = require("../utils/emailService");
 // Danh sách đen để lưu token đã logout (thay bằng Redis trong production)
 const tokenBlacklist = [];
 
@@ -164,6 +165,20 @@ exports.registerUser = async (req, res, next) => {
         // Admin role does not require additional setup
         break;
     }
+    const otp = generateOTP();
+
+    const otpRecord = new Otp({
+      email,
+      otp,
+      purpose: "verify-email",
+    });
+    await otpRecord.save();
+
+    await sendEmail(
+      email,
+      "Mã xác thực tài khoản DentistEZ",
+      `Mã OTP của bạn là ${otp}. Mã sẽ hết hạn sau 5 phút.`
+    );
 
     res.status(201).json({
       id: savedUser._id,
@@ -230,12 +245,16 @@ exports.loginUser = async (req, res, next) => {
         return res.status(400).json({ msg: "Phân quyền không hợp lệ." });
     }
 
-    if (status !== "active") {
+    if (!user.isVerified) {
       return res
         .status(403)
-        .json({
-          msg: "Tài khoản đang bị khóa. Vui lòng liên hệ quản trị viên.",
-        });
+        .json({ msg: "Tài khoản chưa được xác thực qua email." });
+    }
+
+    if (status !== "active") {
+      return res.status(403).json({
+        msg: "Tài khoản đang bị khóa. Vui lòng liên hệ quản trị viên.",
+      });
     }
 
     if (!process.env.JWT_SECRET) {

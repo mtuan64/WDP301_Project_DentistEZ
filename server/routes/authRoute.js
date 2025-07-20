@@ -41,7 +41,7 @@ const { createAcountDoctor, getAllClinic, createAcountStaff, getAllPatient, getA
 const { getDefaultResultOrder } = require("dns");
 const chatbotController = require("../controllers/chat/chatbotController");
 const chatboxController = require("../controllers/chat/chatboxController");
-const { requestPasswordReset, verifyOTP, resetPassword } = require("../controllers/otpController");
+const { requestPasswordReset, resetPassword, verifyEmailOTP, verifyPassOTP } = require("../controllers/otpController");
 
 const {
   createPayment,
@@ -90,6 +90,7 @@ const uploadMulterMemory = multer({
 // auth 
 router.post("/register", registerUser);
 router.post("/login", loginUser);
+router.post("/verify-email-otp", verifyEmailOTP);
 router.get("/view/service", getAllService);
 router.get("/view-detail/service/:id", getServiceDetail);
 router.post("/changepass", authMiddleware, changePassword);
@@ -156,7 +157,7 @@ router.put(
 // Authentication
 router.post("/logout", authMiddleware, logoutUser);
 router.post("/reset-pass", requestPasswordReset);
-router.post("/verify", verifyOTP);
+router.post("/verify-pass", verifyPassOTP);
 router.post("/confirm-reset", resetPassword);
 router.post("/gg-login", googleLogin);
 router.put("/changepass", authMiddleware, changePassword);

@@ -31,6 +31,8 @@ const ForgotPasswordPage = () => {
     }
   };
 
+  
+
   return (
     <div className="loginContainer">
       <div className="loginWrapper">
