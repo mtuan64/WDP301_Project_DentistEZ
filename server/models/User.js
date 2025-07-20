@@ -36,7 +36,9 @@ const UserSchema = new Schema(
       default: "",
     },
     profilePicture: { type: String },
+    isVerified: { type: Boolean, default: false },
   },
+
   { timestamps: true }
 );
 

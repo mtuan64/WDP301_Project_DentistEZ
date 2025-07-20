@@ -1,7 +1,10 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import "../assets/css/ChangePassWord.css"; // Assuming you have a CSS file for styling
+import "../assets/css/ChangePassWord.css";
+import "../assets/css/AuthPages.css";
+import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
+
 const ChangePasswordPage = () => {
   const navigate = useNavigate();
   const [oldPassword, setOldPassword] = useState("");
@@ -10,6 +13,10 @@ const ChangePasswordPage = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const [showOld, setShowOld] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const validatePassword = (password) => {
     return /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/.test(password);
@@ -78,35 +85,59 @@ const ChangePasswordPage = () => {
       <form onSubmit={handleSubmit} className="change-password-form">
         <div className="form-group">
           <label>Mật khẩu hiện tại</label>
-          <input
-            type="password"
-            value={oldPassword}
-            onChange={(e) => setOldPassword(e.target.value)}
-            required
-            placeholder="Nhập mật khẩu hiện tại"
-          />
+          <div className="password-wrapper">
+            <input
+              type={showOld ? "text" : "password"}
+              value={oldPassword}
+              onChange={(e) => setOldPassword(e.target.value)}
+              required
+              placeholder="Nhập mật khẩu hiện tại"
+            />
+            <span
+              className="toggle-icon"
+              onClick={() => setShowOld(!showOld)}
+            >
+              {showOld ? <AiFillEyeInvisible /> : <AiFillEye />}
+            </span>
+          </div>
         </div>
 
         <div className="form-group">
           <label>Mật khẩu mới</label>
-          <input
-            type="password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            required
-            placeholder="Nhập mật khẩu mới"
-          />
+          <div className="password-wrapper">
+            <input
+              type={showNew ? "text" : "password"}
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              required
+              placeholder="Nhập mật khẩu mới"
+            />
+            <span
+              className="toggle-icon"
+              onClick={() => setShowNew(!showNew)}
+            >
+              {showNew ? <AiFillEyeInvisible /> : <AiFillEye />}
+            </span>
+          </div>
         </div>
 
         <div className="form-group">
           <label>Xác nhận mật khẩu mới</label>
-          <input
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-            placeholder="Xác nhận lại mật khẩu mới"
-          />
+          <div className="password-wrapper">
+            <input
+              type={showConfirm ? "text" : "password"}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+              placeholder="Xác nhận lại mật khẩu mới"
+            />
+            <span
+              className="toggle-icon"
+              onClick={() => setShowConfirm(!showConfirm)}
+            >
+              {showConfirm ? <AiFillEyeInvisible /> : <AiFillEye />}
+            </span>
+          </div>
         </div>
 
         <div className="button-group">

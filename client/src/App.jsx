@@ -37,6 +37,7 @@ import "antd/dist/reset.css";
 import PaymentTestPage from "./pages/PaymentTestPage";
 import PatientAppointmentPage from "./pages/PatientAppointmentPage";
 import ChangePasswordPage from "./pages/ChangePass";
+import VerifyEmailPage from "./pages/VerifyEmail";
 
 const DRAWER_WIDTH = 240;
 
@@ -83,6 +84,7 @@ const App = () => {
           <Route path="/doctor" element={<DoctorPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/myprofile" element={<ProfilePage />} />
           <Route path="/appointment" element={<AppointmentPage />} />
