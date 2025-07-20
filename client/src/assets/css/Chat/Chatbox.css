@@ -24,27 +24,27 @@
 
 .chat-toggle:hover {
   background-color: #0066cc;
-  transform: scale(1.1); 
+  transform: scale(1.1);
 }
 
 .chat-icon {
-  font-size: 30px; /* Kích thước phù hợp cho BsChatDots */
-  color: white; /* Màu trắng nổi bật */
+  font-size: 30px;
+  color: white;
   transition: transform 0.3s ease;
 }
 
 .chat-toggle:hover .chat-icon {
-  transform: scale(1.1); /* Tăng kích thước icon khi hover */
+  transform: scale(1.1);
 }
 
 .chat-box {
-  width: 90vw; /* Responsive theo chiều rộng */
-  max-width: 900px; /* Giới hạn tối đa */
-  height: 80vh; /* Responsive theo chiều cao */
-  max-height: 600px; /* Giới hạn tối đa */
+  width: 90vw;
+  max-width: 900px;
+  height: 80vh;
+  max-height: 600px;
   background-color: #e9ecef;
   border: 1px solid #ddd;
-  border-radius: 10px; /* Bo góc mềm mại */
+  border-radius: 10px;
   display: flex;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   position: relative;
@@ -68,8 +68,8 @@
 }
 
 .sidebar {
-  width: 30%; /* Tỷ lệ linh hoạt */
-  min-width: 200px; /* Không quá nhỏ */
+  width: 30%;
+  min-width: 200px;
   border-right: 1px solid #ccc;
   background-color: #f8f9fa;
   display: flex;
@@ -87,7 +87,7 @@
 
 .sidebar-header h3 {
   margin: 0;
-  font-size: 1rem; /* Font responsive */
+  font-size: 1rem;
   color: #333;
 }
 
@@ -124,6 +124,10 @@
   font-size: 1.25rem;
   margin-right: 10px;
   color: #007bff;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 .user-info {
@@ -186,18 +190,50 @@
   flex-direction: column;
 }
 
+.message-group {
+  margin-bottom: 10px;
+}
+
 .message-container {
   display: flex;
   flex-direction: column;
-  margin-bottom: 10px;
+  margin-bottom: 5px;
 }
 
 .message-container.user {
   align-items: flex-end;
 }
 
-.message-container.ai {
+.message-container.other {
   align-items: flex-start;
+}
+
+.message-sender-info {
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.message-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  margin-right: 8px;
+  object-fit: cover;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.message-sender-name {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #333;
+}
+
+.message-container.user .message-sender-info {
+  display: none;
 }
 
 .message {
@@ -214,11 +250,8 @@
   background-color: #0084ff;
   color: white;
 }
-.message.user {
-  background-color: #0084ff;
-  color: white;
-}
-.message.ai {
+
+.message.other {
   background-color: #fff;
   color: #333;
   border: 1px solid #ddd;
@@ -250,6 +283,19 @@
   margin-top: 2px;
   margin-left: 10px;
   align-self: flex-start;
+}
+
+.message-content {
+  display: flex;
+  align-items: center;
+}
+
+.message-content.user {
+  flex-direction: row-reverse;
+}
+
+.message-content.other {
+  flex-direction: row;
 }
 
 .input-area {
@@ -343,24 +389,21 @@
   align-items: flex-end;
 }
 
-/* Media Queries cho màn hình nhỏ */
+/* Media Queries for smaller screens */
 @media (max-width: 1024px) {
   .chat-box {
     width: 95vw;
     height: 85vh;
     max-height: 500px;
   }
-
   .sidebar {
     width: 35%;
     min-width: 180px;
   }
-
   .user-name,
   .chat-title {
     font-size: 0.875rem;
   }
-
   .user-last-message,
   .message-text {
     font-size: 0.75rem;
@@ -372,23 +415,19 @@
     width: 100vw;
     height: 100vh;
     max-height: none;
-    border-radius: 0; /* Loại bỏ bo góc trên mobile */
+    border-radius: 0;
   }
-
   .sidebar {
     width: 40%;
     min-width: 150px;
   }
-
   .chat-toggle {
     width: 50px;
     height: 50px;
   }
-
   .chat-icon {
-    font-size: 26px; /* Giảm kích thước icon */
+    font-size: 26px;
   }
-
   .notification-badge.toggle-badge {
     font-size: 0.65rem;
     padding: 2px 6px;
@@ -399,29 +438,23 @@
   .chat-box {
     flex-direction: column;
   }
-
   .sidebar {
     width: 100%;
     min-width: auto;
   }
-
   .chat-area {
     flex: 1;
   }
-
   .user-item {
     padding: 8px;
   }
-
   .user-avatar {
     font-size: 1rem;
   }
-
   .chat-toggle {
     width: 45px;
     height: 45px;
   }
-
   .chat-icon {
     font-size: 24px;
   }
