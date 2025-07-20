@@ -16,11 +16,9 @@ module.exports.initializeSocket = (server) => {
   });
 
   io.on("connection", (socket) => {
-    console.log("New client connected:", socket.id);
 
     socket.on("joinRoom", async ({ userId, role }) => {
       try {
-        console.log("Joining room with userId:", userId, "role:", role);
         if (!userId || !mongoose.isValidObjectId(userId)) {
           console.error("Join room error: Invalid userId", userId);
           return socket.emit("error", { message: "Invalid user ID" });
@@ -40,9 +38,6 @@ module.exports.initializeSocket = (server) => {
             const roomId = `chat-${patient._id}`;
             socket.join(roomId);
             activePatients.add(patient._id.toString());
-            console.log(
-              `Staff ${userId} joined room ${roomId} for patient ${patient.fullname}`
-            );
           });
           io.to(socket.id).emit("updatePatients", patients);
         }
