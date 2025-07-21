@@ -62,7 +62,7 @@ const getAvailableTimeslots = async (req, res) => {
   }
 };
 
-// Tạo timeslot mới (dành cho bác sĩ hoặc admin)
+// Tạo timeslot mới (dành cho bác sĩ )
 const createTimeslot = async (req, res) => {
   try {
     const { doctorId, date, slot_index, start_time, end_time, note } = req.body;
@@ -192,6 +192,42 @@ const deleteTimeslot = async (req, res) => {
     });
   }
 };
+const getSlotByDoctorId = async (req, res) => {
+  try {
+    const { doctorId } = req.params;
+
+
+    if (!mongoose.Types.ObjectId.isValid(doctorId)) {
+      return res.status(400).json({
+        success: false,
+        message: "doctorId không hợp lệ",
+      });
+    }
+
+    const timeslots = await TimeSlot.find({ doctorId })
+      .populate("doctorId", "name")
+      .sort({ date: 1, start_time: 1 });
+
+    if (timeslots.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy timeslot cho bác sĩ này",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: timeslots,
+    });
+  } catch (error) {
+    console.error("Error fetching timeslots by doctorId:", error);
+    res.status(500).json({
+      success: false,
+      message: "Lỗi khi lấy danh sách timeslot của bác sĩ",
+      error: error.message,
+    });
+  }
+};
 
 module.exports = {
   getTimeslotById,
@@ -199,4 +235,5 @@ module.exports = {
   createTimeslot,
   updateTimeslot,
   deleteTimeslot,
+  getSlotByDoctorId,
 };

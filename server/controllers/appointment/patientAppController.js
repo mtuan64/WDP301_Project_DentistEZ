@@ -14,85 +14,92 @@ const payosCallback = async (req, res) => {
   console.log("PayOS callback body:", req.body);
 
   try {
-    // Lấy dữ liệu từ callback mới (PayOS trả về orderCode và code bên trong data)
+    console.log("PayOS callback body:", req.body);
+
+    // Lấy dữ liệu từ callback
     const data = req.body.data || {};
     const orderCode = String(data.orderCode);
-    const statusCode = data.code; // '00' là thành công theo thông lệ VN Payment Gateway
+    const statusCode = data.code; // '00' là thành công
+    const status = (statusCode === "00") ? "paid" : "failed";
 
-    // Đổi statusCode về dạng text cho logic cũ
-    const status = statusCode === "00" ? "paid" : "failed";
-
+    // Tìm Payment bằng orderCode (dùng chung cho cả deposit và final)
     const payment = await Payment.findOne({ orderCode });
-    console.log("payment tìm được:", payment);
+    if (!payment) return res.status(200).json({ message: "Không tìm thấy payment" });
 
-    const allPayments = await Payment.find({});
-    console.log(
-      "Tất cả orderCode trong DB:",
-      allPayments.map((p) => p.orderCode)
-    );
-    console.log("orderCode từ callback:", orderCode);
-
-    if (!payment) {
-      return res.status(200).json({ message: "Webhook test OK" });
+    // Nếu đã xử lý rồi thì bỏ qua
+    if (payment.status === "paid") {
+      return res.status(200).json({ message: "Payment đã xử lý trước đó" });
     }
 
-    if (status === "paid" && payment.status !== "paid") {
-      const meta = payment.metaData;
+    payment.status = status;
+    await payment.save();
+    
+    // ========== PHÂN BIỆT DEPOSIT/final ==========
+    if (status === "paid") {
+      // 1. Nếu là thanh toán ĐẶT CỌC/ĐẶT LỊCH
+      if (payment.type === "deposit") {
+        const meta = payment.metaData;
 
-      // Kiểm tra slot còn khả dụng không
-      const slot = await TimeSlot.findById(meta.timeslotId);
-      if (!slot || slot.isAvailable === false) {
-        return res
-          .status(400)
-          .json({ message: "Slot đã được đặt hoặc không khả dụng." });
-      }
+        // Kiểm tra slot còn khả dụng
+        const slot = await TimeSlot.findById(meta.timeslotId);
+        if (!slot || slot.isAvailable === false) {
+          return res.status(400).json({ message: "Slot đã được đặt hoặc không khả dụng." });
+        }
 
-      // Tạo appointment với trạng thái confirmed
-      const appointment = await Appointment.create({
-        patientId: meta.patientId,
-        doctorId: meta.doctorId,
-        serviceId: meta.serviceId,
-        serviceOptionId: meta.serviceOptionId,
-        clinicId: meta.clinicId,
-        timeslotId: meta.timeslotId,
-        note: meta.note,
-        createdBy: meta.createdBy,
-        status: "confirmed",
-        reExaminationOf: meta.reExaminationOf || null, // Thêm trường reExaminationOf nếu có
-      });
+        // Tạo appointment mới (đặt lịch)
+        const appointment = await Appointment.create({
+          patientId: meta.patientId,
+          doctorId: meta.doctorId,
+          serviceId: meta.serviceId,
+          serviceOptionId: meta.serviceOptionId,
+          clinicId: meta.clinicId,
+          timeslotId: meta.timeslotId,
+          note: meta.note,
+          createdBy: meta.createdBy,
+          status: "confirmed",
+          reExaminationOf: meta.reExaminationOf || null
+        });
 
-      // Đánh dấu slot đã được đặt
-      await TimeSlot.findByIdAndUpdate(meta.timeslotId, { isAvailable: false });
+        // Đánh dấu slot đã được đặt
+        await TimeSlot.findByIdAndUpdate(meta.timeslotId, { isAvailable: false });
 
-      // Lấy đuôi file từ mime-type
-      const getFileType = (mimeType) => {
-        if (!mimeType) return "other";
-        const parts = mimeType.split("/");
-        if (
-          parts[1] ===
-          "vnd.openxmlformats-officedocument.wordprocessingml.document"
-        )
-          return "docx";
-        if (
-          parts[1] === "vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
-          return "xlsx";
-        return parts[1] || "other";
-      };
+        // Lưu file (nếu có)
+        const getFileType = (mimeType) => {
+          if (!mimeType) return "other";
+          const parts = mimeType.split("/");
+          if (parts[1] === "vnd.openxmlformats-officedocument.wordprocessingml.document") return "docx";
+          if (parts[1] === "vnd.openxmlformats-officedocument.spreadsheetml.sheet") return "xlsx";
+          return parts[1] || "other";
+        };
+        if (meta.fileUrl) {
+          await AppointmentFile.create({
+            appointmentId: appointment._id,
+            fileUrl: meta.fileUrl,
+            fileName: meta.fileName || "",
+            fileType: getFileType(meta.fileType),
+          });
+        }
 
-      if (meta.fileUrl) {
-        await AppointmentFile.create({
-          appointmentId: appointment._id,
-          fileUrl: meta.fileUrl,
-          fileName: meta.fileName || "",
-          fileType: getFileType(meta.fileType),
+        // Cập nhật appointmentId cho phiếu payment cọc
+        payment.appointmentId = appointment._id;
+        await payment.save();
+
+        return res.status(201).json({
+          message: "Đặt lịch thành công! Vui lòng xem chi tiết tại lịch của tôi",
+          appointment,
+          payment
         });
       }
-      console.log("Meta data:", payment.metaData);
 
-      payment.status = "paid";
-      payment.appointmentId = appointment._id;
-      await payment.save();
+      // 2. Nếu là thanh toán FINAL (70% còn lại)
+      if (payment.type === "final" && payment.appointmentId) {
+        // Update trạng thái lịch thành fully_paid
+        await Appointment.findByIdAndUpdate(
+          payment.appointmentId,
+          { status: "fully_paid" }
+        );
+        return res.status(201).json({ message: "Đã cập nhật thanh toán đủ" });
+      }
 
       const [doctor, service, serviceOption, clinic, timeslot] =
         await Promise.all([

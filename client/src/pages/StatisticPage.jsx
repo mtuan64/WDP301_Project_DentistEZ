@@ -5,6 +5,15 @@ import axios from "axios";
 import { DatePicker } from "antd";
 import dayjs from "dayjs";
 import { debounce } from "lodash";
+import {
+  CalendarOutlined,
+  DollarOutlined,
+  CheckCircleOutlined,
+  CreditCardOutlined,
+  BarChartOutlined,
+  LineChartOutlined,
+  PieChartOutlined,
+} from "@ant-design/icons"; // Import icons from Ant Design
 
 const AppointmentStats = () => {
   const [appointmentData, setAppointmentData] = useState([]);
@@ -325,6 +334,7 @@ const AppointmentStats = () => {
       )}
 
       <Typography.Title level={2} style={{ marginBottom: 24, fontWeight: 700 }}>
+        <BarChartOutlined style={{ marginRight: 8, color: "#1890ff" }} />
         Dashboard Statistics ({dateRange[0].format("YYYY-MM-DD")} to {dateRange[1].format("YYYY-MM-DD")})
       </Typography.Title>
       <div style={{ marginBottom: 28, display: "flex", justifyContent: "center" }}>
@@ -347,7 +357,12 @@ const AppointmentStats = () => {
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={12} md={6}>
           <Card
-            title="Total Appointments"
+            title={
+              <span>
+                <CalendarOutlined style={{ marginRight: 8, color: "#1890ff" }} />
+                Total Appointments
+              </span>
+            }
             loading={loading.summaries}
             style={{ borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.07)" }}
           >
@@ -356,7 +371,12 @@ const AppointmentStats = () => {
         </Col>
         <Col xs={24} sm={12} md={6}>
           <Card
-            title="Total Revenue"
+            title={
+              <span>
+                <DollarOutlined style={{ marginRight: 8, color: "#52c41a" }} />
+                Total Revenue
+              </span>
+            }
             loading={loading.summaries}
             style={{ borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.07)" }}
           >
@@ -365,7 +385,12 @@ const AppointmentStats = () => {
         </Col>
         <Col xs={24} sm={12} md={6}>
           <Card
-            title="Completed Examinations"
+            title={
+              <span>
+                <CheckCircleOutlined style={{ marginRight: 8, color: "#52c41a" }} />
+                Completed Examinations
+              </span>
+            }
             loading={loading.summaries}
             style={{ borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.07)" }}
           >
@@ -374,7 +399,12 @@ const AppointmentStats = () => {
         </Col>
         <Col xs={24} sm={12} md={6}>
           <Card
-            title="Fully Paid Appointments"
+            title={
+              <span>
+                <CreditCardOutlined style={{ marginRight: 8, color: "#1890ff" }} />
+                Fully Paid Appointments
+              </span>
+            }
             loading={loading.summaries}
             style={{ borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.07)" }}
           >
@@ -386,7 +416,12 @@ const AppointmentStats = () => {
       <Row gutter={[16, 16]} style={{ marginTop: "20px" }}>
         <Col xs={24} md={12}>
           <Card
-            title="Appointments Over Time"
+            title={
+              <span>
+                <LineChartOutlined style={{ marginRight: 8, color: "#1890ff" }} />
+                Appointments Over Time
+              </span>
+            }
             loading={loading.appointmentTrend}
             style={{ borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.07)" }}
           >
@@ -401,7 +436,12 @@ const AppointmentStats = () => {
         </Col>
         <Col xs={24} md={12}>
           <Card
-            title="Appointments per Day"
+            title={
+              <span>
+                <BarChartOutlined style={{ marginRight: 8, color: "#3498db" }} />
+                Appointments per Day
+              </span>
+            }
             loading={loading.appointmentTrend}
             style={{ borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.07)" }}
           >
@@ -419,7 +459,12 @@ const AppointmentStats = () => {
       <Row gutter={[16, 16]} style={{ marginTop: "20px" }}>
         <Col xs={24} md={12}>
           <Card
-            title="Revenue Over Time"
+            title={
+              <span>
+                <LineChartOutlined style={{ marginRight: 8, color: "#52c41a" }} />
+                Revenue Over Time
+              </span>
+            }
             loading={loading.revenueTrend}
             style={{ borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.07)" }}
           >
@@ -434,7 +479,12 @@ const AppointmentStats = () => {
         </Col>
         <Col xs={24} md={12}>
           <Card
-            title="Appointment Status Distribution"
+            title={
+              <span>
+                <PieChartOutlined style={{ marginRight: 8, color: "#1890ff" }} />
+                Appointment Status Distribution
+              </span>
+            }
             loading={loading.appointmentStatus}
             style={{ borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.07)" }}
           >
@@ -449,12 +499,16 @@ const AppointmentStats = () => {
         </Col>
       </Row>
 
-
       <div style={tableWrapperStyle}>
         <Row gutter={[16, 16]}>
           <Col xs={24} md={12}>
             <Card
-              title="Appointments by Date"
+              title={
+                <span>
+                  <CalendarOutlined style={{ marginRight: 8, color: "#1890ff" }} />
+                  Appointments by Date
+                </span>
+              }
               loading={loading.appointmentTrend}
               style={{ borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.07)" }}
             >
@@ -470,7 +524,12 @@ const AppointmentStats = () => {
           </Col>
           <Col xs={24} md={12}>
             <Card
-              title="Revenue by Date"
+              title={
+                <span>
+                  <DollarOutlined style={{ marginRight: 8, color: "#52c41a" }} />
+                  Revenue by Date
+                </span>
+              }
               loading={loading.revenueTrend}
               style={{ borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.07)" }}
             >
@@ -486,7 +545,6 @@ const AppointmentStats = () => {
           </Col>
         </Row>
       </div>
-
     </div>
   );
 };

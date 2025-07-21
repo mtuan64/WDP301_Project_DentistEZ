@@ -38,6 +38,11 @@ import PaymentTestPage from "./pages/PaymentTestPage";
 import PatientAppointmentPage from "./pages/PatientAppointmentPage";
 import ChangePasswordPage from "./pages/ChangePass";
 import VerifyEmailPage from "./pages/VerifyEmail";
+import ReDetail from "./pages/ReDetail";
+import StaffManagerPatientApp from "./pages/StaffManagerPatientApp";
+import PaymentModalFinal from "./pages/PaymentModalFinal";
+import StaffPaymentSuccessPage from "./pages/StaffPaymentSuccessPage";
+import StaffPaymentCancelPage from "./pages/StaffPaymentCancelPage";
 
 const DRAWER_WIDTH = 240;
 
@@ -119,11 +124,17 @@ const App = () => {
           <Route path="/payment-test" element={<PaymentTestPage />} />
           <Route path="/payment-cancel" element={<PaymentCancelPage />} />
           <Route path="/payment-success" element={<PaymentSuccessPage />} />
+          <Route path="/re-examinations/:id" element={<ReDetail />} />
+          <Route path="/staffmanager/patientapp" element={<StaffManagerPatientApp />} />
+          <Route path="/modalpayment" element={<PaymentModalFinal/>} />
+          <Route path="/staffmanager/payment-success" element={<StaffPaymentSuccessPage />} />
+          <Route path="/staffmanager/payment-cancel" element={<StaffPaymentCancelPage />} />
         </Routes>
       </div>
 
-      <FooterComponent />
+      
       <Chatbox />
+      <FooterComponent />
     </div>
   );
 };
