@@ -18,7 +18,7 @@ import {
 
 const FooterComponent = () => {
   return (
-    <footer className="bg-dark text-light pt-5">
+    <footer className="bg-dark text-light pt-5" style={{ marginTop: 50 }}>
       <Container>
         <Row className="pt-4">
           <Col lg={3} md={6} className="mb-4" style={{ paddingRight: "20px", paddingLeft: "20px" }}>
