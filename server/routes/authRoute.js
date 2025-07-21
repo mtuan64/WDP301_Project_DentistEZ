@@ -33,7 +33,7 @@ const {
 } = require("../controllers/statisticController");
  
 
-const { getTimeslotById, getAvailableTimeslots, createTimeslot, updateTimeslot , deleteTimeslot} = require("../controllers/timeslotController");
+const { getTimeslotById, getAvailableTimeslots, createTimeslot, updateTimeslot , deleteTimeslot, getSlotByDoctorId} = require("../controllers/timeslotController");
 
 const multer = require("multer");
 const path = require("path");
