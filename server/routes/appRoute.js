@@ -1,9 +1,13 @@
 const express = require("express");
 const router = express.Router();
 
-const { authPatientMiddleware } = require("../middleware/authMiddleware");
+const { authPatientMiddleware, authStaffMiddleware, authPatientOrStaffMiddleware } = require("../middleware/authMiddleware");
 const paymentController = require("../controllers/paymentController");
 const patientAppController = require("../controllers/appointment/patientAppController");
+const repatientAppController = require("../controllers/appointment/repatientAppController");
+const timeslotController = require("../controllers/timeslotController");
+const { getAllAppointmentByStaff } = require("../controllers/appointment/staffAppController");
+const { createFinalOnlinePayment, createFinalCashPayment, payosCallbackFinal, getAppointmentDetail, getDepositTotal } = require("../controllers/paymetfinal/finalPaymentController");
 
 // Thư viện cho upload file
 const multer = require("multer");
@@ -62,6 +66,17 @@ router.post("/payos-callback", patientAppController.payosCallback);
 router.get("/patient/:userId", getAppointmentsByPatient);
 router.put("/cancel/:id", authPatientMiddleware, cancelAppointmentWithRefund);
 
+// api lịch tái khám 
+router.post('/re-examination/:id',authPatientOrStaffMiddleware ,repatientAppController.createReExamination);
+router.get("/timeslots/by-doctor/:doctorId",authPatientOrStaffMiddleware,timeslotController.getSlotByDoctorId);
+router.get("/re-examinations/:id",authPatientMiddleware,repatientAppController.getReExaminationsByRoot);
 
+// staff appointment management
+router.get("/staff/appointments", authStaffMiddleware, getAllAppointmentByStaff);
 
+// thanh toán 70% cho lịch hẹn
+router.post("/payments/:appointmentId/final/online", createFinalOnlinePayment); 
+router.post("/payments/:appointmentId/final/cash", createFinalCashPayment);     
+router.get("/payments/deposit-total/:appointmentId", getDepositTotal); 
+router.get("/staffmodal/appointments/:id", getAppointmentDetail);
 module.exports = router;

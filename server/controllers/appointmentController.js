@@ -159,7 +159,7 @@ const getAppointmentsByPatient = async (req, res) => {
     }
 
     // Fetch appointments for the patientId
-    const appointments = await Appointment.find({ patientId: patient._id })
+    const appointments = await Appointment.find({ patientId: patient._id }).select("note doctorId patientId staffId serviceId clinicId timeslotId serviceOptionId status createdAt reExaminationOf")
       .populate({
         path: "patientId",
         select: "userId",
@@ -198,6 +198,10 @@ const getAppointmentsByPatient = async (req, res) => {
       .populate({
         path: "timeslotId",
         select: "date start_time end_time",
+      })
+      .populate({
+        path: "serviceOptionId",
+        select: "optionName price",
       })
       .sort({ createdAt: -1 });
 

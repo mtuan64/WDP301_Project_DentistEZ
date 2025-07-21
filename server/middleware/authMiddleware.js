@@ -201,4 +201,35 @@ const authDentistOrAdminMiddleware = (req, res, next) => {
   });
 };
 
-module.exports = { authMiddleware, authAdminMiddleware, authDentistOrAdminMiddleware, authDentistMiddleware, authPatientMiddleware, authStaffMiddleware, tokenBlacklist, isTokenBlacklisted };
+const authPatientOrStaffMiddleware = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({
+      message: "Không tìm thấy token hoặc token không hợp lệ",
+      status: "ERROR",
+    });
+  }
+  const token = authHeader.split(" ")[1];
+
+  jwt.verify(token, process.env.JWT_SECRET, function (err, decoded) {
+    if (err) {
+      return res.status(403).json({
+        message: "Token không hợp lệ hoặc đã hết hạn",
+        status: "ERROR",
+      });
+    }
+    if (decoded.role === "patient" || decoded.role === "staff") {
+      req.user = decoded;
+      next();
+    } else {
+      return res.status(403).json({
+        message: "Bạn không có quyền truy cập (chỉ dành cho Doctor hoặc Admin)",
+        status: "ERROR",
+      });
+    }
+  });
+};
+
+
+
+module.exports = { authMiddleware, authAdminMiddleware, authDentistOrAdminMiddleware, authDentistMiddleware, authPatientMiddleware, authStaffMiddleware, tokenBlacklist, isTokenBlacklisted , authPatientOrStaffMiddleware };
