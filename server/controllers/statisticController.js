@@ -319,6 +319,7 @@ exports.getAppointmentByService = async (req, res) => {
 // Get all payments with details and statistics
 exports.getAllPayments = async (req, res) => {
   try {
+    // Populate cả metaData và appointmentId (gồm thông tin bệnh nhân, bác sĩ, vv. của lịch hẹn)
     const payments = await Payment.find()
       .populate({
         path: "metaData.patientId",
@@ -346,8 +347,26 @@ exports.getAllPayments = async (req, res) => {
         path: "metaData.clinicId",
         select: "clinic_name",
       })
+      .populate({
+        path: "appointmentId",
+        populate: [
+          {
+            path: "patientId",
+            model: "Patient",
+            populate: { path: "userId", model: "User", select: "fullname" }
+          },
+          {
+            path: "doctorId",
+            model: "Doctor",
+            populate: { path: "userId", model: "User", select: "fullname" }
+          },
+          { path: "serviceId", model: "Service", select: "serviceName price" },
+          { path: "clinicId", model: "Clinic", select: "clinic_name" }
+        ]
+      })
       .lean();
 
+    // Tính toán thống kê như cũ
     const statistics = {
       totalRevenue: 0,
       byStatus: {
@@ -376,6 +395,9 @@ exports.getAllPayments = async (req, res) => {
       statistics.byPaymentMethod[payment.paymentMethod].amount += payment.amount;
     });
 
+    // Helper lấy thông tin từ metaData hoặc appointmentId
+    const getField = (first, fallback) => first || fallback || "N/A";
+
     const formattedPayments = payments.map((p) => ({
       _id: p._id,
       amount: p.amount,
@@ -389,11 +411,31 @@ exports.getAllPayments = async (req, res) => {
       createdAt: p.createdAt,
       updatedAt: p.updatedAt,
       metaData: {
-        patient: p.metaData.patientId?.userId?.fullname || "N/A",
-        doctor: p.metaData.doctorId?.userId?.fullname || "N/A",
-        service: p.metaData.serviceId?.serviceName || "N/A",
-        servicePrice: p.metaData.serviceId?.price || 0,
-        clinic: p.metaData.clinicId?.clinic_name || "N/A",
+        patient:
+          getField(
+            p.metaData.patientId?.userId?.fullname,
+            p.appointmentId?.patientId?.userId?.fullname
+          ),
+        doctor:
+          getField(
+            p.metaData.doctorId?.userId?.fullname,
+            p.appointmentId?.doctorId?.userId?.fullname
+          ),
+        service:
+          getField(
+            p.metaData.serviceId?.serviceName,
+            p.appointmentId?.serviceId?.serviceName
+          ),
+        servicePrice:
+          getField(
+            p.metaData.serviceId?.price,
+            p.appointmentId?.serviceId?.price
+          ) || 0,
+        clinic:
+          getField(
+            p.metaData.clinicId?.clinic_name,
+            p.appointmentId?.clinicId?.clinic_name
+          ),
         note: p.metaData.note || "N/A",
         file: p.metaData.fileUrl
           ? {
@@ -403,6 +445,8 @@ exports.getAllPayments = async (req, res) => {
             }
           : null,
       },
+      // Để FE biết tình trạng Chung của lịch hẹn (nếu cần)
+      appointmentStatus: p.appointmentId?.status || undefined,
     }));
 
     res.json({
@@ -421,3 +465,4 @@ exports.getAllPayments = async (req, res) => {
     });
   }
 };
+

@@ -12,7 +12,7 @@ const PaymentSchema = new mongoose.Schema(
       required: true
     },
     orderCode: {
-      type: String,
+      type: Number,
       required: true,
       unique: true
     },
