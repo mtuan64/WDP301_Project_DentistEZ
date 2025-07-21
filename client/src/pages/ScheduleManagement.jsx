@@ -518,6 +518,21 @@ const ScheduleManagement = () => {
   const markAppointmentCompleted = async () => {
     if (!appointmentDetails?._id) return;
 
+    const appointmentDate = new Date(appointmentDetails.timeslotId?.date);
+    const currentDate = new Date();
+    // Set time to 00:00:00 for date comparison
+    appointmentDate.setHours(0, 0, 0, 0);
+    currentDate.setHours(0, 0, 0, 0);
+
+    if (appointmentDate > currentDate) {
+      setNotification({
+        message: "Không thể hoàn tất cuộc hẹn trong tương lai!",
+        type: "error",
+      });
+      setShowConfirmCompleteModal(false);
+      return;
+    }
+
     try {
       const response = await axios.put(
         `http://localhost:9999/api/appointments/update-status-note/${appointmentDetails._id}`,
@@ -860,14 +875,26 @@ const ScheduleManagement = () => {
               </div>
             </div>
             <div className="ds-modal-footer">
-              {appointmentDetails.status === "confirmed" && (
-                <button
-                  className="ds-modal-confirm-button"
-                  onClick={() => setShowConfirmCompleteModal(true)}
-                >
-                  Hoàn tất
-                </button>
-              )}
+              {appointmentDetails.status === "confirmed" &&
+                (() => {
+                  const appointmentDate = new Date(
+                    appointmentDetails.timeslotId?.date
+                  );
+                  const currentDate = new Date();
+                  appointmentDate.setHours(0, 0, 0, 0);
+                  currentDate.setHours(0, 0, 0, 0);
+                  if (appointmentDate <= currentDate) {
+                    return (
+                      <button
+                        className="ds-modal-confirm-button"
+                        onClick={() => setShowConfirmCompleteModal(true)}
+                      >
+                        Hoàn tất
+                      </button>
+                    );
+                  }
+                  return null;
+                })()}
               <button className="ds-modal-close-button" onClick={closeModal}>
                 Đóng
               </button>
