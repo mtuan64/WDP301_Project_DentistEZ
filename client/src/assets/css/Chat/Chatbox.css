@@ -459,3 +459,16 @@
     font-size: 24px;
   }
 }
+
+.message-text ol {
+  list-style-type: decimal;
+  margin-left: 20px;
+  margin-top: 10px;
+  padding-left: 20px;
+}
+
+.message-text ol li {
+  margin-bottom: 8px;
+  font-size: 0.875rem;
+  color: #333;
+}
