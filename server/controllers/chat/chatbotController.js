@@ -29,6 +29,7 @@ const chatbotController = {
       // Service Information Intent
       if (
         lowerCaseMessage.includes("các dịch vụ") ||
+        lowerCaseMessage.includes("những dịch vụ") ||
         lowerCaseMessage.includes("service") ||
         lowerCaseMessage.includes("gói dịch vụ") ||
         lowerCaseMessage.includes("trám răng") ||

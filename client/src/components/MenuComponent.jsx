@@ -47,9 +47,9 @@ const menuByRole = (role, userId) => {
       { title: "Change Password", path: "/change-password", icon: <LockOutlined /> },
     ],
     patient: [
-      { title: "Home", path: "/", icon: <HomeOutlined /> },
-      { title: "My Appointment", path: `/myappointment`, icon: <CalendarOutlined /> },
-      { title: "Report Management", path: "/report-management", icon: <FileTextOutlined /> },
+      { title: "Trang chủ", path: "/", icon: <HomeOutlined /> },
+      { title: "Lịch hẹn của tôi", path: `/myappointment`, icon: <CalendarOutlined /> },
+      { title: "Lịch sử giao dịch", path: "/paymenthistory", icon: <FileTextOutlined /> },
       { title: "Schedule", path: "/schedule", icon: <ScheduleOutlined /> },
       { title: "Attendance", path: "/attendance", icon: <UsergroupAddOutlined /> },
       { title: "Mark Report", path: "/mark-report", icon: <EditOutlined /> },

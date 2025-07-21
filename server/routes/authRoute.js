@@ -48,6 +48,7 @@ const {
   getPaymentStatus,
   getPaymentByOrderCode,
   cancelPayment,
+  getPaymentsByPatientId,
 } = require("../controllers/paymentController");
 
 // Configure multer for file uploads (used for profile pictures and blog images)
@@ -142,7 +143,8 @@ router.get('/appointment-by-service', getAppointmentByService);
 //get all payments
 router.get("/admin/payments", getAllPayments);
 
-
+// patient
+router.get("/patient/payments", authPatientMiddleware, getPaymentsByPatientId);
 
 // doctor 
 router.post("/doctor/create-schedule", authDentistMiddleware, createSchedule);
