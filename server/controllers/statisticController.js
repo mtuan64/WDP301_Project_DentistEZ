@@ -1,5 +1,6 @@
 const Appointment = require("../models/Appointment");
 const Payment = require("../models/Payment");
+const ServiceOption = require("../models/ServiceOption");
 
 // Get daily appointment count (last 30 days)
 exports.getAppointmentTrend = async (req, res) => {
@@ -8,7 +9,12 @@ exports.getAppointmentTrend = async (req, res) => {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
     const result = await Appointment.aggregate([
-      { $match: { createdAt: { $gte: thirtyDaysAgo } } },
+      {
+        $match: {
+          createdAt: { $gte: thirtyDaysAgo },
+          status: { $ne: "cancelled" },
+        },
+      },
       {
         $group: {
           _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
@@ -33,14 +39,53 @@ exports.getRevenueTrend = async (req, res) => {
     const result = await Payment.aggregate([
       {
         $match: {
-          createdAt: { $gte: thirtyDaysAgo },
           status: "paid",
+          createdAt: { $gte: thirtyDaysAgo },
+        },
+      },
+      {
+        $lookup: {
+          from: "appointments",
+          localField: "appointmentId",
+          foreignField: "_id",
+          as: "appointment",
+        },
+      },
+      { $unwind: "$appointment" },
+      {
+        $lookup: {
+          from: "serviceoptions",
+          localField: "appointment.serviceOptionId",
+          foreignField: "_id",
+          as: "serviceOption",
+        },
+      },
+      { $unwind: "$serviceOption" },
+      {
+        $addFields: {
+          calculatedRevenue: {
+            $switch: {
+              branches: [
+                {
+                  case: { $in: ["$appointment.status", ["confirmed", "completed"]] },
+                  then: "$amount",
+                },
+                {
+                  case: { $eq: ["$appointment.status", "fully_paid"] },
+                  then: {
+                    $add: ["$amount", { $multiply: ["$serviceOption.price", 0.7] }],
+                  },
+                },
+              ],
+              default: 0,
+            },
+          },
         },
       },
       {
         $group: {
           _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-          totalRevenue: { $sum: "$amount" },
+          totalRevenue: { $sum: "$calculatedRevenue" },
         },
       },
       { $sort: { _id: 1 } },
@@ -48,6 +93,7 @@ exports.getRevenueTrend = async (req, res) => {
 
     res.json(result);
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: err.message });
   }
 };
@@ -101,7 +147,7 @@ exports.getRevenueByMethod = async (req, res) => {
   }
 };
 
-// Revenue breakdown by payment type (deposit vs final, last 30 days)
+// Revenue breakdown by payment type (last 30 days)
 exports.getRevenueByType = async (req, res) => {
   try {
     const thirtyDaysAgo = new Date();
@@ -132,11 +178,57 @@ exports.getRevenueByType = async (req, res) => {
 exports.getDashboardSummaries = async (req, res) => {
   try {
     const appointmentCount = await Appointment.countDocuments();
+
     const revenue = await Payment.aggregate([
       { $match: { status: "paid" } },
-      { $group: { _id: null, total: { $sum: "$amount" } } },
+      {
+        $lookup: {
+          from: "appointments",
+          localField: "appointmentId",
+          foreignField: "_id",
+          as: "appointment",
+        },
+      },
+      { $unwind: "$appointment" },
+      {
+        $lookup: {
+          from: "serviceoptions",
+          localField: "appointment.serviceOptionId",
+          foreignField: "_id",
+          as: "serviceOption",
+        },
+      },
+      { $unwind: "$serviceOption" },
+      {
+        $addFields: {
+          calculatedRevenue: {
+            $switch: {
+              branches: [
+                {
+                  case: { $in: ["$appointment.status", [ "confirmed", "completed"]] },
+                  then: "$amount",
+                },
+                {
+                  case: { $eq: ["$appointment.status", "fully_paid"] },
+                  then: {
+                    $add: ["$amount", { $multiply: ["$serviceOption.price", 0.7] }],
+                  },
+                },
+              ],
+              default: 0,
+            },
+          },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: "$calculatedRevenue" },
+        },
+      },
     ]);
-    const completedAppointments = await Appointment.countDocuments({ status: "completed" });
+
+    const completedAppointments = await Appointment.countDocuments({ status: ["completed", "fully_paid"] });
     const fullyPaidAppointments = await Appointment.countDocuments({ status: "fully_paid" });
 
     res.json({
@@ -329,4 +421,3 @@ exports.getAllPayments = async (req, res) => {
     });
   }
 };
-

@@ -21,6 +21,8 @@ const AppointmentPage = () => {
   const [fileUrl, setFileUrl] = useState('');
   const [fileType, setFileType] = useState('');
   const [file, setFile] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
   const navigate = useNavigate();
 
   const user = JSON.parse(localStorage.getItem('user')) || {};
@@ -51,7 +53,6 @@ const AppointmentPage = () => {
       console.error('Lỗi khi lấy danh sách dịch vụ:', err);
     } finally {
       setLoading(false);
- Ascendancy
     }
   };
 
@@ -82,9 +83,7 @@ const AppointmentPage = () => {
       setAvailableTimeslots([]);
       return;
     }
-    let filteredSlots = serviceDetail.timeslots ||推荐
-
-System: [];
+    let filteredSlots = serviceDetail.timeslots || [];
     if (date) {
       filteredSlots = filteredSlots.filter(
         (slot) =>
@@ -115,12 +114,15 @@ System: [];
       const data = await response.json();
       if (response.ok) {
         setFileUrl(data.fileUrl);
-        alert('Upload thành công');
+        setModalMessage('Upload thành công');
+        setShowModal(true);
       } else {
-        alert('Upload thất bại: ' + data.message);
+        setModalMessage('Upload thất bại: ' + data.message);
+        setShowModal(true);
       }
     } catch (error) {
-      alert('Lỗi kết nối server');
+      setModalMessage('Lỗi kết nối server');
+      setShowModal(true);
     }
   };
 
@@ -130,12 +132,17 @@ System: [];
 
   const handleBooking = () => {
     if (!isUserProfileComplete()) {
-      alert('Bạn cần cập nhật đầy đủ hồ sơ cá nhân trước khi đặt lịch!');
-      navigate('/myprofile');
+      setModalMessage('Bạn cần đăng nhập và cập nhật đầy đủ hồ sơ cá nhân trước khi đặt lịch!');
+      setShowModal(true);
+      setTimeout(() => {
+        setShowModal(false);
+        navigate('/myprofile');
+      }, 3000); 
       return;
     }
     if (!selectedService || !selectedOptionId || !selectedDate || !selectedTimeSlot) {
-      alert('Vui lòng chọn đầy đủ thông tin!');
+      setModalMessage('Vui lòng chọn đầy đủ thông tin!');
+      setShowModal(true);
       return;
     }
     setShowBookingModal(true);
@@ -143,7 +150,8 @@ System: [];
 
   const handlePayment = async () => {
     if (!selectedService || !selectedOptionId || !selectedDate || !selectedTimeSlot) {
-      alert('Vui lòng chọn đầy đủ thông tin!');
+      setModalMessage('Vui lòng chọn đầy đủ thông tin!');
+      setShowModal(true);
       return;
     }
     const currentOption = serviceDetail?.options?.find((opt) => String(opt._id) === String(selectedOptionId));
@@ -170,15 +178,18 @@ System: [];
       });
       const data = await res.json();
       if (res.ok) {
-        alert(data.message || 'Tạo thanh toán thành công! Đang chuyển sang trang thanh toán...');
+        setModalMessage(data.message || 'Tạo thanh toán thành công! Đang chuyển sang trang thanh toán...');
+        setShowModal(true);
         if (data.payment && data.payment.payUrl) {
           window.location.href = data.payment.payUrl;
         }
       } else {
-        alert(data.message || 'Có lỗi xảy ra!');
+        setModalMessage(data.message || 'Có lỗi xảy ra!');
+        setShowModal(true);
       }
     } catch (err) {
-      alert('Có lỗi kết nối server!');
+      setModalMessage('Có lỗi kết nối server!');
+      setShowModal(true);
     }
   };
 
@@ -228,7 +239,7 @@ System: [];
       padding: '48px 60px',
       boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
       marginBottom: '38px',
-      borderRadius: 0,
+      borderRadius: 15,
     },
     stepTitle: {
       fontSize: '28px',
@@ -238,8 +249,28 @@ System: [];
     },
     dateTimeSection: {
       display: 'grid',
-      gridTemplateColumns: '1fr 1fr',
-      gap: '18px',
+      gridTemplateColumns: '1fr',
+      gap: '20px',
+      padding: '30px',
+      backgroundColor: '#fff',
+      borderRadius: 15,
+      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+      margin: '20px 0',
+    },
+    optionLabel: {
+      fontSize: '1.1rem',
+      fontWeight: 600,
+      color: '#333',
+      marginBottom: '10px',
+    },
+    optionSelect: {
+      width: '100%',
+      padding: '15px',
+      fontSize: '1rem',
+      border: '2px solid #ddd',
+      borderRadius: 10,
+      backgroundColor: '#f8f9fa',
+      transition: 'border-color 0.3s ease',
     },
     timeSlots: {
       display: 'grid',
@@ -320,12 +351,49 @@ System: [];
       width: '100vw',
       height: '100vh',
       background: 'rgba(0,0,0,0.3)',
-      zIndex: 9999,
-      display: 'flex',
+      zIndex: 10000,
+      display: showModal ? 'flex' : 'none',
       alignItems: 'center',
       justifyContent: 'center',
     },
     modalContent: {
+      background: '#fff',
+      borderRadius: 16,
+      width: '400px',
+      maxWidth: '90vw',
+      padding: '20px',
+      textAlign: 'center',
+      boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+    },
+    modalMessage: {
+      fontSize: '16px',
+      color: '#333',
+      marginBottom: '20px',
+    },
+    modalButton: {
+      padding: '10px 20px',
+      border: 'none',
+      backgroundColor: '#007bff',
+      color: 'white',
+      borderRadius: '8px',
+      fontSize: '16px',
+      fontWeight: '700',
+      cursor: 'pointer',
+      transition: 'all 0.2s',
+    },
+    modalBooking: {
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      width: '100vw',
+      height: '100vh',
+      background: 'rgba(0,0,0,0.3)',
+      zIndex: 9999,
+      display: showBookingModal ? 'flex' : 'none',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    modalBookingContent: {
       background: '#fff',
       borderRadius: 16,
       width: 900,
@@ -666,8 +734,8 @@ System: [];
           <Col lg={9}>{renderStepContent()}</Col>
         </Row>
         {showBookingModal && (
-          <div style={styles.modal} onClick={() => setShowBookingModal(false)}>
-            <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+          <div style={styles.modalBooking} onClick={() => setShowBookingModal(false)}>
+            <div style={styles.modalBookingContent} onClick={(e) => e.stopPropagation()}>
               <div style={styles.modalHeader}>
                 <span style={styles.modalTitle}>Đặt Lịch Khám Bệnh</span>
               </div>
@@ -699,7 +767,7 @@ System: [];
                     <span style={{ fontWeight: 600 }}>Bác sĩ: </span>
                     <span>{serviceDetail?.doctorId?.userId?.fullname || '---'}</span>
                   </div>
-                  <div style={{ marginBottom: 7 }}>
+                  <div style={{ marginBottom: 7}}>
                     <span style={{ fontWeight: 600 }}>Phòng khám: </span>
                     <span>{serviceDetail?.clinicId?.clinic_name || '---'}</span>
                   </div>
@@ -822,6 +890,14 @@ System: [];
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+        {showModal && (
+          <div style={styles.modal} onClick={() => setShowModal(false)}>
+            <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+              <div style={styles.modalMessage}>{modalMessage}</div>
+              <button style={styles.modalButton} onClick={() => setShowModal(false)}>OK</button>
             </div>
           </div>
         )}

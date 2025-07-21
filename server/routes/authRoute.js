@@ -11,6 +11,7 @@ const {
   editAppointment,
   deleteAppointment,
   getAppointmentByTimeslot,
+  updateAppointmentStatusAndNote,
 } = require("../controllers/appointmentController");
 const {
   getUserProfile,
@@ -40,7 +41,7 @@ const { createAcountDoctor, getAllClinic, createAcountStaff, getAllPatient, getA
 const { getDefaultResultOrder } = require("dns");
 const chatbotController = require("../controllers/chat/chatbotController");
 const chatboxController = require("../controllers/chat/chatboxController");
-const { requestPasswordReset, verifyOTP, resetPassword } = require("../controllers/otpController");
+const { requestPasswordReset, resetPassword, verifyEmailOTP, verifyPassOTP } = require("../controllers/otpController");
 
 const {
   createPayment,
@@ -89,6 +90,7 @@ const uploadMulterMemory = multer({
 // auth 
 router.post("/register", registerUser);
 router.post("/login", loginUser);
+router.post("/verify-email-otp", verifyEmailOTP);
 router.get("/view/service", getAllService);
 router.get("/view-detail/service/:id", getServiceDetail);
 router.post("/changepass", authMiddleware, changePassword);
@@ -146,11 +148,16 @@ router.get("/admin/payments", getAllPayments);
 router.post("/doctor/create-schedule", authDentistMiddleware, createSchedule);
 router.get("/doctor/getScheduleByWeek", authDentistMiddleware, getScheduleByWeek);
 router.get('/appointments/timeslot/:timeslotId', authDentistMiddleware, getAppointmentByTimeslot);
+router.put(
+  "/appointments/update-status-note/:appointmentId",
+  authDentistMiddleware,
+  updateAppointmentStatusAndNote
+);
 
 // Authentication
 router.post("/logout", authMiddleware, logoutUser);
 router.post("/reset-pass", requestPasswordReset);
-router.post("/verify", verifyOTP);
+router.post("/verify-pass", verifyPassOTP);
 router.post("/confirm-reset", resetPassword);
 router.post("/gg-login", googleLogin);
 router.put("/changepass", authMiddleware, changePassword);

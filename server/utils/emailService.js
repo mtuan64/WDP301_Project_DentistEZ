@@ -8,23 +8,30 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-transporter.verify(function(error, success) {
+transporter.verify(function (error, success) {
   if (error) {
-    console.log(error);
+    console.log("Email transporter error:", error);
   } else {
-    console.log('Server is ready to take our messages');
+    console.log("Email transporter is ready.");
   }
 });
 
-
-const sendEmail = async (to, subject, text) => {
+/**
+ * Gửi email cho người dùng
+ * @param {string} to - Địa chỉ email người nhận
+ * @param {string} subject - Tiêu đề email
+ * @param {string} text - Nội dung text thuần (fallback)
+ * @param {string} html - Nội dung HTML định dạng (tuỳ chọn)
+ */
+const sendEmail = async (to, subject, text, html = null) => {
   try {
     console.log(`Sending email to ${to}: ${subject}`);
     await transporter.sendMail({
-      from: process.env.EMAIL_USER,
+      from: `"DentistEZ" <${process.env.EMAIL_USER}>`,
       to,
       subject,
       text,
+      html,
     });
     console.log("Email sent successfully.");
   } catch (error) {

@@ -3,14 +3,15 @@ import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import { useAuth } from "../context/authContext";
 import "../assets/css/Login.css";
-
+import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
+import "../assets/css/AuthPages.css";
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
-
+  const [showPassword, setShowPassword] = useState(false);
   // Google Login
   useEffect(() => {
     if (window.google) {
@@ -134,18 +135,28 @@ const LoginPage = () => {
               />
             </div>
             <div className="formGroup">
-              <label htmlFor="password" className="label">
-                Mật Khẩu
-              </label>
-              <input
-                type="password"
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="input"
-                required
-                disabled={isLoading}
-              />
+              <div className="formGroup">
+                <label htmlFor="password" className="label">
+                  Mật Khẩu
+                </label>
+                <div className="passwordWrapper">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    id="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="input"
+                    required
+                    disabled={isLoading}
+                  />
+                  <span
+                    className="passwordToggleIcon"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <AiFillEyeInvisible /> : <AiFillEye />}
+                  </span>
+                </div>
+              </div>
             </div>
 
             <div className="forgotPasswordLink">

@@ -12,7 +12,7 @@ const generateOTP = () => {
 
 const sendOTPEmail = async (email, otp) => {
   const subject = "Password Reset OTP";
-  const text = `Your OTP for password reset is ${otp}. It will expire in 3 minutes.`;
+  const text = `Your OTP for password reset is ${otp}. It will expire in 5 minutes.`;
   await sendEmail(email, subject, text);
 };
 
@@ -34,15 +34,13 @@ const requestPasswordReset = async (req, res) => {
 
     await sendOTPEmail(email, otp);
 
-    res
-      .status(200)
-      .json({ message: "OTP sent to your email" });
+    res.status(200).json({ message: "OTP sent to your email" });
   } catch (error) {
     res.status(500).json({ message: "Server error" });
   }
 };
 
-const verifyOTP = async (req, res) => {
+const verifyPassOTP = async (req, res) => {
   const { email, otp } = req.body;
   try {
     const otpRecord = await Otp.findOne({
@@ -69,7 +67,7 @@ const resetPassword = async (req, res) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     console.log("Decoded token:", decoded);
-    
+
     const otpRecord = await Otp.findById(decoded.userId);
     if (!otpRecord) {
       return res.status(404).json({ message: "OTP record not found" });
@@ -92,9 +90,40 @@ const resetPassword = async (req, res) => {
     res.status(400).json({ message: "Invalid token" });
   }
 };
+const verifyEmailOTP = async (req, res) => {
+  const { email, otp } = req.body;
+  try {
+    const otpRecord = await Otp.findOne({
+      email,
+      otp,
+      purpose: "verify-email",
+    });
+
+    if (!otpRecord || otpRecord.expireAt < Date.now()) {
+      return res
+        .status(400)
+        .json({ message: "Mã OTP không hợp lệ hoặc đã hết hạn." });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "Không tìm thấy người dùng." });
+    }
+
+    user.isVerified = true;
+    await user.save();
+    await Otp.deleteOne({ _id: otpRecord._id });
+
+    res.status(200).json({ message: "Xác thực email thành công!" });
+  } catch (err) {
+    res.status(500).json({ message: "Lỗi server" });
+  }
+};
 
 module.exports = {
+  generateOTP,
   requestPasswordReset,
-  verifyOTP,
+  verifyPassOTP,
   resetPassword,
+  verifyEmailOTP,
 };
