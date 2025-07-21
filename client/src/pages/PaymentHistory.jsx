@@ -530,8 +530,7 @@ const PaymentHistory = () => {
               )}
 
               <div className="ph-modal-grid">
-                <div>
-                  stalls <label className="ph-modal-label">Ngày tạo</label>
+                <div><label className="ph-modal-label">Ngày tạo</label>
                   <p className="ph-modal-text">
                     {formatDate(selectedPayment.createdAt)}
                   </p>
