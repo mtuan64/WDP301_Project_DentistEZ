@@ -67,7 +67,7 @@ exports.getRevenueTrend = async (req, res) => {
             $switch: {
               branches: [
                 {
-                  case: { $in: ["$appointment.status", ["cancelled","confirmed", "completed"]] },
+                  case: { $in: ["$appointment.status", ["confirmed", "completed"]] },
                   then: "$amount",
                 },
                 {
@@ -205,7 +205,7 @@ exports.getDashboardSummaries = async (req, res) => {
             $switch: {
               branches: [
                 {
-                  case: { $in: ["$appointment.status", ["cancelled", "confirmed", "completed"]] },
+                  case: { $in: ["$appointment.status", [ "confirmed", "completed"]] },
                   then: "$amount",
                 },
                 {

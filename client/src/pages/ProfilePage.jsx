@@ -7,7 +7,6 @@ import "../assets/css/ProfilePage.css";
 const ProfilePage = () => {
   const { user, login } = useAuth();
   const navigate = useNavigate();
-
   const [formData, setFormData] = useState({
     username: "",
     fullname: "",
@@ -30,7 +29,6 @@ const ProfilePage = () => {
       navigate("/login");
       return;
     }
-
     setFormData({
       username: user.username || "",
       fullname: user.fullname || "",
@@ -63,7 +61,7 @@ const ProfilePage = () => {
 
   const validateFullname = (name) => {
     return (
-      name.length >= 2 && name.length <= 50 && /^[a-zA-Z\sÀ-ỹ]+$/.test(name)
+      name.length >= 2 && name.length <= 50 && /^[a-zA-Z0-9\sÀ-ỹ]+$/.test(name)
     );
   };
 
@@ -106,13 +104,11 @@ const ProfilePage = () => {
     setLoading(true);
     setError("");
     setSuccess("");
-
     try {
       const token = user?.token || localStorage.getItem("token");
       if (!token) {
         throw new Error("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.");
       }
-
       const userId =
         user?._id ||
         user?.id ||
@@ -123,36 +119,31 @@ const ProfilePage = () => {
           "Không tìm thấy ID người dùng. Vui lòng đăng nhập lại."
         );
       }
-
       if (!validateUsername(formData.username)) {
         throw new Error(
           "Tên người dùng phải từ 3-30 ký tự và chỉ chứa chữ cái, số hoặc dấu gạch dưới."
         );
       }
-
       if (!validateFullname(formData.fullname)) {
-        throw new Error("Họ tên phải từ 2-50 ký tự và chỉ chứa chữ cái.");
+        throw new Error(
+          "Họ tên phải từ 2-50 ký tự và chỉ chứa chữ cái hoặc số."
+        );
       }
-
       if (formData.phone && !validatePhone(formData.phone)) {
         throw new Error(
           "Số điện thoại phải có đúng 10 chữ số và bắt đầu bằng 03, 05, 07, 08 hoặc 09."
         );
       }
-
       if (formData.dateOfBirth && !validateDateOfBirth(formData.dateOfBirth)) {
         throw new Error("Ngày sinh phải từ năm 1900 đến hiện tại.");
       }
-
       if (formData.address && !validateAddress(formData.address)) {
         throw new Error("Địa chỉ không được vượt quá 200 ký tự.");
       }
-
       const validGenders = ["male", "female", "other", ""];
       if (formData.gender && !validGenders.includes(formData.gender)) {
         throw new Error("Giới tính không hợp lệ.");
       }
-
       const updateData = {
         username: formData.username,
         fullname: formData.fullname,
@@ -163,16 +154,13 @@ const ProfilePage = () => {
           : undefined,
         gender: formData.gender || undefined,
       };
-
       Object.keys(updateData).forEach(
         (key) => updateData[key] === undefined && delete updateData[key]
       );
-
       let updatedProfilePicture = profilePicture;
       if (file) {
         const uploadData = new FormData();
         uploadData.append("profilePicture", file);
-
         const uploadResponse = await axios.post(
           "http://localhost:9999/api/user/upload-picture-profile",
           uploadData,
@@ -183,9 +171,7 @@ const ProfilePage = () => {
             },
           }
         );
-
         console.log("Upload API response:", uploadResponse.data); // Debug
-
         if (uploadResponse.data.status !== "SUCCESS") {
           throw new Error(
             uploadResponse.data.message || "Lỗi khi upload ảnh đại diện."
@@ -193,7 +179,6 @@ const ProfilePage = () => {
         }
         updatedProfilePicture = uploadResponse.data.data.profilePicture;
       }
-
       const profileResponse = await axios.put(
         "http://localhost:9999/api/user/profile",
         updateData,
@@ -204,15 +189,12 @@ const ProfilePage = () => {
           },
         }
       );
-
       console.log("Profile API response:", profileResponse.data); // Debug
-
       if (profileResponse.data.status !== "SUCCESS") {
         throw new Error(
           profileResponse.data.message || "Lỗi khi cập nhật hồ sơ."
         );
       }
-
       const updatedUser = {
         ...user,
         ...profileResponse.data.data,
@@ -222,7 +204,6 @@ const ProfilePage = () => {
           updatedProfilePicture || profileResponse.data.data.profilePicture,
         token,
       };
-
       localStorage.setItem("user", JSON.stringify(updatedUser));
       login(updatedUser);
       setSuccess("Hồ sơ đã được cập nhật thành công!");
@@ -256,10 +237,8 @@ const ProfilePage = () => {
       <div className="row justify-content-center">
         <div className="col-lg-8">
           <h2 className="text-primary mb-4">Hồ Sơ Cá Nhân</h2>
-
           {error && <div className="alert alert-danger">{error}</div>}
           {success && <div className="alert alert-success">{success}</div>}
-
           <div className="text-center mb-4">
             <img
               src={profilePicture || "https://via.placeholder.com/150"}
@@ -280,7 +259,6 @@ const ProfilePage = () => {
               </label>
             </div>
           </div>
-
           <form onSubmit={handleSubmit}>
             <div className="row">
               <div className="col-md-6 mb-3">
@@ -299,7 +277,6 @@ const ProfilePage = () => {
                   title="Tên người dùng phải từ 3-30 ký tự và chỉ chứa chữ cái, số hoặc dấu gạch dưới."
                 />
               </div>
-
               <div className="col-md-6 mb-3">
                 <label htmlFor="fullname" className="form-label">
                   Họ và Tên
@@ -312,11 +289,10 @@ const ProfilePage = () => {
                   onChange={handleInputChange}
                   className="form-control"
                   required
-                  pattern="^[a-zA-Z\sÀ-ỹ]{2,50}$"
-                  title="Họ tên phải từ 2-50 ký tự và chỉ chứa chữ cái."
+                  pattern="^[a-zA-Z0-9\sÀ-ỹ]{2,50}$"
+                  title="Họ tên phải từ 2-50 ký tự và chỉ chứa chữ cái hoặc số."
                 />
               </div>
-
               <div className="col-md-6 mb-3">
                 <label htmlFor="email" className="form-label">
                   Email
@@ -330,7 +306,6 @@ const ProfilePage = () => {
                   disabled
                 />
               </div>
-
               <div className="col-md-6 mb-3">
                 <label htmlFor="phone" className="form-label">
                   Số Điện Thoại
@@ -347,7 +322,6 @@ const ProfilePage = () => {
                   title="Số điện thoại phải có 10 chữ số, bắt đầu bằng 03, 05, 07, 08 hoặc 09."
                 />
               </div>
-
               <div className="col-md-6 mb-3">
                 <label htmlFor="address" className="form-label">
                   Địa Chỉ
@@ -363,7 +337,6 @@ const ProfilePage = () => {
                   title="Địa chỉ không được vượt quá 200 ký tự."
                 />
               </div>
-
               <div className="col-md-6 mb-3">
                 <label htmlFor="dateOfBirth" className="form-label">
                   Ngày Sinh
@@ -380,7 +353,6 @@ const ProfilePage = () => {
                   title="Ngày sinh phải từ năm 1900 đến hiện tại."
                 />
               </div>
-
               <div className="col-md-6 mb-3">
                 <label htmlFor="gender" className="form-label">
                   Giới Tính
@@ -399,7 +371,6 @@ const ProfilePage = () => {
                 </select>
               </div>
             </div>
-
             <button
               type="submit"
               className="btn btn-primary mt-3"
@@ -407,7 +378,6 @@ const ProfilePage = () => {
             >
               {loading ? "Đang Lưu..." : "Lưu Thay Đổi"}
             </button>
-
             <button
               type="button"
               className="btn btn-warning mt-3 ms-3"

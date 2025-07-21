@@ -13,7 +13,7 @@ const VerifyOtpPage = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const response = await fetch("http://localhost:9999/api/verify", {
+      const response = await fetch("http://localhost:9999/api/verify-pass", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, otp }),
