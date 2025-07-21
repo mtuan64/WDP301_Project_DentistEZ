@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Container, Row, Col } from "react-bootstrap";
 import { Link } from "react-router-dom";
+import axios from "axios";
 import {
   HomeOutlined,
   InfoCircleOutlined,
@@ -17,6 +18,26 @@ import {
 } from "@ant-design/icons";
 
 const FooterComponent = () => {
+  // State for services and loading
+  const [services, setServices] = useState([]);
+  const [loadingServices, setLoadingServices] = useState(true);
+
+  // Fetch Services
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const response = await axios.get("http://localhost:9999/api/view/service");
+        setServices(response.data.data || response.data);
+      } catch (error) {
+        console.error("Failed to fetch services:", error);
+      } finally {
+        setLoadingServices(false);
+      }
+    };
+
+    fetchServices();
+  }, []);
+
   return (
     <footer className="bg-dark text-light pt-5">
       <Container>
@@ -64,23 +85,24 @@ const FooterComponent = () => {
           </Col>
           <Col lg={3} md={6} className="mb-4" style={{ paddingRight: "20px", paddingLeft: "20px" }}>
             <h5 className="text-white mb-4">Dịch Vụ Của Chúng Tôi</h5>
-            <ul className="list-unstyled">
-              <li>
-                <Link to="/service" className="text-light">Nha Khoa Tổng Quát</Link>
-              </li>
-              <li>
-                <Link to="/service" className="text-light">Nha Khoa Thẩm Mỹ</Link>
-              </li>
-              <li>
-                <Link to="/service" className="text-light">Chỉnh Nha</Link>
-              </li>
-              <li>
-                <Link to="/service" className="text-light">Cấy Ghép Răng</Link>
-              </li>
-              <li>
-                <Link to="/service" className="text-light">Tẩy Trắng Răng</Link>
-              </li>
-            </ul>
+            {loadingServices ? (
+              <p className="text-light">Loading services...</p>
+            ) : services.length > 0 ? (
+              <ul className="list-unstyled">
+                {services.map((service) => (
+                  <li key={service._id || service.id}>
+                    <Link
+                      to={`/service-detail/${service._id || service.id}`}
+                      className="text-light"
+                    >
+                      {service.serviceName || service.title}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-light">No services available.</p>
+            )}
           </Col>
           <Col lg={3} md={6} className="mb-4" style={{ paddingRight: "20px", paddingLeft: "20px" }}>
             <h5 className="text-white mb-4">Liên Hệ Với Chúng Tôi</h5>

@@ -11,6 +11,7 @@ const {
   editAppointment,
   deleteAppointment,
   getAppointmentByTimeslot,
+  updateAppointmentStatusAndNote,
 } = require("../controllers/appointmentController");
 const {
   getUserProfile,
@@ -146,6 +147,11 @@ router.get("/admin/payments", getAllPayments);
 router.post("/doctor/create-schedule", authDentistMiddleware, createSchedule);
 router.get("/doctor/getScheduleByWeek", authDentistMiddleware, getScheduleByWeek);
 router.get('/appointments/timeslot/:timeslotId', authDentistMiddleware, getAppointmentByTimeslot);
+router.put(
+  "/appointments/update-status-note/:appointmentId",
+  authDentistMiddleware,
+  updateAppointmentStatusAndNote
+);
 
 // Authentication
 router.post("/logout", authMiddleware, logoutUser);

@@ -42,6 +42,11 @@ const PatientAppointmentPage = () => {
     ),
   ];
 
+  const [isCancelModalVisible, setIsCancelModalVisible] = useState(false);
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
+
+
   const fetchAppointments = async () => {
     setLoading(true);
     try {
@@ -72,6 +77,11 @@ const PatientAppointmentPage = () => {
     setIsModalVisible(true);
   };
 
+  const showEditModal = (appointment) => {
+    setSelectedAppointment(appointment);
+    setIsEditModalVisible(true);
+  };
+
   const handleCancelAppointment = async () => {
     if (!refundAccount) {
       message.warning("Vui lòng nhập số tài khoản ngân hàng.");
@@ -93,6 +103,7 @@ const PatientAppointmentPage = () => {
       message.error(error.response?.data?.message || "Hủy lịch thất bại.");
     }
   };
+
 
   // Hàm chọn tái khám
   const handleReExam = async (appointment) => {
@@ -127,6 +138,17 @@ const PatientAppointmentPage = () => {
       ),
     }));
 
+
+
+  const handleUpdateAppointment = (updatedAppointment) => {
+    setAppointments((prev) =>
+      prev.map((appt) =>
+        appt._id === updatedAppointment._id ? updatedAppointment : appt
+      )
+    );
+    setIsEditModalVisible(false);
+    setSelectedAppointment(null);
+  };
 
 
   const columns = [
@@ -251,8 +273,9 @@ const PatientAppointmentPage = () => {
     {
       title: "Hành động",
       render: (text, record) => {
-        const canCancel =
+        const canCancelOrChange =
           dayjs(record.timeslotId.date).diff(dayjs(), "hour") >= 8;
+
 
         const canReExam =
           record.status === "completed" || record.status === "fully_paid";
@@ -279,6 +302,25 @@ const PatientAppointmentPage = () => {
                 Tái khám
               </Button>
             )}
+
+        return (
+          <div className="flex space-x-2">
+            <Button
+              type="primary"
+              danger
+              onClick={() => showCancelModal(record._id)}
+              disabled={!canCancelOrChange}
+            >
+              Huỷ lịch
+            </Button>
+            <Button
+              type="primary"
+              onClick={() => showEditModal(record)}
+              disabled={!canCancelOrChange}
+            >
+              Đổi lịch
+            </Button>
+
           </div>
         );
       },
@@ -326,6 +368,7 @@ const PatientAppointmentPage = () => {
           onChange={(e) => setRefundAccount(e.target.value)}
         />
       </Modal>
+
 
       <Modal
   title={
