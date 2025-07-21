@@ -43,7 +43,7 @@ const menuByRole = (role, userId) => {
     ],
     staff: [
       { title: "Home", path: "/", icon: <HomeOutlined /> },
-      { title: "Addresses", path: "/addresses", icon: <UserOutlined /> },
+      { title: "Patient Appointment Management ", path: "/staffmanager/patientapp", icon: <UserOutlined /> },
       { title: "Change Password", path: "/change-password", icon: <LockOutlined /> },
     ],
     patient: [
