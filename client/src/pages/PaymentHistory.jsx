@@ -21,6 +21,8 @@ const PaymentHistory = () => {
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   // Fetch payment history from API
   useEffect(() => {
@@ -54,7 +56,7 @@ const PaymentHistory = () => {
     fetchPayments();
   }, []);
 
-  // Filter payments based on search term, status, and date range
+  // Filter payments and reset to first page when filters change
   useEffect(() => {
     let filtered = payments;
 
@@ -99,7 +101,43 @@ const PaymentHistory = () => {
     }
 
     setFilteredPayments(filtered);
+    setCurrentPage(1); // Reset to first page when filters change
   }, [payments, searchTerm, statusFilter, dateRange]);
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredPayments.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentPayments = filteredPayments.slice(startIndex, endIndex);
+
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  const handleFirstPage = () => setCurrentPage(1);
+  const handleLastPage = () => setCurrentPage(totalPages);
+  const handlePrevPage = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
+  const handleNextPage = () =>
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+
+  // Generate page numbers (limit to 5 buttons for usability)
+  const getPageNumbers = () => {
+    const maxButtons = 5;
+    const half = Math.floor(maxButtons / 2);
+    let startPage = Math.max(1, currentPage - half);
+    let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+
+    if (endPage - startPage + 1 < maxButtons) {
+      startPage = Math.max(1, endPage - maxButtons + 1);
+    }
+
+    return Array.from(
+      { length: endPage - startPage + 1 },
+      (_, i) => startPage + i
+    );
+  };
 
   // Format currency for display
   const formatCurrency = (amount) => {
@@ -273,75 +311,138 @@ const PaymentHistory = () => {
               <p>Thử thay đổi bộ lọc để xem thêm kết quả</p>
             </div>
           ) : (
-            <div className="ph-table-container">
-              <table className="ph-payment-table">
-                <thead>
-                  <tr>
-                    <th>Giao dịch</th>
-                    <th>Số tiền</th>
-                    <th>Trạng thái</th>
-                    <th>Ngày tạo</th>
-                    <th>Thao tác</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredPayments.map((payment) => (
-                    <tr key={payment._id} className="ph-payment-row">
-                      <td>
-                        <div>
-                          <div className="ph-description">
-                            {payment.description || "N/A"}
-                          </div>
-                          <div className="ph-subtext">
-                            Mã: #{payment.orderCode || "N/A"}
-                          </div>
-                          <div className="ph-subtext">
-                            BS:{" "}
-                            {payment.metaData?.doctorId?.userId?.fullname ||
-                              "N/A"}
-                          </div>
-                        </div>
-                      </td>
-                      <td>
-                        <div className="ph-amount">
-                          {formatCurrency(payment.amount)}
-                        </div>
-                        <div className="ph-payment-method">
-                          {getPaymentMethodIcon(
-                            payment.paymentMethod || "online"
-                          )}
-                          <span className="ph-method-text">
-                            {payment.paymentMethod === "online"
-                              ? "Online"
-                              : "Tiền mặt"}
-                          </span>
-                        </div>
-                      </td>
-                      <td>
-                        <div className="ph-status">
-                          {getStatusIcon(payment.status)}
-                          <span className="ph-status-text">
-                            {getStatusText(payment.status)}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="ph-date">
-                        {formatDate(payment.createdAt)}
-                      </td>
-                      <td>
-                        <button
-                          onClick={() => setSelectedPayment(payment)}
-                          className="ph-detail-button"
-                          title="Xem chi tiết"
-                        >
-                          <Eye size={24} />
-                        </button>
-                      </td>
+            <>
+              <div className="ph-table-container">
+                <table className="ph-payment-table">
+                  <thead>
+                    <tr>
+                      <th>Giao dịch</th>
+                      <th>Số tiền</th>
+                      <th>Trạng thái</th>
+                      <th>Ngày tạo</th>
+                      <th>Thao tác</th>
                     </tr>
+                  </thead>
+                  <tbody>
+                    {currentPayments.map((payment) => (
+                      <tr key={payment._id} className="ph-payment-row">
+                        <td>
+                          <div>
+                            <div className="ph-description">
+                              {payment.description || "N/A"}
+                            </div>
+                            <div className="ph-subtext">
+                              Mã: #{payment.orderCode || "N/A"}
+                            </div>
+                            <div className="ph-subtext">
+                              BS:{" "}
+                              {payment.metaData?.doctorId?.userId?.fullname ||
+                                "N/A"}
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <div className="ph-amount">
+                            {formatCurrency(payment.amount)}
+                          </div>
+                          <div className="ph-payment-method">
+                            {getPaymentMethodIcon(
+                              payment.paymentMethod || "online"
+                            )}
+                            <span className="ph-method-text">
+                              {payment.paymentMethod === "online"
+                                ? "Online"
+                                : "Tiền mặt"}
+                            </span>
+                          </div>
+                        </td>
+                        <td>
+                          <div className="ph-status">
+                            {getStatusIcon(payment.status)}
+                            <span className="ph-status-text">
+                              {getStatusText(payment.status)}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="ph-date">
+                          {formatDate(payment.createdAt)}
+                        </td>
+                        <td>
+                          <button
+                            onClick={() => setSelectedPayment(payment)}
+                            className="ph-detail-button"
+                            title="Xem chi tiết"
+                          >
+                            <Eye size={24} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {totalPages > 1 && (
+                <div className="ds-pagination">
+                  <button
+                    className={`ds-pagination-button ${
+                      currentPage === 1 ? "ds-pagination-button-disabled" : ""
+                    }`}
+                    onClick={handleFirstPage}
+                    disabled={currentPage === 1}
+                    title="Trang đầu"
+                  >
+                    «
+                  </button>
+                  <button
+                    className={`ds-pagination-button ${
+                      currentPage === 1 ? "ds-pagination-button-disabled" : ""
+                    }`}
+                    onClick={handlePrevPage}
+                    disabled={currentPage === 1}
+                    title="Trang trước"
+                  >
+                    ‹
+                  </button>
+                  {getPageNumbers().map((page) => (
+                    <button
+                      key={page}
+                      className={`ds-pagination-button ${
+                        currentPage === page
+                          ? "ds-pagination-button-active"
+                          : ""
+                      }`}
+                      onClick={() => handlePageChange(page)}
+                    >
+                      {page}
+                    </button>
                   ))}
-                </tbody>
-              </table>
-            </div>
+                  <button
+                    className={`ds-pagination-button ${
+                      currentPage === totalPages
+                        ? "ds-pagination-button-disabled"
+                        : ""
+                    }`}
+                    onClick={handleNextPage}
+                    disabled={currentPage === totalPages}
+                    title="Trang sau"
+                  >
+                    ›
+                  </button>
+                  <button
+                    className={`ds-pagination-button ${
+                      currentPage === totalPages
+                        ? "ds-pagination-button-disabled"
+                        : ""
+                    }`}
+                    onClick={handleLastPage}
+                    disabled={currentPage === totalPages}
+                    title="Trang cuối"
+                  >
+                    »
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -430,7 +531,7 @@ const PaymentHistory = () => {
 
               <div className="ph-modal-grid">
                 <div>
-                  <label className="ph-modal-label">Ngày tạo</label>
+                  stalls <label className="ph-modal-label">Ngày tạo</label>
                   <p className="ph-modal-text">
                     {formatDate(selectedPayment.createdAt)}
                   </p>

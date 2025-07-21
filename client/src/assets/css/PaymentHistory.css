@@ -54,8 +54,8 @@ body {
   padding: 0.5rem 1rem;
   background: #2563eb;
   color: #ffffff;
-  border-radius: 0.5rem;
   border: none;
+  border-radius: 0.5rem;
   transition: background 0.2s, transform 0.1s;
 }
 
@@ -500,4 +500,62 @@ body {
 .ds-modal-close-button:hover {
   transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(255, 77, 79, 0.3);
+}
+
+.ds-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+  padding: 1rem;
+}
+
+.ds-pagination-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  background: #f3f4f6;
+  color: #1f2937;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.ds-pagination-button:hover:not(.ds-pagination-button-disabled) {
+  background: #dbeafe;
+  transform: scale(1.05);
+}
+
+.ds-pagination-button-active {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.ds-pagination-button-active:hover {
+  background: #1d4ed8;
+  transform: scale(1.05);
+}
+
+.ds-pagination-button-disabled {
+  background: #e5e7eb;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .ds-pagination {
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+  .ds-pagination-button {
+    width: 2rem;
+    height: 2rem;
+    font-size: 0.875rem;
+  }
 }
