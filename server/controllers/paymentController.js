@@ -218,11 +218,43 @@ const getPaymentsByPatientId = async (req, res) => {
   }
 };
 
+// Lấy tất cả giao dịch cho nhân viên (staff)
+const getAllPaymentsForStaff = async (req, res) => {
+  try {
+    const payments = await Payment.find({})
+      .populate({
+        path: "metaData.patientId",
+        populate: { path: "userId", select: "fullname" },
+      })
+      .populate({
+        path: "metaData.doctorId",
+        populate: { path: "userId", select: "fullname" },
+      })
+      .populate("metaData.serviceId", "name")
+      .populate("metaData.clinicId", "name")
+      .populate("metaData.serviceOptionId", "name")
+      .populate("metaData.timeslotId", "date startTime endTime")
+      .sort({ createdAt: -1 });
+
+    return res.json({
+      message: "Lấy tất cả giao dịch thành công.",
+      payments,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Lỗi khi lấy danh sách giao dịch.",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   createPayment,
   getPayment,
   cancelPayment,
   handlePaymentWebhook,
-  getPaymentsByPatientId
+  getPaymentsByPatientId,
+  getAllPaymentsForStaff
 };
 

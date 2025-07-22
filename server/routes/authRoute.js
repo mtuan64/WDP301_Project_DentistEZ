@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-const { authMiddleware, authAdminMiddleware, authDentistMiddleware, authPatientMiddleware , authDentistOrAdminMiddleware } = require("../middleware/authMiddleware");
+const { authMiddleware, authAdminMiddleware, authDentistMiddleware, authPatientMiddleware , authDentistOrAdminMiddleware , authStaffMiddleware } = require("../middleware/authMiddleware");
 const {registerUser,loginUser,uploadProfilePicture,updateUser,upload, getServiceDetail,logoutUser,googleLogin} = require("../controllers/authController");
 const {getAllDoctors,getDoctorById,updateDoctorStatus, createSchedule, getSchedule, getScheduleByWeek, getSchedulebydoctorId, updateDoctor} = require("../controllers/doctorController");
 const {getAllBlogs,getAllBlogsForAdmin,createBlog,updateBlog,deleteBlog,uploadImage,getAllCategories,getAllCategoriesForAdmin, createCategory,updateCategory,deleteCategory,getBlogBySlug,getTopViewedBlogs,incrementBlogViews} = require("../controllers/blogController");
@@ -49,6 +49,7 @@ const {
   getPaymentByOrderCode,
   cancelPayment,
   getPaymentsByPatientId,
+  getAllPaymentsForStaff,
 } = require("../controllers/paymentController");
 
 // Configure multer for file uploads (used for profile pictures and blog images)
@@ -143,8 +144,8 @@ router.get('/appointment-by-service', getAppointmentByService);
 //get all payments
 router.get("/admin/payments", getAllPayments);
 
-// patient
 router.get("/patient/payments", authPatientMiddleware, getPaymentsByPatientId);
+router.get("/staff/payments", authStaffMiddleware, getAllPaymentsForStaff);
 
 // doctor 
 router.post("/doctor/create-schedule", authDentistMiddleware, createSchedule);

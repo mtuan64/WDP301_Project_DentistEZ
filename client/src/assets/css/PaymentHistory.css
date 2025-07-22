@@ -559,3 +559,25 @@ body {
     font-size: 0.875rem;
   }
 }
+.ph-sort-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.ph-sort-button:hover {
+  background: #f3f4f6;
+}
+
+.ds-pagination-info {
+  margin-left: 12px;
+  font-size: 14px;
+  color: #6b7280;
+}
