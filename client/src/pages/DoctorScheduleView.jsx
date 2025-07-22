@@ -477,7 +477,7 @@ const DoctorScheduleView = () => {
               <tbody>
                 {slots.map((slotIndex) => (
                   <tr key={slotIndex}>
-                    <td className="ds-slot-index">Ca {slotIndex}</td>
+                    <td className="ds-slot-index">Slot {slotIndex}</td>
                     {weekDays.map((day) => (
                       <td
                         key={`${day.key}-${slotIndex}`}
