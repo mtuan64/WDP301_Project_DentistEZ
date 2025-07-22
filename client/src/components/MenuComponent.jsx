@@ -24,22 +24,18 @@ const DRAWER_WIDTH = 240;
 const menuByRole = (role, userId) => {
   const menus = {
     admin: [
-      { title: "Home", path: "/", icon: <HomeOutlined /> },
-      { title: "Manage Users", path: "/accountmanagement", icon: <TeamOutlined /> },
-      { title: "Manage Doctor Account", path: "/doctoraccount", icon: <UserOutlined /> },
-      { title: "Manage Service", path: "/servicemanagement", icon: <AppstoreOutlined /> },
-      { title: "Manage Blogs", path: "/admin/blogs", icon: <EditOutlined /> },
-      { title: "Manage Revenue", path: "/admin/payments", icon: <DollarOutlined /> },
-      { title: "Statistic Dashboard", path: "/statistic", icon: <BarChartOutlined /> },
-      { title: "Manage Appointments", path: "/admin/appointments", icon: <CalendarOutlined /> },
+      { title: "Trang chủ", path: "/", icon: <HomeOutlined /> },
+      { title: "Quản lý người dùng", path: "/accountmanagement", icon: <TeamOutlined /> },
+      { title: "Thông tin bác sĩ", path: "/doctoraccount", icon: <UserOutlined /> },
+      { title: "Quản lý dịch vụ", path: "/servicemanagement", icon: <AppstoreOutlined /> },
+      { title: "Quản lý bài viết", path: "/admin/blogs", icon: <EditOutlined /> },
+      { title: "Quản lý hóa đơn", path: "/admin/payments", icon: <DollarOutlined /> },
+      { title: "Thống kê", path: "/statistic", icon: <BarChartOutlined /> },
+      { title: "Quản lý lịch đặt", path: "/admin/appointments", icon: <CalendarOutlined /> },
     ],
     doctor: [
       { title: "Trang chủ", path: "/", icon: <HomeOutlined /> },
       { title: "Quản lý lịch trình", path: "/doctor/schedule", icon: <CalendarOutlined /> },
-      { title: "Report Management", path: "/report", icon: <FileTextOutlined /> },
-      { title: "Message Management", path: "/message-management", icon: <MessageOutlined /> },
-      { title: "Attendance Management", path: "/attendance-management", icon: <ScheduleOutlined /> },
-      { title: "Recruitment Management", path: "/recruitment-management-mentor", icon: <UsergroupAddOutlined /> },
     ],
     staff: [
       { title: "Trang chủ", path: "/", icon: <HomeOutlined /> },
@@ -50,9 +46,6 @@ const menuByRole = (role, userId) => {
       { title: "Trang chủ", path: "/", icon: <HomeOutlined /> },
       { title: "Lịch hẹn của tôi", path: `/myappointment`, icon: <CalendarOutlined /> },
       { title: "Lịch sử giao dịch", path: "/paymenthistory", icon: <FileTextOutlined /> },
-      { title: "Schedule", path: "/schedule", icon: <ScheduleOutlined /> },
-      { title: "Attendance", path: "/attendance", icon: <UsergroupAddOutlined /> },
-      { title: "Mark Report", path: "/mark-report", icon: <EditOutlined /> },
     ],
   };
 

@@ -185,23 +185,23 @@ const HomePage = () => {
                   className="text-uppercase fw-semibold mb-3"
                   style={{ letterSpacing: "2px" }}
                 >
-                  Keep Your Teeth Healthy
+                  Phòng khám DentistEZ
                 </h5>
                 <h1 className="display-3 fw-bold mb-4">
-                  Take The Best Quality Dental Treatment
+                  Mang lại trải nghiệm tốt nhất đến cho khách hàng
                 </h1>
                 <div>
                   <Link
                     to="/appointment"
                     className="btn btn-primary btn-lg px-4 me-3 shadow"
                   >
-                    Appointment
+                    Đặt lịch
                   </Link>
                   <Link
-                    to="/contact"
+                    to="/services"
                     className="btn btn-outline-light btn-lg px-4 shadow"
                   >
-                    Contact Us
+                    Dịch vụ
                   </Link>
                 </div>
               </div>

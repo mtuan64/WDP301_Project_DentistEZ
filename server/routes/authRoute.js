@@ -9,6 +9,7 @@ const {
   getAllAppointment,
   getAppointmentByUserId,
   editAppointment,
+  editAppointmentByStaff,
   deleteAppointment,
   getAppointmentByTimeslot,
   updateAppointmentStatusAndNote,
@@ -113,6 +114,9 @@ router.get('/admin/appointments', getAllAppointment);
 
 // Sửa lịch hẹn theo PatientId và id
 router.put('/appointments/:appointmentId',authPatientMiddleware, editAppointment);
+
+//Sửa lịch hẹn tái khám bởi staff
+router.put('/staff/appointments/:appointmentId', authStaffMiddleware, editAppointmentByStaff);
 
 // Xóa lịch hẹn theo id
 router.delete('/:id', deleteAppointment);

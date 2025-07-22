@@ -2,16 +2,24 @@ const Appointment = require("../models/Appointment");
 const Payment = require("../models/Payment");
 const ServiceOption = require("../models/ServiceOption");
 
-// Get daily appointment count (last 30 days)
+// Get daily appointment count (dynamic date range)
 exports.getAppointmentTrend = async (req, res) => {
   try {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const { start, end } = req.query;
+    if (!start || !end) {
+      return res.status(400).json({ message: "Start and end dates are required" });
+    }
+
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    if (isNaN(startDate) || isNaN(endDate) || startDate > endDate) {
+      return res.status(400).json({ message: "Invalid date range" });
+    }
 
     const result = await Appointment.aggregate([
       {
         $match: {
-          createdAt: { $gte: thirtyDaysAgo },
+          createdAt: { $gte: startDate, $lte: endDate },
           status: { $ne: "cancelled" },
         },
       },
@@ -24,23 +32,32 @@ exports.getAppointmentTrend = async (req, res) => {
       { $sort: { _id: 1 } },
     ]);
 
-    res.json(result);
+    res.json({ success: true, data: result });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("getAppointmentTrend error:", err);
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
-// Get daily revenue (last 30 days)
+// Get daily revenue (dynamic date range)
 exports.getRevenueTrend = async (req, res) => {
   try {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const { start, end } = req.query;
+    if (!start || !end) {
+      return res.status(400).json({ message: "Start and end dates are required" });
+    }
+
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    if (isNaN(startDate) || isNaN(endDate) || startDate > endDate) {
+      return res.status(400).json({ message: "Invalid date range" });
+    }
 
     const result = await Payment.aggregate([
       {
         $match: {
           status: "paid",
-          createdAt: { $gte: thirtyDaysAgo },
+          createdAt: { $gte: startDate, $lte: endDate },
         },
       },
       {
@@ -91,21 +108,29 @@ exports.getRevenueTrend = async (req, res) => {
       { $sort: { _id: 1 } },
     ]);
 
-    res.json(result);
+    res.json({ success: true, data: result });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: err.message });
+    console.error("getRevenueTrend error:", err);
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
-// Appointment status distribution (last 30 days)
+// Appointment status distribution (dynamic date range)
 exports.getAppointmentStatusStats = async (req, res) => {
   try {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const { start, end } = req.query;
+    if (!start || !end) {
+      return res.status(400).json({ message: "Start and end dates are required" });
+    }
+
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    if (isNaN(startDate) || isNaN(endDate) || startDate > endDate) {
+      return res.status(400).json({ message: "Invalid date range" });
+    }
 
     const result = await Appointment.aggregate([
-      { $match: { createdAt: { $gte: thirtyDaysAgo } } },
+      { $match: { createdAt: { $gte: startDate, $lte: endDate } } },
       {
         $group: {
           _id: "$status",
@@ -114,22 +139,31 @@ exports.getAppointmentStatusStats = async (req, res) => {
       },
     ]);
 
-    res.json(result);
+    res.json({ success: true, data: result });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("getAppointmentStatusStats error:", err);
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
-// Revenue breakdown by payment method (last 30 days)
+// Revenue breakdown by payment method (dynamic date range)
 exports.getRevenueByMethod = async (req, res) => {
   try {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const { start, end } = req.query;
+    if (!start || !end) {
+      return res.status(400).json({ message: "Start and end dates are required" });
+    }
+
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    if (isNaN(startDate) || isNaN(endDate) || startDate > endDate) {
+      return res.status(400).json({ message: "Invalid date range" });
+    }
 
     const result = await Payment.aggregate([
       {
         $match: {
-          createdAt: { $gte: thirtyDaysAgo },
+          createdAt: { $gte: startDate, $lte: endDate },
           status: "paid",
         },
       },
@@ -141,22 +175,31 @@ exports.getRevenueByMethod = async (req, res) => {
       },
     ]);
 
-    res.json(result);
+    res.json({ success: true, data: result });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("getRevenueByMethod error:", err);
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
-// Revenue breakdown by payment type (last 30 days)
+// Revenue breakdown by payment type (dynamic date range)
 exports.getRevenueByType = async (req, res) => {
   try {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const { start, end } = req.query;
+    if (!start || !end) {
+      return res.status(400).json({ message: "Start and end dates are required" });
+    }
+
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    if (isNaN(startDate) || isNaN(endDate) || startDate > endDate) {
+      return res.status(400).json({ message: "Invalid date range" });
+    }
 
     const result = await Payment.aggregate([
       {
         $match: {
-          createdAt: { $gte: thirtyDaysAgo },
+          createdAt: { $gte: startDate, $lte: endDate },
           status: "paid",
         },
       },
@@ -168,19 +211,38 @@ exports.getRevenueByType = async (req, res) => {
       },
     ]);
 
-    res.json(result);
+    res.json({ success: true, data: result });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("getRevenueByType error:", err);
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
-// Summary counts for KPIs
+// Summary counts for KPIs (dynamic date range)
 exports.getDashboardSummaries = async (req, res) => {
   try {
-    const appointmentCount = await Appointment.countDocuments();
+    const { start, end } = req.query;
+    if (!start || !end) {
+      return res.status(400).json({ message: "Start and end dates are required" });
+    }
+
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    if (isNaN(startDate) || isNaN(endDate) || startDate > endDate) {
+      return res.status(400).json({ message: "Invalid date range" });
+    }
+
+    const appointmentCount = await Appointment.countDocuments({
+      createdAt: { $gte: startDate, $lte: endDate },
+    });
 
     const revenue = await Payment.aggregate([
-      { $match: { status: "paid" } },
+      {
+        $match: {
+          status: "paid",
+          createdAt: { $gte: startDate, $lte: endDate },
+        },
+      },
       {
         $lookup: {
           from: "appointments",
@@ -205,7 +267,7 @@ exports.getDashboardSummaries = async (req, res) => {
             $switch: {
               branches: [
                 {
-                  case: { $in: ["$appointment.status", [ "confirmed", "completed"]] },
+                  case: { $in: ["$appointment.status", ["confirmed", "completed"]] },
                   then: "$amount",
                 },
                 {
@@ -228,28 +290,46 @@ exports.getDashboardSummaries = async (req, res) => {
       },
     ]);
 
-    const completedAppointments = await Appointment.countDocuments({ status: ["completed", "fully_paid"] });
-    const fullyPaidAppointments = await Appointment.countDocuments({ status: "fully_paid" });
+    const completedAppointments = await Appointment.countDocuments({
+      status: { $in: ["completed", "fully_paid"] },
+      createdAt: { $gte: startDate, $lte: endDate },
+    });
+    const fullyPaidAppointments = await Appointment.countDocuments({
+      status: "fully_paid",
+      createdAt: { $gte: startDate, $lte: endDate },
+    });
 
     res.json({
-      totalAppointments: appointmentCount,
-      totalRevenue: revenue[0]?.total || 0,
-      completedAppointments,
-      fullyPaidAppointments,
+      success: true,
+      data: {
+        totalAppointments: appointmentCount,
+        totalRevenue: revenue[0]?.total || 0,
+        completedAppointments,
+        fullyPaidAppointments,
+      },
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("getDashboardSummaries error:", err);
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
-// Appointment distribution by clinic (last 30 days)
+// Appointment distribution by clinic (dynamic date range)
 exports.getAppointmentByClinic = async (req, res) => {
   try {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const { start, end } = req.query;
+    if (!start || !end) {
+      return res.status(400).json({ message: "Start and end dates are required" });
+    }
+
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    if (isNaN(startDate) || isNaN(endDate) || startDate > endDate) {
+      return res.status(400).json({ message: "Invalid date range" });
+    }
 
     const result = await Appointment.aggregate([
-      { $match: { createdAt: { $gte: thirtyDaysAgo } } },
+      { $match: { createdAt: { $gte: startDate, $lte: endDate } } },
       {
         $group: {
           _id: "$clinicId",
@@ -273,20 +353,29 @@ exports.getAppointmentByClinic = async (req, res) => {
       },
     ]);
 
-    res.json(result);
+    res.json({ success: true, data: result });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("getAppointmentByClinic error:", err);
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
-// Appointment distribution by service (last 30 days)
+// Appointment distribution by service (dynamic date range)
 exports.getAppointmentByService = async (req, res) => {
   try {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const { start, end } = req.query;
+    if (!start || !end) {
+      return res.status(400).json({ message: "Start and end dates are required" });
+    }
+
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    if (isNaN(startDate) || isNaN(endDate) || startDate > endDate) {
+      return res.status(400).json({ message: "Invalid date range" });
+    }
 
     const result = await Appointment.aggregate([
-      { $match: { createdAt: { $gte: thirtyDaysAgo } } },
+      { $match: { createdAt: { $gte: startDate, $lte: endDate } } },
       {
         $group: {
           _id: "$serviceId",
@@ -310,17 +399,28 @@ exports.getAppointmentByService = async (req, res) => {
       },
     ]);
 
-    res.json(result);
+    res.json({ success: true, data: result });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("getAppointmentByService error:", err);
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
 // Get all payments with details and statistics
 exports.getAllPayments = async (req, res) => {
   try {
-    // Populate cả metaData và appointmentId (gồm thông tin bệnh nhân, bác sĩ, vv. của lịch hẹn)
-    const payments = await Payment.find()
+    const { start, end } = req.query;
+    let dateFilter = {};
+    if (start && end) {
+      const startDate = new Date(start);
+      const endDate = new Date(end);
+      if (isNaN(startDate) || isNaN(endDate) || startDate > endDate) {
+        return res.status(400).json({ message: "Invalid date range" });
+      }
+      dateFilter = { createdAt: { $gte: startDate, $lte: endDate } };
+    }
+
+    const payments = await Payment.find(dateFilter)
       .populate({
         path: "metaData.patientId",
         select: "userId",
@@ -353,20 +453,19 @@ exports.getAllPayments = async (req, res) => {
           {
             path: "patientId",
             model: "Patient",
-            populate: { path: "userId", model: "User", select: "fullname" }
+            populate: { path: "userId", model: "User", select: "fullname" },
           },
           {
             path: "doctorId",
             model: "Doctor",
-            populate: { path: "userId", model: "User", select: "fullname" }
+            populate: { path: "userId", model: "User", select: "fullname" },
           },
           { path: "serviceId", model: "Service", select: "serviceName price" },
-          { path: "clinicId", model: "Clinic", select: "clinic_name" }
-        ]
+          { path: "clinicId", model: "Clinic", select: "clinic_name" },
+        ],
       })
       .lean();
 
-    // Tính toán thống kê như cũ
     const statistics = {
       totalRevenue: 0,
       byStatus: {
@@ -395,7 +494,6 @@ exports.getAllPayments = async (req, res) => {
       statistics.byPaymentMethod[payment.paymentMethod].amount += payment.amount;
     });
 
-    // Helper lấy thông tin từ metaData hoặc appointmentId
     const getField = (first, fallback) => first || fallback || "N/A";
 
     const formattedPayments = payments.map((p) => ({
@@ -411,31 +509,26 @@ exports.getAllPayments = async (req, res) => {
       createdAt: p.createdAt,
       updatedAt: p.updatedAt,
       metaData: {
-        patient:
-          getField(
-            p.metaData.patientId?.userId?.fullname,
-            p.appointmentId?.patientId?.userId?.fullname
-          ),
-        doctor:
-          getField(
-            p.metaData.doctorId?.userId?.fullname,
-            p.appointmentId?.doctorId?.userId?.fullname
-          ),
-        service:
-          getField(
-            p.metaData.serviceId?.serviceName,
-            p.appointmentId?.serviceId?.serviceName
-          ),
-        servicePrice:
-          getField(
-            p.metaData.serviceId?.price,
-            p.appointmentId?.serviceId?.price
-          ) || 0,
-        clinic:
-          getField(
-            p.metaData.clinicId?.clinic_name,
-            p.appointmentId?.clinicId?.clinic_name
-          ),
+        patient: getField(
+          p.metaData.patientId?.userId?.fullname,
+          p.appointmentId?.patientId?.userId?.fullname
+        ),
+        doctor: getField(
+          p.metaData.doctorId?.userId?.fullname,
+          p.appointmentId?.doctorId?.userId?.fullname
+        ),
+        service: getField(
+          p.metaData.serviceId?.serviceName,
+          p.appointmentId?.serviceId?.serviceName
+        ),
+        servicePrice: getField(
+          p.metaData.serviceId?.price,
+          p.appointmentId?.serviceId?.price
+        ) || 0,
+        clinic: getField(
+          p.metaData.clinicId?.clinic_name,
+          p.appointmentId?.clinicId?.clinic_name
+        ),
         note: p.metaData.note || "N/A",
         file: p.metaData.fileUrl
           ? {
@@ -445,7 +538,6 @@ exports.getAllPayments = async (req, res) => {
             }
           : null,
       },
-      // Để FE biết tình trạng Chung của lịch hẹn (nếu cần)
       appointmentStatus: p.appointmentId?.status || undefined,
     }));
 
@@ -465,4 +557,3 @@ exports.getAllPayments = async (req, res) => {
     });
   }
 };
-
