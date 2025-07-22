@@ -16,18 +16,20 @@ module.exports.initializeSocket = (server) => {
   });
 
   io.on("connection", (socket) => {
-
     socket.on("joinRoom", async ({ userId, role }) => {
       try {
         if (!userId || !mongoose.isValidObjectId(userId)) {
-          console.error("Join room error: Invalid userId", userId);
           return socket.emit("error", { message: "Invalid user ID" });
         }
         if (role === "patient") {
           const roomId = `chat-${userId}`;
           socket.join(roomId);
           socket.roomId = roomId;
-          console.log(`Patient ${userId} joined room ${roomId}`);
+          await Chat.updateMany(
+            { roomId, receiverId: userId, isRead: false },
+            { $set: { isRead: true } }
+          );
+          io.to(roomId).emit("messagesRead", { roomId });
         } else if (role === "staff") {
           const patientsWithMessages = await Chat.find().distinct("senderId");
           const patients = await User.find({
@@ -42,7 +44,7 @@ module.exports.initializeSocket = (server) => {
           io.to(socket.id).emit("updatePatients", patients);
         }
       } catch (error) {
-        console.error("Join room error:", error.message);
+        // console.error("Join room error:", error.message);
         socket.emit("error", {
           message: "Error joining room",
           error: error.message,
@@ -61,6 +63,12 @@ module.exports.initializeSocket = (server) => {
             return socket.emit("error", { message: "Missing fields" });
           }
 
+          // Lấy thông tin người gửi để lấy profilePicture
+          const sender = await User.findById(senderId).select("profilePicture");
+          if (!sender) {
+            return socket.emit("error", { message: "Sender not found" });
+          }
+
           let roomId;
           let targetReceiverId =
             receiverId && mongoose.isValidObjectId(receiverId)
@@ -71,9 +79,10 @@ module.exports.initializeSocket = (server) => {
             roomId = `chat-${senderId}`;
             const newMessage = new Chat({
               senderId,
-              receiverId: null, // Không xác định staff cụ thể
+              receiverId: null,
               message,
               roomId,
+              isRead: false,
             });
             await newMessage.save();
 
@@ -85,7 +94,6 @@ module.exports.initializeSocket = (server) => {
 
             io.emit("updatePatients", patients);
 
-            // Gửi tin nhắn cho staff, không gửi lại cho patient
             socket.to(roomId).emit("receiveMessage", {
               senderId,
               senderName,
@@ -93,6 +101,8 @@ module.exports.initializeSocket = (server) => {
               roomId,
               receiverId: null,
               timestamp: new Date(),
+              isRead: false,
+              profilePicture: sender.profilePicture || "👤",
             });
           } else if (role === "staff") {
             if (!receiverId || !mongoose.isValidObjectId(receiverId)) {
@@ -105,10 +115,10 @@ module.exports.initializeSocket = (server) => {
               receiverId: targetReceiverId,
               message,
               roomId,
+              isRead: false,
             });
             await newMessage.save();
 
-            // Gửi tin nhắn cho patient, không gửi lại cho staff
             socket.to(roomId).emit("receiveMessage", {
               senderId,
               senderName,
@@ -116,10 +126,12 @@ module.exports.initializeSocket = (server) => {
               roomId,
               receiverId: targetReceiverId,
               timestamp: new Date(),
+              isRead: false,
+              profilePicture: sender.profilePicture || "👤",
             });
           }
         } catch (error) {
-          console.error("Send message error:", error.message);
+          // console.error("Send message error:", error.message);
           socket.emit("error", {
             message: "Error sending message",
             error: error.message,
@@ -128,8 +140,35 @@ module.exports.initializeSocket = (server) => {
       }
     );
 
+    socket.on("markMessagesAsRead", async ({ roomId, userId, role }) => {
+      try {
+        if (!roomId || !userId || !mongoose.isValidObjectId(userId)) {
+          return socket.emit("error", { message: "Invalid roomId or userId" });
+        }
+        if (role === "patient") {
+          await Chat.updateMany(
+            { roomId, receiverId: userId, isRead: false },
+            { $set: { isRead: true } }
+          );
+        } else if (role === "staff") {
+          const patientId = roomId.replace("chat-", "");
+          await Chat.updateMany(
+            { roomId, senderId: patientId, isRead: false },
+            { $set: { isRead: true } }
+          );
+        }
+        io.to(roomId).emit("messagesRead", { roomId });
+      } catch (error) {
+        // console.error("Mark messages as read error:", error.message);
+        socket.emit("error", {
+          message: "Error marking messages as read",
+          error: error.message,
+        });
+      }
+    });
+
     socket.on("disconnect", () => {
-      console.log("Client disconnected:", socket.id);
+      // console.log("Client disconnected:", socket.id);
     });
   });
 };
@@ -142,11 +181,13 @@ module.exports.getMessages = async (req, res) => {
     }
     const roomId = `chat-${userId}`;
     const messages = await Chat.find({ roomId })
-      .populate("senderId", "username fullname profilePicture") 
+      .populate("senderId", "username fullname profilePicture")
       .populate("receiverId", "username fullname profilePicture");
-    res.json(messages);
+    res.setHeader("Cache-Control", "no-store");
+    res.status(200).json(messages);
+
   } catch (error) {
-    console.error("Get messages error:", error.message);
+    // console.error("Get messages error:", error.message);
     res
       .status(500)
       .json({ message: "Error fetching messages", error: error.message });
@@ -162,6 +203,11 @@ module.exports.sendMessage = async (req, res) => {
         .json({ message: "Invalid senderId or missing required fields" });
     }
 
+    const sender = await User.findById(senderId).select("profilePicture");
+    if (!sender) {
+      return res.status(404).json({ message: "Sender not found" });
+    }
+
     let roomId;
     let targetReceiverId =
       receiverId && mongoose.isValidObjectId(receiverId) ? receiverId : null;
@@ -173,9 +219,9 @@ module.exports.sendMessage = async (req, res) => {
         receiverId: targetReceiverId,
         message,
         roomId,
+        isRead: false,
       });
       await newMessage.save();
-      console.log(`Message saved for patient ${senderId} via HTTP: ${message}`);
 
       activePatients.add(senderId.toString());
       const patients = await User.find({
@@ -191,6 +237,8 @@ module.exports.sendMessage = async (req, res) => {
         roomId,
         receiverId: targetReceiverId,
         timestamp: new Date(),
+        isRead: false,
+        profilePicture: sender.profilePicture || "👤",
       });
 
       res
@@ -208,9 +256,9 @@ module.exports.sendMessage = async (req, res) => {
         receiverId: targetReceiverId,
         message,
         roomId,
+        isRead: false,
       });
       await newMessage.save();
-      console.log(`Message saved for staff ${senderId} via HTTP: ${message}`);
 
       io.to(roomId).emit("receiveMessage", {
         senderId,
@@ -219,6 +267,8 @@ module.exports.sendMessage = async (req, res) => {
         roomId,
         receiverId: targetReceiverId,
         timestamp: new Date(),
+        isRead: false,
+        profilePicture: sender.profilePicture || "👤",
       });
 
       res
@@ -226,7 +276,7 @@ module.exports.sendMessage = async (req, res) => {
         .json({ message: "Message sent successfully", data: newMessage });
     }
   } catch (error) {
-    console.error("Send message HTTP error:", error.message);
+    // console.error("Send message HTTP error:", error.message);
     res
       .status(500)
       .json({ message: "Error sending message", error: error.message });

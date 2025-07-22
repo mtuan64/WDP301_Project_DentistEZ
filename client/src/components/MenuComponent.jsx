@@ -32,6 +32,7 @@ const menuByRole = (role, userId) => {
       { title: "Quản lý hóa đơn", path: "/admin/payments", icon: <DollarOutlined /> },
       { title: "Thống kê", path: "/statistic", icon: <BarChartOutlined /> },
       { title: "Quản lý lịch đặt", path: "/admin/appointments", icon: <CalendarOutlined /> },
+      { title: "Lịch trình bác sĩ", path: "/schedule", icon: <CalendarOutlined /> },
     ],
     doctor: [
       { title: "Trang chủ", path: "/", icon: <HomeOutlined /> },
@@ -40,7 +41,8 @@ const menuByRole = (role, userId) => {
     staff: [
       { title: "Trang chủ", path: "/", icon: <HomeOutlined /> },
       { title: "Quản lý lịch khám bệnh nhân ", path: "/staffmanager/patientapp", icon: <UserOutlined /> },
-      { title: "Lịch sử giao dịch", path: "staffmanager/paymenthistory", icon: <FileTextOutlined /> },
+      { title: "Lịch sử giao dịch", path: "/staffmanager/paymenthistory", icon: <FileTextOutlined /> },
+      { title: "Lịch trình bác sĩ", path: "/schedule", icon: <CalendarOutlined /> },
     ],
     patient: [
       { title: "Trang chủ", path: "/", icon: <HomeOutlined /> },

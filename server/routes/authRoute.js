@@ -1,7 +1,16 @@
 const express = require("express");
 const router = express.Router();
 
-const { authMiddleware, authAdminMiddleware, authDentistMiddleware, authPatientMiddleware , authDentistOrAdminMiddleware , authStaffMiddleware } = require("../middleware/authMiddleware");
+const {
+  authMiddleware,
+  authAdminMiddleware,
+  authDentistMiddleware,
+  authPatientMiddleware,
+  authDentistOrAdminMiddleware,
+  authStaffMiddleware,
+  authAdminOrStaffMiddleware,
+  authAdminOrStaffOrDentistMiddleware,
+} = require("../middleware/authMiddleware");
 const {registerUser,loginUser,uploadProfilePicture,updateUser,upload, getServiceDetail,logoutUser,googleLogin} = require("../controllers/authController");
 const {getAllDoctors,getDoctorById,updateDoctorStatus, createSchedule, getSchedule, getScheduleByWeek, getSchedulebydoctorId, updateDoctor} = require("../controllers/doctorController");
 const {getAllBlogs,getAllBlogsForAdmin,createBlog,updateBlog,deleteBlog,uploadImage,getAllCategories,getAllCategoriesForAdmin, createCategory,updateCategory,deleteCategory,getBlogBySlug,getTopViewedBlogs,incrementBlogViews} = require("../controllers/blogController");
@@ -34,7 +43,7 @@ const {
 } = require("../controllers/statisticController");
  
 
-const { getTimeslotById, getAvailableTimeslots, createTimeslot, updateTimeslot , deleteTimeslot, getSlotByDoctorId} = require("../controllers/timeslotController");
+const { getTimeslotById, getAvailableTimeslots, createTimeslot, updateTimeslot , deleteTimeslot, getSlotByDoctorId ,getDoctorScheduleByWeek} = require("../controllers/timeslotController");
 
 const multer = require("multer");
 const path = require("path");
@@ -154,7 +163,11 @@ router.get("/staff/payments", authStaffMiddleware, getAllPaymentsForStaff);
 // doctor 
 router.post("/doctor/create-schedule", authDentistMiddleware, createSchedule);
 router.get("/doctor/getScheduleByWeek", authDentistMiddleware, getScheduleByWeek);
-router.get('/appointments/timeslot/:timeslotId', authDentistMiddleware, getAppointmentByTimeslot);
+router.get(
+  "/appointments/timeslot/:timeslotId",
+  authAdminOrStaffOrDentistMiddleware,
+  getAppointmentByTimeslot
+);
 router.put(
   "/appointments/update-status-note/:appointmentId",
   authDentistMiddleware,
@@ -179,6 +192,8 @@ router.delete(
   authDentistOrAdminMiddleware,
   deleteTimeslot
 );
+router.get("/timeslots/doctor/:doctorId", authAdminOrStaffOrDentistMiddleware, getSlotByDoctorId);
+router.get("/doctor-schedule", authAdminOrStaffMiddleware, getDoctorScheduleByWeek);
 
 // Doctor
 router.get("/doctor", getAllDoctors);

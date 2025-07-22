@@ -4,6 +4,7 @@ import axios from "axios";
 import { useAuth } from "../context/authContext";
 import io from "socket.io-client";
 import { BsChatDots } from "react-icons/bs";
+
 const socket = io("http://localhost:9999");
 
 const Chatbox = () => {
@@ -13,7 +14,6 @@ const Chatbox = () => {
   const [inputMessage, setInputMessage] = useState("");
   const [selectedChat, setSelectedChat] = useState(null);
   const [chatNotifications, setChatNotifications] = useState({});
-  const [lastReadTimestamps, setLastReadTimestamps] = useState({});
   const [patients, setPatients] = useState([]);
   const messagesEndRef = useRef(null);
 
@@ -66,59 +66,74 @@ const Chatbox = () => {
   }
 
   useEffect(() => {
-    if (!user || !selectedChat) return;
-    const loadMessages = async () => {
-      let newMessages = [];
-      if (selectedChat.type === "ai") {
-        const savedMessages = localStorage.getItem(
-          `chatMessages_${selectedChat.roomId}`
-        );
-        newMessages = savedMessages ? JSON.parse(savedMessages) : [];
-      } else {
-        try {
-          const userId = user.role === "patient" ? user.id : selectedChat.id;
-          const response = await axios.get(
-            `http://localhost:9999/api/chat/messages?userId=${userId}`
+    if (!user) return;
+
+    const loadAllMessages = async () => {
+      const newMessageMap = { ...messageMap };
+      const newNotifications = { ...chatNotifications };
+
+      for (const chat of chatOptions) {
+        let newMessages = [];
+        if (chat.type === "ai") {
+          const savedMessages = localStorage.getItem(
+            `chatMessages_${chat.roomId}`
           );
-          newMessages = response.data.map((msg) => ({
-            text: msg.message,
-            sender:
-              msg.senderId._id.toString() === user.id.toString()
-                ? "user"
-                : msg.senderId.fullname,
-            avatar:
-              msg.senderId._id.toString() === user.id.toString()
-                ? user.profilePicture
-                : msg.senderId.profilePicture || "👤",
-            timestamp: new Date(msg.timestamp).toLocaleTimeString("en-US", {
-              timeZone: "Asia/Ho_Chi_Minh",
-            }),
-            timestampRaw: msg.timestamp,
-          }));
-        } catch (error) {
-          console.error("Error fetching messages:", error);
-          newMessages = [];
+          newMessages = savedMessages
+            ? JSON.parse(savedMessages).map((msg) => ({
+                ...msg,
+                isRead: true, // Tin nhắn AI luôn được coi là đã đọc
+              }))
+            : [];
+        } else {
+          try {
+            const userId = user.role === "patient" ? user.id : chat.id;
+            const response = await axios.get(
+              `http://localhost:9999/api/chat/messages?userId=${userId}`,
+              {
+                headers: { "Content-Type": "application/json" },
+              }
+            );
+            newMessages = response.data.map((msg) => ({
+              text: msg.message,
+              sender:
+                msg.senderId._id.toString() === user.id.toString()
+                  ? "user"
+                  : msg.senderId.fullname,
+              avatar:
+                msg.senderId._id.toString() === user.id.toString()
+                  ? user.profilePicture || "👤"
+                  : msg.senderId.profilePicture || "👤",
+              timestamp: new Date(msg.timestamp).toLocaleTimeString("en-US", {
+                timeZone: "Asia/Ho_Chi_Minh",
+                hour: "2-digit",
+                minute: "2-digit",
+              }),
+              timestampRaw: msg.timestamp,
+              isRead: msg.isRead,
+            }));
+          } catch (error) {
+            console.error(`Error fetching messages for ${chat.roomId}:`, error);
+            newMessages = [];
+          }
+        }
+        newMessageMap[chat.roomId] = newMessages;
+
+        if (chat.type !== "ai") {
+          const unreadCount = newMessages.filter(
+            (msg) => msg.sender !== "user" && !msg.isRead
+          ).length;
+          newNotifications[chat.roomId] = unreadCount;
+        } else {
+          newNotifications[chat.roomId] = 0; // Chat AI không có thông báo
         }
       }
-      setMessageMap((prev) => ({
-        ...prev,
-        [selectedChat.roomId]: newMessages,
-      }));
-      if (selectedChat.type !== "ai") {
-        const lastRead = lastReadTimestamps[selectedChat.roomId] || 0;
-        const unreadCount = newMessages.filter(
-          (msg) =>
-            msg.sender !== "user" &&
-            new Date(msg.timestampRaw).getTime() > lastRead
-        ).length;
-        setChatNotifications((prev) => ({
-          ...prev,
-          [selectedChat.roomId]: unreadCount,
-        }));
-      }
+
+      setMessageMap(newMessageMap);
+      setChatNotifications(newNotifications);
     };
-    loadMessages();
-  }, [user, selectedChat, lastReadTimestamps]);
+
+    loadAllMessages();
+  }, [user, patients]);
 
   useEffect(() => {
     if (
@@ -138,56 +153,69 @@ const Chatbox = () => {
 
   useEffect(() => {
     if (!user) return;
+
     socket.emit("joinRoom", {
       userId: user.id?.toString() || "unknown",
       role: user.role,
     });
+
     const handleUpdatePatients = (patientList) => {
       setPatients(patientList);
       console.log("Updated patients:", patientList);
     };
+
     const handleReceiveMessage = (data) => {
       const roomId = data.roomId.toString();
-      const currentChatRoomId = selectedChat?.roomId?.toString() || "";
-      let senderAvatar = user.profilePicture;
-      if (data.senderId !== user.id?.toString()) {
-        const senderPatient = patients.find(
-          (p) => p._id.toString() === data.senderId
-        );
-        senderAvatar = senderPatient?.profilePicture || "👤";
-      }
       const newMessage = {
         text: data.message,
         sender:
           data.senderId === user.id?.toString() ? "user" : data.senderName,
-        avatar: senderAvatar,
+        avatar:
+          data.senderId === user.id?.toString()
+            ? user.profilePicture || "👤"
+            : data.profilePicture || "👤",
         timestamp: new Date(data.timestamp).toLocaleTimeString("en-US", {
           timeZone: "Asia/Ho_Chi_Minh",
+          hour: "2-digit",
+          minute: "2-digit",
         }),
         timestampRaw: data.timestamp,
+        isRead: data.isRead,
       };
       setMessageMap((prev) => ({
         ...prev,
         [roomId]: [...(prev[roomId] || []), newMessage],
       }));
-      if (roomId !== currentChatRoomId) {
+      if (!data.isRead && data.senderId !== user.id?.toString()) {
         setChatNotifications((prev) => ({
           ...prev,
           [roomId]: (prev[roomId] || 0) + 1,
         }));
       }
-      if (roomId === currentChatRoomId) {
-        setLastReadTimestamps((prev) => ({
-          ...prev,
-          [roomId]: Date.now(),
-        }));
-      }
     };
+
+    const handleMessagesRead = ({ roomId }) => {
+      setMessageMap((prev) => ({
+        ...prev,
+        [roomId]: (prev[roomId] || []).map((msg) => ({
+          ...msg,
+          isRead: true,
+        })),
+      }));
+      setChatNotifications((prev) => ({
+        ...prev,
+        [roomId]: 0,
+      }));
+    };
+
     socket.on("updatePatients", handleUpdatePatients);
     socket.on("receiveMessage", handleReceiveMessage);
+    socket.on("messagesRead", handleMessagesRead);
+
     return () => {
       socket.off("updatePatients", handleUpdatePatients);
       socket.off("receiveMessage", handleReceiveMessage);
+      socket.off("messagesRead", handleMessagesRead);
     };
   }, [user, selectedChat, patients]);
 
@@ -206,12 +234,17 @@ const Chatbox = () => {
     }
     const timestamp = new Date().toLocaleTimeString("en-US", {
       timeZone: "Asia/Ho_Chi_Minh",
+      hour: "2-digit",
+      minute: "2-digit",
     });
+    const timestampRaw = new Date().toISOString();
     const userMessage = {
       text: inputMessage,
       sender: "user",
       avatar: user.profilePicture || "👤",
       timestamp,
+      timestampRaw,
+      isRead: true, // Tin nhắn do người dùng gửi luôn được coi là đã đọc
     };
     setMessageMap((prev) => ({
       ...prev,
@@ -221,6 +254,7 @@ const Chatbox = () => {
       ],
     }));
     setInputMessage("");
+
     if (selectedChat.type === "ai") {
       try {
         const response = await axios.post(
@@ -241,7 +275,11 @@ const Chatbox = () => {
           avatar: "🤖",
           timestamp: new Date().toLocaleTimeString("en-US", {
             timeZone: "Asia/Ho_Chi_Minh",
+            hour: "2-digit",
+            minute: "2-digit",
           }),
+          timestampRaw: new Date().toISOString(),
+          isRead: true, // Tin nhắn AI trả về khi đang trong chat được coi là đã đọc
         };
         setMessageMap((prev) => ({
           ...prev,
@@ -261,7 +299,11 @@ const Chatbox = () => {
           avatar: "🤖",
           timestamp: new Date().toLocaleTimeString("en-US", {
             timeZone: "Asia/Ho_Chi_Minh",
+            hour: "2-digit",
+            minute: "2-digit",
           }),
+          timestampRaw: new Date().toISOString(),
+          isRead: true,
         };
         setMessageMap((prev) => ({
           ...prev,
@@ -330,7 +372,7 @@ const Chatbox = () => {
       {isOpen && (
         <div className="chat-box">
           <button className="close-button" onClick={() => setIsOpen(false)}>
-            ✖
+            ×
           </button>
           <div className="sidebar">
             <div className="sidebar-header">
@@ -346,14 +388,24 @@ const Chatbox = () => {
                   }`}
                   onClick={() => {
                     setSelectedChat(chat);
-                    setChatNotifications((prev) => ({
-                      ...prev,
-                      [chat.roomId]: 0,
-                    }));
-                    setLastReadTimestamps((prev) => ({
-                      ...prev,
-                      [chat.roomId]: Date.now(),
-                    }));
+                    if (chat.type !== "ai") {
+                      socket.emit("markMessagesAsRead", {
+                        roomId: chat.roomId,
+                        userId: user.id,
+                        role: user.role,
+                      });
+                      setMessageMap((prev) => ({
+                        ...prev,
+                        [chat.roomId]: (prev[chat.roomId] || []).map((msg) => ({
+                          ...msg,
+                          isRead: true,
+                        })),
+                      }));
+                      setChatNotifications((prev) => ({
+                        ...prev,
+                        [chat.roomId]: 0,
+                      }));
+                    }
                   }}
                 >
                   {chat.avatar.startsWith("http") ? (
@@ -469,7 +521,7 @@ const Chatbox = () => {
                     onChange={(e) => setInputMessage(e.target.value)}
                     onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
                     className="message-input"
-                    placeholder="Type your message..."
+                    placeholder="Nhập tin nhắn của bạn..."
                   />
                   <button onClick={handleSendMessage} className="send-button">
                     ➤
@@ -479,8 +531,8 @@ const Chatbox = () => {
             ) : (
               <div className="no-user-selected">
                 <span className="chat-icon">💬</span>
-                <h3>Select a chat to start</h3>
-                <p>Choose a contact from the list to begin messaging.</p>
+                <h3>Chọn một cuộc trò chuyện để bắt đầu</h3>
+                <p>Chọn một liên hệ từ danh sách để bắt đầu nhắn tin.</p>
               </div>
             )}
           </div>
