@@ -34,17 +34,17 @@ const menuByRole = (role, userId) => {
       { title: "Manage Appointments", path: "/admin/appointments", icon: <CalendarOutlined /> },
     ],
     doctor: [
-      { title: "Home", path: "/", icon: <HomeOutlined /> },
-      { title: "Schedule Management", path: "/doctor/schedule", icon: <CalendarOutlined /> },
+      { title: "Trang chủ", path: "/", icon: <HomeOutlined /> },
+      { title: "Quản lý lịch trình", path: "/doctor/schedule", icon: <CalendarOutlined /> },
       { title: "Report Management", path: "/report", icon: <FileTextOutlined /> },
       { title: "Message Management", path: "/message-management", icon: <MessageOutlined /> },
       { title: "Attendance Management", path: "/attendance-management", icon: <ScheduleOutlined /> },
       { title: "Recruitment Management", path: "/recruitment-management-mentor", icon: <UsergroupAddOutlined /> },
     ],
     staff: [
-      { title: "Home", path: "/", icon: <HomeOutlined /> },
-      { title: "Patient Appointment Management ", path: "/staffmanager/patientapp", icon: <UserOutlined /> },
-      { title: "Payment transaction history", path: "staffmanager/paymenthistory", icon: <FileTextOutlined /> },
+      { title: "Trang chủ", path: "/", icon: <HomeOutlined /> },
+      { title: "Quản lý lịch khám bệnh nhân ", path: "/staffmanager/patientapp", icon: <UserOutlined /> },
+      { title: "Lịch sử giao dịch", path: "staffmanager/paymenthistory", icon: <FileTextOutlined /> },
     ],
     patient: [
       { title: "Trang chủ", path: "/", icon: <HomeOutlined /> },
