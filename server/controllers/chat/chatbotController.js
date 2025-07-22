@@ -32,8 +32,9 @@ const chatbotController = {
         lowerCaseMessage.includes("những dịch vụ") ||
         lowerCaseMessage.includes("service") ||
         lowerCaseMessage.includes("gói dịch vụ") ||
-        lowerCaseMessage.includes("trám răng") ||
-        lowerCaseMessage.includes("nhổ răng")
+        lowerCaseMessage.includes("các loại dịch vụ") ||
+        lowerCaseMessage.includes("tất cả dịch vụ")||
+        lowerCaseMessage.includes("trang web")
       ) {
         const services = await Service.find()
           .populate("doctorId", "userId")

@@ -4,6 +4,7 @@
   font-family: 'Inter', Arial, sans-serif;
 }
 
+/* Header */
 .ds-schedule-header {
   display: flex;
   flex-direction: column;
@@ -18,6 +19,51 @@
   font-weight: 700;
 }
 
+/* Doctor Selector */
+.ds-selector-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.ds-doctor-selector {
+  flex: 1;
+  max-width: 300px;
+}
+
+.ds-doctor-selector label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: #1a1a1a;
+  font-size: 15px;
+}
+
+.ds-doctor-select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 15px;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.ds-doctor-select:focus {
+  outline: none;
+  border-color: #4a90e2;
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+}
+
+.ds-doctor-select:disabled {
+  background: #f0f0f0;
+  cursor: not-allowed;
+}
+
+/* Create Button (dành cho ScheduleManagement.jsx) */
 .ds-create-button {
   padding: 10px 20px;
   background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
@@ -39,7 +85,7 @@
   box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
 }
 
-/* Form container */
+/* Form container (dành cho ScheduleManagement.jsx) */
 .ds-form-container {
   overflow: visible;
   margin-bottom: 24px;
@@ -104,7 +150,7 @@
   font-weight: 600;
 }
 
-/* Dropdown styles */
+/* Dropdown styles (dành cho ScheduleManagement.jsx) */
 .ds-dropdown-container {
   position: relative;
   width: 100%;
@@ -213,7 +259,7 @@
   height: 16px;
 }
 
-/* Date Range Picker Styles */
+/* Date Range Picker Styles (dành cho ScheduleManagement.jsx) */
 .ds-date-range-picker {
   border: 1px solid #e0e0e0;
   border-radius: 8px;
@@ -283,7 +329,7 @@
   line-height: 1.4;
 }
 
-/* Summary */
+/* Summary (dành cho ScheduleManagement.jsx) */
 .ds-summary {
   padding: 12px;
   background: linear-gradient(135deg, #f0f8ff 0%, #e6f3ff 100%);
@@ -297,7 +343,7 @@
   font-size: 15px;
 }
 
-/* Submit button */
+/* Submit button (dành cho ScheduleManagement.jsx) */
 .ds-submit-button {
   width: 100%;
   padding: 12px 20px;
@@ -668,7 +714,6 @@
   font-weight: bold;
 }
 
-
 .ds-modal-footer {
   display: flex;
   justify-content: flex-end;
@@ -711,7 +756,7 @@
   box-shadow: 0 2px 8px rgba(74, 144, 226, 0.3);
 }
 
-/* Note Editing Styles */
+/* Note Editing Styles (dành cho ScheduleManagement.jsx) */
 .ds-note-edit-container {
   background: #f8f9fa;
   padding: 12px;
@@ -886,6 +931,14 @@
 @media (max-width: 768px) {
   .ds-schedule-page {
     padding: 10px;
+  }
+
+  .ds-selector-container {
+    flex-direction: column;
+  }
+
+  .ds-doctor-selector {
+    max-width: 100%;
   }
 
   .ds-date-inputs {

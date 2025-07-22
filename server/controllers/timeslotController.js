@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const TimeSlot = require("../models/TimeSlot");
+const Doctor = require("../models/Doctor");
 
 // Lấy chi tiết timeslot theo ID
 const getTimeslotById = async (req, res) => {
@@ -229,6 +230,69 @@ const getSlotByDoctorId = async (req, res) => {
   }
 };
 
+// Lấy lịch làm việc của bác sĩ theo tuần
+const getDoctorScheduleByWeek = async (req, res) => {
+  try {
+    const { doctorId, startDate, endDate } = req.query;
+
+    // Validate doctorId
+    if (!mongoose.Types.ObjectId.isValid(doctorId)) {
+      return res.status(400).json({
+        success: false,
+        message: "doctorId không hợp lệ",
+      });
+    }
+
+    // Validate dates
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return res.status(400).json({
+        success: false,
+        message: "startDate hoặc endDate không hợp lệ",
+      });
+    }
+
+    // Check if doctor exists
+    const doctor = await Doctor.findById(doctorId).populate("userId", "fullname");
+    if (!doctor) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy bác sĩ",
+      });
+    }
+
+    // Fetch timeslots
+    const timeslots = await TimeSlot.find({
+      doctorId,
+      date: {
+        $gte: start,
+        $lte: end,
+      },
+      status: "active",
+    }).sort({ date: 1, slot_index: 1 });
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        doctor: {
+          _id: doctor._id,
+          fullname: doctor.userId.fullname,
+        },
+        timeslots,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching doctor schedule:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi khi lấy lịch làm việc của bác sĩ",
+      error: error.message,
+    });
+  }
+};
+
+
 module.exports = {
   getTimeslotById,
   getAvailableTimeslots,
@@ -236,4 +300,5 @@ module.exports = {
   updateTimeslot,
   deleteTimeslot,
   getSlotByDoctorId,
+  getDoctorScheduleByWeek,
 };

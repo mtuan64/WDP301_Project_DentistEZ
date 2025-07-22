@@ -20,7 +20,7 @@ const BlogDetail = () => {
 
   const getContentSummary = (content) => {
     if (!Array.isArray(content) || content.length === 0)
-      return "No content available";
+      return "Không có nội dung";
     const firstItem = content[0];
     return truncateText(firstItem.text, 50);
   };
@@ -50,7 +50,7 @@ const BlogDetail = () => {
             : [
                 {
                   type: "paragraph",
-                  text: blogResponse.data.content || "No content available",
+                  text: blogResponse.data.content || "Không có nội dung",
                   url: "",
                   bold: false,
                   italic: false,
@@ -59,13 +59,6 @@ const BlogDetail = () => {
               ],
         };
         setBlog(transformedBlog);
-
-        // Increment blog views
-        await axios.post(
-          `http://localhost:9999/api/blogs/slug/${slug}/views`,
-          {},
-          { headers }
-        );
 
         // Fetch top viewed blogs
         const topViewedResponse = await axios.get(
@@ -80,27 +73,52 @@ const BlogDetail = () => {
         console.log("Status:", err.response?.status);
         setError(
           err.response?.data?.message ||
-            "Failed to fetch blog or top viewed posts. Please check the slug or API endpoint."
+            "Không thể tải bài viết hoặc bài viết được xem nhiều. Vui lòng kiểm tra slug hoặc điểm cuối API."
         );
         setLoading(false);
       }
     };
 
     fetchData();
+
+    // Tăng lượt xem sau 30 giây
+    let viewIncremented = false; // Cờ để đảm bảo chỉ tăng view một lần
+    const timer = setTimeout(async () => {
+      if (!viewIncremented) {
+        try {
+          const token = localStorage.getItem("token");
+          const headers = token ? { Authorization: `Bearer ${token}` } : {};
+          await axios.post(
+            `http://localhost:9999/api/blogs/slug/${slug}/views`,
+            {},
+            { headers }
+          );
+          viewIncremented = true; // Đánh dấu đã tăng view
+        } catch (err) {
+          console.error("Error incrementing views:", err);
+        }
+      }
+    }, 30000); // 30 giây
+
+    // Dọn dẹp timer khi component unmount hoặc slug thay đổi
+    return () => {
+      clearTimeout(timer);
+    };
   }, [slug]);
 
   if (loading) {
-    return <div className="blogdetail-loading">Loading...</div>;
+    return <div className="blogdetail-loading">Đang tải...</div>;
   }
 
   if (error) {
-    return <div className="blogdetail-error">Error: {error}</div>;
+    return <div className="blogdetail-error">Lỗi: {error}</div>;
   }
 
   if (!blog) {
     return (
       <div className="blogdetail-error">
-        Blog not found or loading failed. Check console for details.
+        Không tìm thấy bài viết hoặc tải thất bại. Vui lòng kiểm tra console để
+        biết chi tiết.
       </div>
     );
   }
@@ -116,7 +134,7 @@ const BlogDetail = () => {
                 <div className="blogdetail-meta">
                   <span className="blogdetail-date">
                     <CalendarTodayIcon fontSize="small" />
-                    {new Date(blog.createdAt).toLocaleDateString("en-US", {
+                    {new Date(blog.createdAt).toLocaleDateString("vi-VN", {
                       day: "2-digit",
                       month: "2-digit",
                       year: "numeric",
@@ -142,7 +160,7 @@ const BlogDetail = () => {
                     {item.type === "image" ? (
                       <img
                         src={item.url || ""}
-                        alt={`Content image ${index}`}
+                        alt={`Hình ảnh nội dung ${index}`}
                         className="content-image"
                       />
                     ) : (
@@ -151,7 +169,7 @@ const BlogDetail = () => {
                           item.italic ? "italic-text" : ""
                         } ${item.fontSize}-text`}
                       >
-                        {item.text || "No text available"}
+                        {item.text || "Không có nội dung"}
                       </span>
                     )}
                   </div>
@@ -162,7 +180,7 @@ const BlogDetail = () => {
         </div>
         <div className="blogdetail-sidebar">
           <h3 className="blogdetail-sidebar-title">
-            Tin tức được xem nhiều nhất
+            Bài viết được xem nhiều nhất
           </h3>
           <div className="blogdetail-featured-posts">
             {topViewedBlogs.map((topBlog, index) => (
