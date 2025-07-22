@@ -90,23 +90,23 @@ const Header = ({ onMenuClick }) => {
         <div className="navbar-nav ms-auto py-0 align-items-center d-flex">
           <Link to="/" className="nav-item nav-link">
             <HomeOutlined style={{ marginRight: 8 }} />
-            Home
+            Trang chủ
           </Link>
           <Link to="/about" className="nav-item nav-link">
             <InfoCircleOutlined style={{ marginRight: 8 }} />
-            About
+            Giới thiệu
           </Link>
           <Link to="/blog" className="nav-item nav-link">
             <BookOutlined style={{ marginRight: 8 }} />
-            Blog
+            Tin tức
           </Link>
           <Link to="/services" className="nav-item nav-link">
             <ToolOutlined style={{ marginRight: 8 }} />
-            Service
+            Dịch vụ
           </Link>
           <Link to="/doctor" className="nav-item nav-link">
             <TeamOutlined style={{ marginRight: 8 }} />
-            Doctor
+            Bác sĩ
           </Link>
 
           {/* ✅ Account Dropdown */}
@@ -126,7 +126,7 @@ const Header = ({ onMenuClick }) => {
             <Dropdown menu={{ items: guestMenuItems }} trigger={["click"]}>
               <div className="nav-item nav-link d-flex align-items-center" style={{ cursor: "pointer" }}>
                 <UserOutlined style={{ marginRight: 8 }} />
-                Account
+                Tài khoản
               </div>
             </Dropdown>
           )}
@@ -138,7 +138,7 @@ const Header = ({ onMenuClick }) => {
 
         <Link to="/appointment" className="btn btn-primary py-2 px-4 ms-3">
           <CalendarOutlined style={{ marginRight: 8 }} />
-          Appointment
+          Đặt lịch
         </Link>
       </div>
     </nav>

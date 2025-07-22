@@ -185,10 +185,76 @@ const handlePaymentWebhook = async (req, res) => {
   }
 };
 
+// Lấy tất cả lịch sử giao dịch của bệnh nhân theo patientId
+const getPaymentsByPatientId = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const patient = await Patient.findOne({ userId });
+    if (!patient) {
+      return res.status(404).json({ message: "Không tìm thấy bệnh nhân." });
+    }
+
+    const payments = await Payment.find({ "metaData.patientId": patient._id })
+      .populate({
+        path: "metaData.doctorId",
+        populate: { path: "userId", select: "fullname" },
+      })
+      .populate("metaData.serviceId", "name")
+      .populate("metaData.clinicId", "name")
+      .populate("metaData.serviceOptionId", "name")
+      .populate("metaData.timeslotId", "date startTime endTime")
+      .sort({ createdAt: -1 });
+
+    return res.json({
+      message: "Lấy lịch sử giao dịch thành công.",
+      payments,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Lỗi khi lấy lịch sử giao dịch.",
+      error: error.message,
+    });
+  }
+};
+
+// Lấy tất cả giao dịch cho nhân viên (staff)
+const getAllPaymentsForStaff = async (req, res) => {
+  try {
+    const payments = await Payment.find({})
+      .populate({
+        path: "metaData.patientId",
+        populate: { path: "userId", select: "fullname" },
+      })
+      .populate({
+        path: "metaData.doctorId",
+        populate: { path: "userId", select: "fullname" },
+      })
+      .populate("metaData.serviceId", "name")
+      .populate("metaData.clinicId", "name")
+      .populate("metaData.serviceOptionId", "name")
+      .populate("metaData.timeslotId", "date startTime endTime")
+      .sort({ createdAt: -1 });
+
+    return res.json({
+      message: "Lấy tất cả giao dịch thành công.",
+      payments,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Lỗi khi lấy danh sách giao dịch.",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   createPayment,
   getPayment,
   cancelPayment,
-  handlePaymentWebhook
+  handlePaymentWebhook,
+  getPaymentsByPatientId,
+  getAllPaymentsForStaff
 };
 

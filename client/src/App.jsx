@@ -43,6 +43,8 @@ import StaffManagerPatientApp from "./pages/StaffManagerPatientApp";
 import PaymentModalFinal from "./pages/PaymentModalFinal";
 import StaffPaymentSuccessPage from "./pages/StaffPaymentSuccessPage";
 import StaffPaymentCancelPage from "./pages/StaffPaymentCancelPage";
+import PaymentHistory from "./pages/PaymentHistory";
+import StaffPaymentHistory from "./pages/StaffPaymentHistory";
 
 const DRAWER_WIDTH = 240;
 
@@ -73,7 +75,7 @@ const App = () => {
           isOpen={menuOpen}
           onClose={() => setMenuOpen(false)}
           role={role}
-          userId={user?.id} 
+          userId={user?.id}
         />
       )}
 
@@ -109,7 +111,10 @@ const App = () => {
           />
           <Route path="/accountmanagement" element={<AccountManagement />} />
 
-          <Route path="/admin/appointments" element={<AppointmentManagement />} />
+          <Route
+            path="/admin/appointments"
+            element={<AppointmentManagement />}
+          />
           <Route path="/accountmanagement" element={<AccountManagement />} />
           <Route path="/patient/:userId" element={<PatientAppointment />} />
           <Route path="/doctor/schedule" element={<ScheduleManagement />} />
@@ -125,14 +130,28 @@ const App = () => {
           <Route path="/payment-cancel" element={<PaymentCancelPage />} />
           <Route path="/payment-success" element={<PaymentSuccessPage />} />
           <Route path="/re-examinations/:id" element={<ReDetail />} />
-          <Route path="/staffmanager/patientapp" element={<StaffManagerPatientApp />} />
-          <Route path="/modalpayment" element={<PaymentModalFinal/>} />
-          <Route path="/staffmanager/payment-success" element={<StaffPaymentSuccessPage />} />
-          <Route path="/staffmanager/payment-cancel" element={<StaffPaymentCancelPage />} />
+          <Route
+            path="/staffmanager/patientapp"
+            element={<StaffManagerPatientApp />}
+          />
+          <Route path="/modalpayment" element={<PaymentModalFinal />} />
+          <Route
+            path="/staffmanager/payment-success"
+            element={<StaffPaymentSuccessPage />}
+          />
+          <Route
+            path="/staffmanager/payment-cancel"
+            element={<StaffPaymentCancelPage />}
+          />
+
+          <Route path="/paymenthistory" element={<PaymentHistory />} />
+          <Route
+            path="/staffmanager/paymenthistory"
+            element={<StaffPaymentHistory />}
+          />
         </Routes>
       </div>
 
-      
       <Chatbox />
       <FooterComponent />
     </div>
