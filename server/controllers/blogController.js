@@ -130,18 +130,19 @@ exports.createBlog = async (req, res) => {
     }
     const processedContent = await Promise.all(
       content.map(async (item, index) => {
-        if (item.type === "image" && req.files && req.files.contentImages) {
-          const contentImage = req.files.contentImages.find(
-            (file) => file.fieldname === `contentImages[${index}]`
-          );
-          if (contentImage) {
-            const result = await cloudinary.uploader.upload(contentImage.path, {
-              folder: "blog_images",
-            });
-            await fs.unlink(contentImage.path);
-            return { ...item, url: result.secure_url };
-          }
-        }
+        if (
+  item.type === "image" &&
+  req.files &&
+  req.files[`contentImages[${index}]`]
+) {
+  const contentImage = req.files[`contentImages[${index}]`][0];
+  const result = await cloudinary.uploader.upload(contentImage.path, {
+    folder: "blog_images",
+  });
+  await fs.unlink(contentImage.path);
+  return { ...item, url: result.secure_url };
+}
+
         return {
           ...item,
           bold: item.bold || false,

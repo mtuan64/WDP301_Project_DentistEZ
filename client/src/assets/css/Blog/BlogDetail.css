@@ -11,12 +11,12 @@
 }
 
 .blogdetail-main {
-  flex: 3; 
+  flex: 3;
   min-width: 0;
 }
 
 .blogdetail-sidebar {
-  flex: 1; 
+  flex: 1;
   background: #ffffff;
   padding: 20px;
   border-radius: 8px;
@@ -42,7 +42,7 @@
   align-items: center;
   gap: 10px;
   background: #e3dfe35e;
-  height: 100px; 
+  height: 100px;
   overflow: hidden;
 }
 
@@ -134,9 +134,9 @@
 
 .blogdetail-meta {
   display: flex;
-  justify-content: flex-end; /* Đặt bên phải */
+  justify-content: flex-end;
   align-items: center;
-  gap: 15px; /* Khoảng cách giữa date và views */
+  gap: 15px;
 }
 
 .blogdetail-date,
@@ -149,7 +149,7 @@
 
 .blogdetail-date svg,
 .blogdetail-views svg {
-  margin-right: 5px; /* Khoảng cách giữa icon và text */
+  margin-right: 5px;
 }
 
 .blogdetail-image img {
@@ -169,10 +169,17 @@
 .content-paragraph,
 .content-bullet {
   margin-bottom: 15px;
+  white-space: pre-wrap; /* Hiển thị xuống dòng tự nhiên */
+}
+
+.content-bullet {
+  display: flex;
+  align-items: flex-start;
 }
 
 .bullet-point {
   margin-right: 10px;
+  flex-shrink: 0;
 }
 
 .content-image {
