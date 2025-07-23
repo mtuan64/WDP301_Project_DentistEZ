@@ -13,7 +13,7 @@ const { createFinalOnlinePayment, createFinalCashPayment, payosCallbackFinal, ge
 const multer = require("multer");
 const cloudinary = require("cloudinary").v2;
 const streamifier = require("streamifier");
-const { getAllAppointment, getAppointmentsByPatient, cancelAppointmentWithRefund } = require("../controllers/appointmentController");
+const { getAllAppointment, getAppointmentsByPatient, cancelAppointmentWithRefund, getAllRefunds, confirmRefund } = require("../controllers/appointmentController");
 
 
 // Multer để nhận file vào memory
@@ -64,7 +64,9 @@ router.post("/payos-callback", patientAppController.payosCallback);
 
 //appointment routes
 router.get("/patient/:userId", getAppointmentsByPatient);
+router.get("/refunds", getAllRefunds);
 router.put("/cancel/:id", authPatientMiddleware, cancelAppointmentWithRefund);
+router.put("/refunds/confirm/:id", confirmRefund);
 
 // api lịch tái khám 
 router.post('/re-examination/:id',authPatientOrStaffMiddleware ,repatientAppController.createReExamination);

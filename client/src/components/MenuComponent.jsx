@@ -37,24 +37,19 @@ const menuByRole = (role, userId) => {
     doctor: [
       { title: "Trang chủ", path: "/", icon: <HomeOutlined /> },
       { title: "Quản lý lịch trình", path: "/doctor/schedule", icon: <CalendarOutlined /> },
-      { title: "Report Management", path: "/report", icon: <FileTextOutlined /> },
-      { title: "Message Management", path: "/message-management", icon: <MessageOutlined /> },
-      { title: "Attendance Management", path: "/attendance-management", icon: <ScheduleOutlined /> },
-      { title: "Recruitment Management", path: "/recruitment-management-mentor", icon: <UsergroupAddOutlined /> },
+      
     ],
     staff: [
       { title: "Trang chủ", path: "/", icon: <HomeOutlined /> },
       { title: "Quản lý lịch khám bệnh nhân ", path: "/staffmanager/patientapp", icon: <UserOutlined /> },
       { title: "Lịch sử giao dịch", path: "staffmanager/paymenthistory", icon: <FileTextOutlined /> },
-      { title: "Lịch trình bác sĩ", path: "/schedule", icon: <CalendarOutlined /> },
+      { title: "Quản lý hoàn tiền lịch hủy", path: "/staffmanager/refunds", icon: <DollarOutlined /> },
     ],
     patient: [
       { title: "Trang chủ", path: "/", icon: <HomeOutlined /> },
       { title: "Lịch hẹn của tôi", path: `/myappointment`, icon: <CalendarOutlined /> },
       { title: "Lịch sử giao dịch", path: "/paymenthistory", icon: <FileTextOutlined /> },
-      { title: "Schedule", path: "/schedule", icon: <ScheduleOutlined /> },
-      { title: "Attendance", path: "/attendance", icon: <UsergroupAddOutlined /> },
-      { title: "Mark Report", path: "/mark-report", icon: <EditOutlined /> },
+      
     ],
   };
 
