@@ -43,7 +43,7 @@ const Chatbox = () => {
     chatOptions.push({
       id: "2",
       type: "user",
-      name: "Support Team",
+      name: "Đội ngũ tư vấn",
       avatar: "👥",
       role: "staff",
       lastMessage: "We are here to help!",
