@@ -14,6 +14,25 @@ function ServiceManagement() {
   const [allServices, setAllServices] = useState([]);
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+  // Thêm ở trên cùng file, ngay sau các useState
+  const [modalAlert, setModalAlert] = useState({ open: false, content: '', onClose: null });
+  const [modalConfirm, setModalConfirm] = useState({ open: false, content: '', onConfirm: null, onCancel: null });
+
+  const showAlert = (content, cb) =>
+    setModalAlert({
+      open: true,
+      content,
+      onClose: () => { setModalAlert(m => ({ ...m, open: false })); if (cb) cb(); }
+    });
+
+  const showConfirm = (content, onConfirm, onCancel) =>
+    setModalConfirm({
+      open: true,
+      content,
+      onConfirm: () => { setModalConfirm(m => ({ ...m, open: false })); onConfirm && onConfirm(); },
+      onCancel: () => { setModalConfirm(m => ({ ...m, open: false })); onCancel && onCancel(); }
+    });
+
 
 
 
@@ -111,13 +130,13 @@ function ServiceManagement() {
         setForm({ ...form, image: res.data.url });
       }
     } catch (err) {
-      alert('Upload ảnh thất bại!');
+      showAlert('Upload ảnh thất bại!');
     }
     setUploading(false);
   };
 
   // Khi chọn bác sĩ, tự động lấy clinicId và set vào form
-const handleDoctorChange = (e) => {
+  const handleDoctorChange = (e) => {
     const selectedDoctorId = e.target.value;
     const doctor = doctors.find(d => d._id === selectedDoctorId);
     let clinicId = '';
@@ -192,7 +211,7 @@ const handleDoctorChange = (e) => {
       await axios.post('http://localhost:9999/api/admin/create/service', form, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setToast({ show: true, message: 'Bạn đã tạo service thành công!', type: 'success' });
+      showAlert('Bạn đã tạo dịch vụ thành công!');
       setShowModal(false);
       setFormError('');
       setForm({
@@ -324,18 +343,19 @@ const handleDoctorChange = (e) => {
     fontSize: 18,
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Bạn chắc chắn muốn xóa dịch vụ này?')) return;
-    try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`http://localhost:9999/api/admin/delete-service/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setToast({ show: true, message: 'Đã xóa dịch vụ!', type: 'success' });
-      fetchServices();
-    } catch (err) {
-      setToast({ show: true, message: 'Xóa dịch vụ thất bại!', type: 'error' });
-    }
+  const handleDelete = (id) => {
+    showConfirm('Bạn chắc chắn muốn xóa dịch vụ này?', async () => {
+      try {
+        const token = localStorage.getItem('token');
+        await axios.delete(`http://localhost:9999/api/admin/delete-service/${id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        showAlert('Đã xóa dịch vụ!');
+        fetchServices();
+      } catch (err) {
+        showAlert('Xóa dịch vụ thất bại!');
+      }
+    });
   };
   const handleEdit = (sv) => {
     setForm({
@@ -365,7 +385,7 @@ const handleDoctorChange = (e) => {
       await axios.put(`http://localhost:9999/api/admin/update-service/${editId}`, form, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setToast({ show: true, message: 'Đã cập nhật dịch vụ!', type: 'success' });
+      showAlert('Đã cập nhật dịch vụ!');
       setShowModal(false);
       setFormError('');
       setEditId(null);
@@ -430,24 +450,6 @@ const handleDoctorChange = (e) => {
     >
 
 
-      {/* Toast/thông báo nổi */}
-      {toast.show && (
-        <div style={{
-          position: 'fixed',
-          top: 30,
-          right: 30,
-          zIndex: 9999,
-          padding: '16px 28px',
-          borderRadius: 8,
-          background: toast.type === 'success' ? '#4caf50' : '#f44336',
-          color: '#fff',
-          fontWeight: 600,
-          fontSize: 18,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
-        }}>
-          {toast.message}
-        </div>
-      )}
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h2 style={{ marginBottom: 24, fontWeight: 700 }}>Danh sách dịch vụ</h2>
@@ -532,7 +534,7 @@ const handleDoctorChange = (e) => {
                 <th style={thStyle}>Ảnh</th>
                 <th style={thStyle}>Mô tả</th>
                 <th style={thStyle}>Option nhỏ</th>
-                <th style={thLastStyle}>Action</th>
+                <th style={thLastStyle}>Thao Tác</th>
               </tr>
             </thead>
             <tbody>
@@ -881,6 +883,29 @@ const handleDoctorChange = (e) => {
           </div>
         </div>
       )}
+
+      {/* Modal Alert */}
+      {modalAlert.open && (
+        <div style={{ position: 'fixed', zIndex: 10010, top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.14)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: '#fff', borderRadius: 12, minWidth: 300, boxShadow: '0 2px 22px #0001', padding: 30, textAlign: 'center' }}>
+            <h3 style={{ margin: 0, color: '#26c', fontWeight: 700, fontSize: 20 }}>Thông báo</h3>
+            <p style={{ fontSize: 17, margin: '18px 0 18px 0', color: '#222' }}>{modalAlert.content}</p>
+            <button onClick={modalAlert.onClose} style={{ padding: "10px 25px", background: "#03a9f4", color: "#fff", border: "none", borderRadius: 6, fontSize: 15, fontWeight: 'bold', cursor: 'pointer' }}>OK</button>
+          </div>
+        </div>
+      )}
+      {/* Modal Confirm */}
+      {modalConfirm.open && (
+        <div style={{ position: 'fixed', zIndex: 10010, top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.14)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: '#fff', borderRadius: 12, minWidth: 330, boxShadow: '0 2px 22px #0001', padding: 30, textAlign: 'center' }}>
+            <h3 style={{ margin: 0, color: '#e89c00', fontWeight: 700, fontSize: 20 }}>Xác nhận</h3>
+            <p style={{ fontSize: 17, margin: '16px 0 18px 0', color: '#222' }}>{modalConfirm.content}</p>
+            <button onClick={modalConfirm.onConfirm} style={{ padding: "10px 25px", background: "#03a9f4", color: "#fff", border: "none", borderRadius: 6, fontSize: 15, fontWeight: 'bold', marginRight: 16, cursor: 'pointer' }}>Đồng ý</button>
+            <button onClick={modalConfirm.onCancel} style={{ padding: "10px 25px", background: "#eee", color: "#444", border: "none", borderRadius: 6, fontSize: 15, fontWeight: 'bold', cursor: 'pointer' }}>Hủy</button>
+          </div>
+        </div>
+      )}
+
 
     </div>
   );
