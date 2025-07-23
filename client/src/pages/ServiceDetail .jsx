@@ -17,6 +17,17 @@ const ServiceDetail = () => {
   const [fileUrl, setFileUrl] = useState('');
   const [fileType, setFileType] = useState('');
   const [file, setFile] = useState(null);
+  const [modalAlert, setModalAlert] = useState({ open: false, content: "" });
+  const showAlert = (content, cb) =>
+    setModalAlert({
+      open: true,
+      content,
+      onClose: () => {
+        setModalAlert((m) => ({ ...m, open: false }));
+        if (cb) cb();
+      }
+    });
+
 
 
   const handleFileChange = (e) => {
@@ -40,12 +51,12 @@ const ServiceDetail = () => {
       const data = await response.json();
       if (response.ok) {
         setFileUrl(data.fileUrl); // URL file trên Cloudinary
-        alert("Upload thành công");
+        showAlert("Upload thành công");
       } else {
-        alert("Upload thất bại: " + data.message);
+        showAlert("Upload thất bại: " + data.message);
       }
     } catch (error) {
-      alert("Lỗi kết nối server");
+      showAlert("Lỗi kết nối server");
     }
   };
 
@@ -119,15 +130,22 @@ const ServiceDetail = () => {
       user?.address
     );
   };
+  const isLoggedIn = () => {
+    return !!localStorage.getItem('token');
+  };
 
   const handleBooking = () => {
-    if (!isUserProfileComplete()) {
-      alert('Bạn cần cập nhật đầy đủ hồ sơ cá nhân trước khi đặt lịch!');
-      navigate('/myprofile'); // hoặc đường dẫn trang cập nhật hồ sơ của bạn
+    if (!isLoggedIn()) {
+      showAlert('Vui lòng đăng nhập để đặt lịch!', () => navigate('/login'));
       return;
     }
+    if (!isUserProfileComplete()) {
+      showAlert('Bạn cần cập nhật đầy đủ hồ sơ cá nhân trước khi đặt lịch!', () => navigate('/myprofile'));
+      return;
+    }
+
     if (!selectedOptionId || !selectedDate || !selectedTimeSlot) {
-      alert('Vui lòng chọn đầy đủ thông tin!');
+      showAlert('Vui lòng chọn đầy đủ thông tin!');
       return;
     }
     console.log('Mở modal đặt lịch');
@@ -136,7 +154,7 @@ const ServiceDetail = () => {
 
   const handlePayment = async () => {
     if (!selectedOptionId || !selectedDate || !selectedTimeSlot) {
-      alert('Vui lòng chọn đầy đủ thông tin!');
+      showAlert('Vui lòng chọn đầy đủ thông tin!');
       return;
     }
 
@@ -164,16 +182,16 @@ const ServiceDetail = () => {
       });
       const data = await res.json();
       if (res.ok) {
-        alert(data.message || "Tạo thanh toán thành công! Đang chuyển sang trang thanh toán...");
+        showAlert(data.message || "Tạo thanh toán thành công! Đang chuyển sang trang thanh toán...");
         // Nếu có link thanh toán, chuyển hướng luôn
         if (data.payment && data.payment.payUrl) {
           window.location.href = data.payment.payUrl;
         }
       } else {
-        alert(data.message || "Có lỗi xảy ra!");
+        showAlert(data.message || "Có lỗi xảy ra!");
       }
     } catch (err) {
-      alert("Có lỗi kết nối server!");
+      showAlert("Có lỗi kết nối server!");
     }
   };
 
@@ -456,9 +474,10 @@ const ServiceDetail = () => {
                   }}
                   onClick={() => {
                     setSelectedOptionId(
-                      options.find(opt => opt.image === img)?.optionName || ''
+                      options.find(opt => opt.image === img)?._id || ''
                     );
                   }}
+
                 >
                   <img
                     src={img || '/api/placeholder/80/80'}
@@ -531,37 +550,37 @@ const ServiceDetail = () => {
               <div>
                 <label style={styles.optionLabel}>Chọn giờ:</label>
                 <div style={styles.timeSlots}>
-  {!selectedDate ? (
-    <span style={{ color: '#888' }}>Vui lòng chọn ngày trước</span>
-  ) : slots.length > 0 ? (
-    slots.map((slot, index) => (
-      <div
-        key={slot._id || slot.time || index}
-        style={{
-          ...styles.timeSlot,
-          ...(selectedTimeSlot === slot ? styles.timeSlotSelected : {}),
-          // Nếu slot đã được đặt thì mờ đi
-          ...(slot.isAvailable === false ? styles.timeSlotDisabled : {})
-        }}
-        // Chỉ cho phép chọn nếu slot còn trống
-        onClick={() =>
-          slot.isAvailable !== false && setSelectedTimeSlot(slot)
-        }
-      >
-        {slot.time
-          ? slot.time
-          : `${slot.start_time || ''}${slot.end_time ? ' - ' + slot.end_time : ''}`}
-        {slot.isAvailable === false && (
-          <span style={{ color: '#e74c3c', fontSize: 12, marginLeft: 6 }}>
-            (Đã đặt)
-          </span>
-        )}
-      </div>
-    ))
-  ) : (
-    <span style={{ color: '#888' }}>Không có slot nào</span>
-  )}
-</div>
+                  {!selectedDate ? (
+                    <span style={{ color: '#888' }}>Vui lòng chọn ngày trước</span>
+                  ) : slots.length > 0 ? (
+                    slots.map((slot, index) => (
+                      <div
+                        key={slot._id || slot.time || index}
+                        style={{
+                          ...styles.timeSlot,
+                          ...(selectedTimeSlot === slot ? styles.timeSlotSelected : {}),
+                          // Nếu slot đã được đặt thì mờ đi
+                          ...(slot.isAvailable === false ? styles.timeSlotDisabled : {})
+                        }}
+                        // Chỉ cho phép chọn nếu slot còn trống
+                        onClick={() =>
+                          slot.isAvailable !== false && setSelectedTimeSlot(slot)
+                        }
+                      >
+                        {slot.time
+                          ? slot.time
+                          : `${slot.start_time || ''}${slot.end_time ? ' - ' + slot.end_time : ''}`}
+                        {slot.isAvailable === false && (
+                          <span style={{ color: '#e74c3c', fontSize: 12, marginLeft: 6 }}>
+                            (Đã đặt)
+                          </span>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <span style={{ color: '#888' }}>Không có slot nào</span>
+                  )}
+                </div>
 
 
               </div>
@@ -640,7 +659,9 @@ const ServiceDetail = () => {
               zIndex: 9999,
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              padding: 10,
+              boxSizing: 'border-box',
             }}
             onClick={() => setShowBookingModal(false)}
           >
@@ -648,14 +669,16 @@ const ServiceDetail = () => {
               style={{
                 background: '#fff',
                 borderRadius: 16,
-                width: 900,
-                maxWidth: '88vw',
+                width: '100%',
+                maxWidth: window.innerWidth < 1000 ? '95vw' : '1080px',
+                maxHeight: '90vh',
+                overflowY: 'auto',
                 display: 'flex',
                 flexDirection: 'column',
                 boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
-                overflow: 'hidden',
                 minHeight: 420,
-                position: 'relative'
+                position: 'relative',
+                padding: 0,
               }}
               onClick={e => e.stopPropagation()}
             >
@@ -663,148 +686,197 @@ const ServiceDetail = () => {
               <div
                 style={{
                   width: '100%',
-                  padding: '22px 0 10px 0',
+                  padding: '18px 0 8px 0',
                   textAlign: 'center',
                   borderBottom: '1px solid #eee',
                   background: '#f8f9fa'
                 }}
               >
-                <span style={{ fontSize: 26, fontWeight: 700, color: '#007bff', letterSpacing: 1 }}>
+                <span style={{ fontSize: 22, fontWeight: 700, color: '#007bff', letterSpacing: 1 }}>
                   Đặt lịch khám bệnh
                 </span>
               </div>
-              {/* Nội dung chia 2 cột */}
-              <div style={{ display: 'flex', width: '100%', flex: 1 }}>
-                {/* Bên trái: Thông tin dịch vụ, bác sĩ, phòng khám, thời gian */}
-                <div style={{ flex: 1.2, padding: 32, borderRight: '1px solid #eee', background: '#f8f9fa' }}>
-                  <h3 style={{ color: '#007bff', marginBottom: 18 }}>Thông tin dịch vụ</h3>
 
-                  <div style={{ width: '100%', marginBottom: 20, textAlign: 'center' }}>
+              {/* Nội dung chia 2 cột */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: window.innerWidth < 800 ? '1fr' : '1fr 1.5fr',
+                  gap: 0,
+                  width: '100%',
+                  flex: 1,
+                }}
+              >
+                {/* CỘT 1: Thông tin dịch vụ */}
+                <div
+                  style={{
+                    padding: 18,
+                    borderRight: window.innerWidth < 800 ? 'none' : '1px solid #eee',
+                    borderBottom: window.innerWidth < 800 ? '1px solid #eee' : 'none',
+                    background: '#f8f9fa',
+                    minWidth: 230,
+                  }}
+                >
+                  <h3 style={{ color: '#007bff', marginBottom: 18, fontSize: 18 }}>Thông tin dịch vụ</h3>
+                  <div style={{ width: '100%', marginBottom: 16, textAlign: 'center' }}>
                     <img
                       src={mainImage || '/no-image.jpg'}
                       alt={service?.serviceName || service?.name}
-                      style={{ width: 140, height: 110, objectFit: 'cover', borderRadius: 8, boxShadow: '0 1px 8px #ccc' }}
+                      style={{
+                        width: 120,
+                        height: 90,
+                        objectFit: 'cover',
+                        borderRadius: 8,
+                        boxShadow: '0 1px 8px #ccc'
+                      }}
                     />
                   </div>
-                  <div style={{ marginBottom: 7 }}>
+                  <div style={{ marginBottom: 6 }}>
                     <span style={{ fontWeight: 600 }}>Tên dịch vụ: </span>
                     <span>{service?.serviceName || '---'}</span>
                   </div>
                   <div style={{ marginBottom: 10 }}>
                     <span style={{ fontWeight: 600 }}>Giá dịch vụ: </span>
-                    <span style={{ color: '#e74c3c', fontWeight: 700, fontSize: 20 }}>
+                    <span style={{ color: '#e74c3c', fontWeight: 700, fontSize: 18 }}>
                       {getCurrentPrice().toLocaleString()} đ
                     </span>
                   </div>
-                  <div style={{ marginBottom: 7 }}>
-                    <span style={{ fontWeight: 600 }}>Gói dịch vụ nhỏ : </span>
+                  <div style={{ marginBottom: 6 }}>
+                    <span style={{ fontWeight: 600 }}>Gói dịch vụ nhỏ: </span>
                     <span>{currentOption ? currentOption.optionName : "---"}</span>
-
                   </div>
-                  <div style={{ marginBottom: 7 }}>
+                  <div style={{ marginBottom: 6 }}>
                     <span style={{ fontWeight: 600 }}>Bác sĩ: </span>
                     <span>{service?.doctorId?.userId?.fullname || '---'}</span>
                   </div>
-                  <div style={{ marginBottom: 7 }}>
+                  <div style={{ marginBottom: 6 }}>
                     <span style={{ fontWeight: 600 }}>Phòng khám: </span>
                     <span>{service?.clinicId?.clinic_name || '---'}</span>
                   </div>
-                  <div style={{ marginBottom: 7 }}>
+                  <div style={{ marginBottom: 6 }}>
                     <span style={{ fontWeight: 600 }}>Ngày khám: </span>
                     <span>{selectedDate}</span>
                   </div>
-                  <div style={{ marginBottom: 7 }}>
+                  <div style={{ marginBottom: 6 }}>
                     <span style={{ fontWeight: 600 }}>Khung giờ: </span>
                     <span>
                       {selectedTimeSlot?.start_time && selectedTimeSlot?.end_time
                         ? `${selectedTimeSlot.start_time} - ${selectedTimeSlot.end_time}`
                         : selectedTimeSlot?.time || selectedTimeSlot || '---'}
                     </span>
-
                   </div>
-                  
-
                 </div>
-                {/* Bên phải: Thông tin người đặt */}
-                <div style={{ flex: 1, padding: 32, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                  <div>
-                    <h3 style={{ color: '#007bff', marginBottom: 18 }}>Thông tin người đặt</h3>
-                    <div style={{ marginBottom: 16 }}>
-                      <label style={{ fontWeight: 600, display: 'block', marginBottom: 6, color: '#34495e' }}>Họ và tên</label>
-                      <input
-                        type="text"
-                        value={user?.fullname || ''}
-                        readOnly
-                        style={{
-                          width: '100%',
-                          border: '1px solid #ddd',
-                          borderRadius: 6,
-                          padding: '10px 14px',
-                          background: '#fafbfc'
-                        }}
-                      />
+
+                {/* CỘT 2: Thông tin người đặt (GHÉP CỘT 2+3) */}
+                <div
+                  style={{
+                    padding: 18,
+                    background: '#fff',
+                    minWidth: 400,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  {/* Title căn giữa */}
+                  <div style={{ textAlign: 'center', marginBottom: 18 }}>
+                    <h3 style={{ color: '#007bff', fontSize: 18, margin: 0 }}>Thông tin người đặt</h3>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                    {/* Grid 2 cột cho 4 trường đầu + địa chỉ */}
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: window.innerWidth < 600 ? '1fr' : '1fr 1fr',
+                        gap: 12,
+                        marginBottom: 16
+                      }}
+                    >
+                      <div>
+                        <label style={{ fontWeight: 600, display: 'block', marginBottom: 6, color: '#34495e' }}>Họ và tên</label>
+                        <input
+                          type="text"
+                          value={user?.fullname || ''}
+                          readOnly
+                          style={{
+                            width: '100%',
+                            border: '1px solid #ddd',
+                            borderRadius: 6,
+                            padding: '8px 12px',
+                            background: '#fafbfc',
+                            fontSize: 15
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ fontWeight: 600, display: 'block', marginBottom: 6, color: '#34495e' }}>Ngày sinh</label>
+                        <input
+                          type="text"
+                          value={formatDateOfBirth(user?.dateOfBirth) || ''}
+                          readOnly
+                          style={{
+                            width: '100%',
+                            border: '1px solid #ddd',
+                            borderRadius: 6,
+                            padding: '8px 12px',
+                            background: '#fafbfc',
+                            fontSize: 15
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ fontWeight: 600, display: 'block', marginBottom: 6, color: '#34495e' }}>Email</label>
+                        <input
+                          type="email"
+                          value={user?.email || ''}
+                          readOnly
+                          style={{
+                            width: '100%',
+                            border: '1px solid #ddd',
+                            borderRadius: 6,
+                            padding: '8px 12px',
+                            background: '#fafbfc',
+                            fontSize: 15
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ fontWeight: 600, display: 'block', marginBottom: 6, color: '#34495e' }}>Số điện thoại</label>
+                        <input
+                          type="text"
+                          value={user?.phone || ''}
+                          readOnly
+                          style={{
+                            width: '100%',
+                            border: '1px solid #ddd',
+                            borderRadius: 6,
+                            padding: '8px 12px',
+                            background: '#fafbfc',
+                            fontSize: 15
+                          }}
+                        />
+                      </div>
+                      <div style={{ gridColumn: window.innerWidth < 600 ? '1' : '1 / -1' }}>
+                        <label style={{ fontWeight: 600, display: 'block', marginBottom: 6, color: '#34495e' }}>Địa chỉ</label>
+                        <input
+                          type="text"
+                          value={user?.address || ''}
+                          readOnly
+                          style={{
+                            width: '100%',
+                            border: '1px solid #ddd',
+                            borderRadius: 6,
+                            padding: '8px 12px',
+                            background: '#fafbfc',
+                            fontSize: 15
+                          }}
+                        />
+                      </div>
                     </div>
-                    <div style={{ flex: 1 }}>
-                      <label style={{ fontWeight: 600, display: 'block', marginBottom: 6, color: '#34495e' }}>Ngày sinh</label>
-                      <input
-                        type="text"
-                        value={formatDateOfBirth(user?.dateOfBirth) || ''}
-                        readOnly
-                        style={{
-                          width: '100%',
-                          border: '1px solid #ddd',
-                          borderRadius: 6,
-                          padding: '10px 14px',
-                          background: '#fafbfc'
-                        }}
-                      />
-                    </div>
-                    <div style={{ marginBottom: 16 }}>
-                      <label style={{ fontWeight: 600, display: 'block', marginBottom: 6, color: '#34495e' }}>Email</label>
-                      <input
-                        type="email"
-                        value={user?.email || ''}
-                        readOnly
-                        style={{
-                          width: '100%',
-                          border: '1px solid #ddd',
-                          borderRadius: 6,
-                          padding: '10px 14px',
-                          background: '#fafbfc'
-                        }}
-                      />
-                    </div>
-                    <div style={{ marginBottom: 16 }}>
-                      <label style={{ fontWeight: 600, display: 'block', marginBottom: 6, color: '#34495e' }}>Số điện thoại</label>
-                      <input
-                        type="text"
-                        value={user?.phone || ''}
-                        readOnly
-                        style={{
-                          width: '100%',
-                          border: '1px solid #ddd',
-                          borderRadius: 6,
-                          padding: '10px 14px',
-                          background: '#fafbfc'
-                        }}
-                      />
-                    </div>
-                    <div style={{ marginBottom: 14 }}>
-                      <label style={{ fontWeight: 600, display: 'block', marginBottom: 6, color: '#34495e' }}>Địa chỉ</label>
-                      <input
-                        type="text"
-                        value={user?.address || ''}
-                        readOnly
-                        style={{
-                          width: '100%',
-                          border: '1px solid #ddd',
-                          borderRadius: 6,
-                          padding: '10px 14px',
-                          background: '#fafbfc'
-                        }}
-                      />
-                    </div>
-                    <div style={{ marginBottom: 14 }}>
+
+                    {/* Ghi chú full width */}
+                    <div style={{ marginBottom: 12 }}>
                       <label style={{ fontWeight: 600, display: 'block', marginBottom: 6, color: '#34495e' }}>Ghi chú</label>
                       <textarea
                         value={note || ''}
@@ -814,35 +886,37 @@ const ServiceDetail = () => {
                           width: '100%',
                           border: '1px solid #ddd',
                           borderRadius: 6,
-                          padding: '10px 14px',
+                          padding: '8px 12px',
                           background: '#fafbfc',
-                          minHeight: 40
+                          minHeight: 44,
+                          resize: 'vertical',
+                          fontSize: 15
                         }}
                       />
                     </div>
+
+                    {/* Upload file full width */}
                     <div style={{ marginBottom: 16 }}>
                       <label style={{ fontWeight: 600, display: 'block', marginBottom: 8, color: '#34495e' }}>
                         Tải lên file bệnh án trước đó (nếu có)
                       </label>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        {/* Nút chọn file custom */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                         <label
                           htmlFor="file-upload"
                           style={{
                             background: '#f1f3f6',
                             color: '#007bff',
-                            padding: '10px 22px',
+                            padding: '7px 16px',
                             borderRadius: 8,
                             fontWeight: 600,
                             cursor: 'pointer',
                             border: '1.5px solid #007bff',
                             transition: 'all 0.2s',
-                            display: 'inline-block'
+                            display: 'inline-block',
+                            fontSize: 14
                           }}
-                          onMouseOver={e => (e.target.style.background = '#e6f0ff')}
-                          onMouseOut={e => (e.target.style.background = '#f1f3f6')}
                         >
-                          <i className="fa fa-upload" style={{ marginRight: 8 }}></i>
+                          <i className="fa fa-upload" style={{ marginRight: 6 }}></i>
                           Chọn file
                           <input
                             id="file-upload"
@@ -852,61 +926,60 @@ const ServiceDetail = () => {
                             style={{ display: 'none' }}
                           />
                         </label>
-                        {/* Nút tải lên */}
                         <button
                           onClick={handleFileUpload}
                           disabled={!file}
                           style={{
                             background: file ? '#007bff' : '#b2c6e6',
                             color: '#fff',
-                            padding: '10px 28px',
+                            padding: '7px 16px',
                             border: 'none',
                             borderRadius: 8,
                             fontWeight: 700,
-                            fontSize: 16,
+                            fontSize: 14,
                             cursor: file ? 'pointer' : 'not-allowed',
                             boxShadow: file ? '0 1px 6px #007bff22' : 'none',
                             transition: 'all 0.2s'
                           }}
                         >
-                          <i className="fa fa-cloud-upload" style={{ marginRight: 8 }}></i>
+                          <i className="fa fa-cloud-upload" style={{ marginRight: 6 }}></i>
                           Tải lên
                         </button>
                       </div>
-                      {/* Hiển thị tên file đã chọn */}
                       {fileName && (
-                        <div style={{ fontSize: 14, color: '#007bff', marginTop: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <i className="fa fa-file" style={{ fontSize: 16 }}></i>
+                        <div style={{ fontSize: 13, color: '#007bff', marginTop: 7, display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <i className="fa fa-file" style={{ fontSize: 15 }}></i>
                           <span>Đã chọn: {fileName}</span>
                         </div>
                       )}
-                      {/* Hiển thị thông báo upload thành công */}
                       {fileUrl && (
-                        <div style={{ color: 'green', marginTop: 8, fontWeight: 600 }}>
+                        <div style={{ color: 'green', marginTop: 7, fontWeight: 600, fontSize: 14 }}>
                           <i className="fa fa-check-circle" style={{ marginRight: 6 }}></i>
                           File đã upload thành công!
                         </div>
                       )}
                     </div>
+                  </div>
 
-                    <div style={{ marginTop: 10, marginBottom: 16 }}>
-                      <span style={{ color: '#e74c3c', fontWeight: 600 }}>
-                        Số tiền bạn cần cọc trước 30% là: {depositAmount.toLocaleString()}  VND
+                  {/* Tiền cọc + nút thanh toán căn giữa */}
+                  <div style={{ textAlign: 'center', marginTop: 16 }}>
+                    <div style={{ marginBottom: 16 }}>
+                      <span style={{ color: '#e74c3c', fontWeight: 600, fontSize: 15 }}>
+                        Số tiền bạn cần cọc trước 30% là: {depositAmount.toLocaleString()} VND
                       </span>
                     </div>
-                  </div>
-                  <div style={{ textAlign: 'right', marginTop: 18 }}>
                     <button
                       style={{
                         background: '#e74c3c',
                         color: '#fff',
-                        padding: '14px 38px',
+                        padding: '12px 32px',
                         border: 'none',
                         borderRadius: 8,
                         fontWeight: 700,
-                        fontSize: 18,
+                        fontSize: 16,
                         cursor: 'pointer',
-                        boxShadow: '0 2px 8px #e74c3c33'
+                        boxShadow: '0 2px 8px #e74c3c33',
+                        minWidth: 200
                       }}
                       onClick={handlePayment}
                     >
@@ -921,7 +994,21 @@ const ServiceDetail = () => {
 
 
 
+
+
       </div>
+      {modalAlert.open && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.14)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+          <div style={{ background: '#fff', borderRadius: 12, minWidth: 300, boxShadow: '0 2px 22px #0001', padding: 32, textAlign: 'center' }}>
+            <h3 style={{ margin: 0, color: '#007bff', fontWeight: 700, fontSize: 22 }}>Thông báo</h3>
+            <p style={{ fontSize: 17, margin: '22px 0', color: '#222' }}>{modalAlert.content}</p>
+            <button onClick={modalAlert.onClose}
+              style={{ padding: "10px 28px", background: "#007bff", color: "#fff", border: 0, borderRadius: 7, fontWeight: 600, fontSize: 15, cursor: 'pointer' }}>
+              Đóng
+            </button>
+          </div>
+        </div>
+      )}
 
     </div>
   );

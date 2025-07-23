@@ -536,14 +536,14 @@ const StaffPaymentHistory = () => {
                 </p>
               </div>
 
-              {selectedPayment.metaData?.note && (
+              {/* {selectedPayment.metaData?.note && (
                 <div>
                   <label className="ph-modal-label">Ghi chú</label>
                   <p className="ph-modal-text">
                     {selectedPayment.metaData.note}
                   </p>
                 </div>
-              )}
+              )} */}
 
               <div className="ph-modal-grid">
                 <div>

@@ -46,6 +46,7 @@ import StaffPaymentSuccessPage from "./pages/StaffPaymentSuccessPage";
 import StaffPaymentCancelPage from "./pages/StaffPaymentCancelPage";
 import PaymentHistory from "./pages/PaymentHistory";
 import StaffPaymentHistory from "./pages/StaffPaymentHistory";
+import RefundManagement from "./pages/StaffRefunds";
 
 const DRAWER_WIDTH = 240;
 
@@ -151,6 +152,7 @@ const App = () => {
             path="/staffmanager/paymenthistory"
             element={<StaffPaymentHistory />}
           />
+          <Route path="/staffmanager/refunds" element={<RefundManagement />} />
         </Routes>
       </div>
 
