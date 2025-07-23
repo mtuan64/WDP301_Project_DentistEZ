@@ -30,7 +30,7 @@ const Header = ({ onMenuClick }) => {
     {
       key: "profile",
       icon: <UserOutlined />,
-      label: <Link to="/myprofile">Profile</Link>,
+      label: <Link to="/myprofile">Hồ sơ</Link>,
     },
     {
       type: "divider",
@@ -38,7 +38,7 @@ const Header = ({ onMenuClick }) => {
     {
       key: "logout",
       icon: <LogoutOutlined />,
-      label: "Log out",
+      label: "Đăng xuất",
       onClick: handleLogout,
     },
   ];
@@ -47,12 +47,12 @@ const Header = ({ onMenuClick }) => {
     {
       key: "login",
       icon: <LoginOutlined />,
-      label: <Link to="/login">Login</Link>,
+      label: <Link to="/login">Đăng nhập</Link>,
     },
     {
       key: "register",
       icon: <UserAddOutlined />,
-      label: <Link to="/register">Register</Link>,
+      label: <Link to="/register">Đăng kí</Link>,
     },
   ];
 

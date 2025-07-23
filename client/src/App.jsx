@@ -25,6 +25,7 @@ import MenuComponent from "./components/MenuComponent";
 import PatientAppointment from "./pages/PatientAppointment";
 import AccountManagement from "./pages/AccountManagement";
 import ScheduleManagement from "./pages/ScheduleManagement";
+import DoctorScheduleView from "./pages/DoctorScheduleView";
 import ServiceCard from "./pages/ServiceCard ";
 import ServiceDetail from "./pages/ServiceDetail ";
 import ServiceManagement from "./pages/ServiceManagement";
@@ -118,6 +119,7 @@ const App = () => {
           <Route path="/accountmanagement" element={<AccountManagement />} />
           <Route path="/patient/:userId" element={<PatientAppointment />} />
           <Route path="/doctor/schedule" element={<ScheduleManagement />} />
+          <Route path="/schedule" element={<DoctorScheduleView />} />
           <Route path="/services" element={<ServiceCard />} />
           <Route path="/service-detail/:id" element={<ServiceDetail />} />
           <Route path="/servicemanagement" element={<ServiceManagement />} />

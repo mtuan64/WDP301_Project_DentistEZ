@@ -14,7 +14,11 @@ import {
   Select,
   MenuItem,
   Chip,
+  Pagination,
+  Typography,
+  InputAdornment,
 } from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
@@ -25,6 +29,8 @@ const AppointmentManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const navigate = useNavigate();
 
   // Kiểm tra xác thực và lấy dữ liệu
@@ -48,7 +54,12 @@ const AppointmentManagement = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      setAppointments(appointmentRes.data.success ? appointmentRes.data.data : []);
+      const sortedAppointments = appointmentRes.data.success
+        ? appointmentRes.data.data.sort((a, b) => 
+            new Date(b.createdAt) - new Date(a.createdAt)
+          )
+        : [];
+      setAppointments(sortedAppointments);
     } catch (error) {
       console.error("Error fetching data:", error.message);
     }
@@ -81,6 +92,27 @@ const AppointmentManagement = () => {
     return matchesSearch && matchesStatus;
   });
 
+  // Tính tổng số trang
+  const totalPages = Math.ceil(filteredAppointments.length / rowsPerPage);
+
+  // Hàm lấy dữ liệu trang hiện tại
+  const getCurrentPageData = () => {
+    const startIndex = (page - 1) * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+    return filteredAppointments.slice(startIndex, endIndex);
+  };
+
+  // Xử lý thay đổi trang
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  // Xử lý thay đổi số dòng mỗi trang
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(1); // Reset về trang 1 khi thay đổi số dòng
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case "pending":
@@ -97,88 +129,236 @@ const AppointmentManagement = () => {
   };
 
   return (
-    <div className="p-4 max-w-screen-xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Appointment Management</h1>
-      <Box display="flex" justifyContent="flex-end" mb={2}>
-        <Box display="flex" gap={2}>
-          <TextField
-            label="Search by Patient/Doctor"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            size="small"
-          />
-          <FormControl size="small" style={{ minWidth: 120 }}>
-            <InputLabel>Status</InputLabel>
-            <Select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              label="Status"
-            >
-              <MenuItem value="">All</MenuItem>
-              <MenuItem value="fully_paid">Fully_paid</MenuItem>
-              <MenuItem value="confirmed">Confirmed</MenuItem>
-              <MenuItem value="completed">Completed</MenuItem>
-              <MenuItem value="cancelled">Cancelled</MenuItem>
-            </Select>
-          </FormControl>
-        </Box>
+    <div style={{ padding: "24px", maxWidth: "1400px", margin: "0 auto" }}>
+      <h2 style={{ margin: 0, marginBottom: "24px" }}>Quản lý lịch đặt</h2>
+      <Box sx={{ marginBottom: "16px" }}>
+        <TextField
+          fullWidth
+          variant="outlined"
+          placeholder="Tìm theo tên bệnh nhân hoặc bác sĩ"
+          value={searchTerm}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            setPage(1); // Reset về trang 1 khi search
+          }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon />
+              </InputAdornment>
+            ),
+          }}
+          sx={{
+            "& .MuiOutlinedInput-root": {
+              borderRadius: "25px",
+              backgroundColor: "#f8f9fa",
+            },
+          }}
+        />
       </Box>
-      <p className="total-count mb-4">Total appointments: {filteredAppointments.length}</p>
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow style={{ backgroundColor: "#f5f5f5" }}>
-              <TableCell width={60}>STT</TableCell>
-              <TableCell>Bệnh nhân</TableCell>
-              <TableCell>Dịch vụ</TableCell>
-              <TableCell>Phòng khám</TableCell>
-              <TableCell>Bác sĩ</TableCell>
-              <TableCell>Ngày khám</TableCell>
-              <TableCell>Giờ khám</TableCell>
-              <TableCell>Trạng thái</TableCell>
-              <TableCell>Ngày đặt</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filteredAppointments.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={10}>No appointments found</TableCell>
+      <Box display="flex" justifyContent="flex-end" mb={2}>
+        <FormControl size="small" style={{ minWidth: 120 }}>
+          <InputLabel>Trạng thái</InputLabel>
+          <Select
+            value={statusFilter}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setPage(1); // Reset về trang 1 khi thay đổi bộ lọc
+            }}
+            label="Status"
+          >
+            <MenuItem value="">All</MenuItem>
+            <MenuItem value="fully_paid">Fully Paid</MenuItem>
+            <MenuItem value="confirmed">Confirmed</MenuItem>
+            <MenuItem value="completed">Completed</MenuItem>
+            <MenuItem value="cancelled">Cancelled</MenuItem>
+          </Select>
+        </FormControl>
+      </Box>
+      <p style={{ marginBottom: "16px", fontSize: "16px", color: "#555" }}>
+        Tổng lịch đặt: {filteredAppointments.length}
+        {searchTerm && ` (filtered from ${appointments.length})`}
+      </p>
+      <div style={{ overflowX: "auto", width: "100%" }}>
+        <TableContainer component={Paper} sx={{ boxShadow: 3 }}>
+          <Table sx={{ tableLayout: "fixed" }}>
+            <TableHead>
+              <TableRow sx={{ backgroundColor: "#f5f5f5" }}>
+                <TableCell sx={{ width: "60px", whiteSpace: "nowrap", fontWeight: "bold" }}>
+                  STT
+                </TableCell>
+                <TableCell sx={{ whiteSpace: "nowrap", fontWeight: "bold" }}>
+                  Bệnh nhân
+                </TableCell>
+                <TableCell sx={{ whiteSpace: "nowrap", fontWeight: "bold" }}>
+                  Dịch vụ
+                </TableCell>
+                <TableCell sx={{ whiteSpace: "nowrap", fontWeight: "bold" }}>
+                  Phòng khám
+                </TableCell>
+                <TableCell sx={{ whiteSpace: "nowrap", fontWeight: "bold" }}>
+                  Bác sĩ
+                </TableCell>
+                <TableCell sx={{ whiteSpace: "nowrap", fontWeight: "bold" }}>
+                  Ngày khám
+                </TableCell>
+                <TableCell sx={{ whiteSpace: "nowrap", fontWeight: "bold" }}>
+                  Giờ khám
+                </TableCell>
+                <TableCell sx={{ whiteSpace: "nowrap", fontWeight: "bold" }}>
+                  Trạng thái
+                </TableCell>
+                <TableCell sx={{ whiteSpace: "nowrap", fontWeight: "bold" }}>
+                  Ngày đặt
+                </TableCell>
               </TableRow>
-            ) : (
-              filteredAppointments.map((appointment, index) => (
-                <TableRow key={appointment._id}>
-                  <TableCell>{index + 1}</TableCell>
-                  <TableCell>{appointment.patientId?.userId?.fullname || "N/A"}</TableCell>
-                  <TableCell>{appointment.serviceId?.serviceName || "N/A"}</TableCell>
-                  <TableCell>{appointment.clinicId?.clinic_name || "N/A"}</TableCell>
-                  <TableCell>{appointment.doctorId?.userId?.fullname || "N/A"}</TableCell>
-                  <TableCell>
-                    {appointment.timeslotId?.date
-                      ? dayjs(appointment.timeslotId.date).format("DD/MM/YYYY")
-                      : "N/A"}
-                  </TableCell>
-                  <TableCell>
-                    {appointment.timeslotId
-                      ? `${appointment.timeslotId.start_time} - ${appointment.timeslotId.end_time}`
-                      : "N/A"}
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={appointment.status.toUpperCase()}
-                      color={getStatusColor(appointment.status)}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    {appointment.createdAt
-                      ? dayjs(appointment.createdAt).format("DD/MM/YYYY HH:mm")
-                      : "N/A"}
+            </TableHead>
+            <TableBody>
+              {getCurrentPageData().length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={9} style={{ textAlign: "center", padding: "40px" }}>
+                    {loading ? "Loading..." : searchTerm ? "No matching results found" : "No data found"}
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+              ) : (
+                getCurrentPageData().map((appointment, index) => (
+                  <TableRow
+                    key={appointment._id}
+                    sx={{
+                      "&:hover": { backgroundColor: "#f9f9f9" },
+                      "&:nth-of-type(even)": { backgroundColor: "#fafafa" },
+                    }}
+                  >
+                    <TableCell sx={{ whiteSpace: "nowrap" }}>
+                      {(page - 1) * rowsPerPage + index + 1}
+                    </TableCell>
+                    <TableCell sx={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {appointment.patientId?.userId?.fullname || "N/A"}
+                    </TableCell>
+                    <TableCell sx={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {appointment.serviceId?.serviceName || "N/A"}
+                    </TableCell>
+                    <TableCell sx={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {appointment.clinicId?.clinic_name || "N/A"}
+                    </TableCell>
+                    <TableCell sx={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {appointment.doctorId?.userId?.fullname || "N/A"}
+                    </TableCell>
+                    <TableCell sx={{ whiteSpace: "nowrap" }}>
+                      {appointment.timeslotId?.date
+                        ? dayjs(appointment.timeslotId.date).format("DD/MM/YYYY")
+                        : "N/A"}
+                    </TableCell>
+                    <TableCell sx={{ whiteSpace: "nowrap" }}>
+                      {appointment.timeslotId
+                        ? `${appointment.timeslotId.start_time} - ${appointment.timeslotId.end_time}`
+                        : "N/A"}
+                    </TableCell>
+                    <TableCell sx={{ whiteSpace: "nowrap" }}>
+                      <Chip
+                        label={appointment.status.toUpperCase()}
+                        color={getStatusColor(appointment.status)}
+                      />
+                    </TableCell>
+                    <TableCell sx={{ whiteSpace: "nowrap" }}>
+                      {appointment.createdAt
+                        ? dayjs(appointment.createdAt).format("DD/MM/YYYY HH:mm")
+                        : "N/A"}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              padding: "20px 24px",
+              marginTop: "20px",
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <Typography variant="body2" sx={{ color: "#666" }}>
+                Show:
+              </Typography>
+              <FormControl size="small" sx={{ minWidth: 80 }}>
+                <Select
+                  value={rowsPerPage}
+                  onChange={handleChangeRowsPerPage}
+                  sx={{
+                    "& .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#ddd",
+                    },
+                  }}
+                >
+                  <MenuItem value={10}>10</MenuItem>
+                  <MenuItem value={25}>25</MenuItem>
+                  <MenuItem value={50}>50</MenuItem>
+                </Select>
+              </FormControl>
+              <Typography variant="body2" sx={{ color: "#666" }}>
+                entries
+              </Typography>
+            </Box>
+            <Pagination
+              count={totalPages}
+              page={page}
+              onChange={handleChangePage}
+              shape="rounded"
+              size="large"
+              showFirstButton
+              showLastButton
+              sx={{
+                "& .MuiPagination-ul": {
+                  backgroundColor: "#fff",
+                  borderRadius: "25px",
+                  padding: "8px 16px",
+                  boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+                  border: "1px solid #e0e0e0",
+                },
+                "& .MuiPaginationItem-root": {
+                  color: "#666",
+                  fontWeight: "500",
+                  margin: "0 4px",
+                  minWidth: "40px",
+                  height: "40px",
+                  borderRadius: "50%",
+                  "&:hover": {
+                    backgroundColor: "#f0f8ff",
+                    color: "#1976d2",
+                  },
+                },
+                "& .MuiPaginationItem-page.Mui-selected": {
+                  backgroundColor: "#00bcd4",
+                  color: "#fff",
+                  fontWeight: "bold",
+                  "&:hover": {
+                    backgroundColor: "#00acc1",
+                  },
+                },
+                "& .MuiPaginationItem-ellipsis": {
+                  color: "#999",
+                },
+                "& .MuiPaginationItem-previousNext": {
+                  color: "#00bcd4",
+                  fontWeight: "bold",
+                  "&.Mui-disabled": {
+                    color: "#ccc",
+                  },
+                },
+              }}
+            />
+            <Typography variant="body2" sx={{ color: "#666" }}>
+              Showing {filteredAppointments.length === 0 ? 0 : ((page - 1) * rowsPerPage) + 1} to{" "}
+              {Math.min(page * rowsPerPage, filteredAppointments.length)} of {filteredAppointments.length}{" "}
+              entries
+              {searchTerm && ` (filtered from ${appointments.length} total entries)`}
+            </Typography>
+          </Box>
+        </TableContainer>
+      </div>
     </div>
   );
 };

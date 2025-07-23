@@ -24,14 +24,15 @@ const DRAWER_WIDTH = 240;
 const menuByRole = (role, userId) => {
   const menus = {
     admin: [
-      { title: "Home", path: "/", icon: <HomeOutlined /> },
-      { title: "Manage Users", path: "/accountmanagement", icon: <TeamOutlined /> },
-      { title: "Manage Doctor Account", path: "/doctoraccount", icon: <UserOutlined /> },
-      { title: "Manage Service", path: "/servicemanagement", icon: <AppstoreOutlined /> },
-      { title: "Manage Blogs", path: "/admin/blogs", icon: <EditOutlined /> },
-      { title: "Manage Revenue", path: "/admin/payments", icon: <DollarOutlined /> },
-      { title: "Statistic Dashboard", path: "/statistic", icon: <BarChartOutlined /> },
-      { title: "Manage Appointments", path: "/admin/appointments", icon: <CalendarOutlined /> },
+      { title: "Trang chủ", path: "/", icon: <HomeOutlined /> },
+      { title: "Quản lý người dùng", path: "/accountmanagement", icon: <TeamOutlined /> },
+      { title: "Thông tin bác sĩ", path: "/doctoraccount", icon: <UserOutlined /> },
+      { title: "Quản lý dịch vụ", path: "/servicemanagement", icon: <AppstoreOutlined /> },
+      { title: "Quản lý bài viết", path: "/admin/blogs", icon: <EditOutlined /> },
+      { title: "Quản lý hóa đơn", path: "/admin/payments", icon: <DollarOutlined /> },
+      { title: "Thống kê", path: "/statistic", icon: <BarChartOutlined /> },
+      { title: "Quản lý lịch đặt", path: "/admin/appointments", icon: <CalendarOutlined /> },
+      { title: "Lịch trình bác sĩ", path: "/schedule", icon: <CalendarOutlined /> },
     ],
     doctor: [
       { title: "Trang chủ", path: "/", icon: <HomeOutlined /> },
@@ -45,6 +46,7 @@ const menuByRole = (role, userId) => {
       { title: "Trang chủ", path: "/", icon: <HomeOutlined /> },
       { title: "Quản lý lịch khám bệnh nhân ", path: "/staffmanager/patientapp", icon: <UserOutlined /> },
       { title: "Lịch sử giao dịch", path: "staffmanager/paymenthistory", icon: <FileTextOutlined /> },
+      { title: "Lịch trình bác sĩ", path: "/schedule", icon: <CalendarOutlined /> },
     ],
     patient: [
       { title: "Trang chủ", path: "/", icon: <HomeOutlined /> },

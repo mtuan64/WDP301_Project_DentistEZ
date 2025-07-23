@@ -812,6 +812,198 @@ const updateAppointmentStatusAndNote = async (req, res) => {
   }
 };
 
+const editAppointmentByStaff = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { appointmentId } = req.params;
+    const { timeslotId, note } = req.body || {};
+    const user = req.user;
+
+    // Validate appointmentId
+    if (!appointmentId || !mongoose.Types.ObjectId.isValid(appointmentId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'ID lịch hẹn không hợp lệ',
+      });
+    }
+
+    // Find appointment
+    const appointment = await Appointment.findById(appointmentId).session(session);
+    if (!appointment) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy lịch hẹn',
+      });
+    }
+
+    // Kiểm tra userId hợp lệ và vai trò là staff
+    if (!user || !user.userId || user.role !== 'staff') {
+      return res.status(401).json({
+        success: false,
+        message: 'Bạn không có quyền chỉnh sửa lịch hẹn này',
+      });
+    }
+
+    // Không cho phép chỉnh sửa nếu lịch hẹn đã hoàn thành hoặc hủy
+    if (['completed', 'cancelled'].includes(appointment.status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Không thể chỉnh sửa lịch hẹn đã hoàn thành hoặc đã hủy',
+      });
+    }
+
+    // Validate ghi chú
+    if (note && note.length > 500) {
+      return res.status(400).json({
+        success: false,
+        message: 'Ghi chú không được vượt quá 500 ký tự',
+      });
+    }
+
+    const sanitizedNote = note
+      ? sanitizeHtml(note, {
+          allowedTags: ['b', 'i', 'em', 'strong'],
+          allowedAttributes: {},
+        })
+      : undefined;
+
+    const updateData = { updatedAt: new Date() };
+
+    // Nếu có thay đổi timeslot
+    if (timeslotId) {
+      if (!mongoose.Types.ObjectId.isValid(timeslotId)) {
+        return res.status(400).json({
+          success: false,
+          message: 'ID khung giờ không hợp lệ',
+        });
+      }
+
+      const timeslot = await TimeSlot.findOne({ _id: timeslotId, status: 'active' }).session(session);
+      if (!timeslot) {
+        return res.status(404).json({
+          success: false,
+          message: 'Khung giờ không tồn tại hoặc không khả dụng',
+        });
+      }
+
+      const currentTime = new Date();
+      const timeslotDateTime = new Date(`${timeslot.date}T${timeslot.start_time}Z`);
+      const eightHoursInMs = 8 * 60 * 60 * 1000;
+      if (timeslotDateTime - currentTime < eightHoursInMs) {
+        return res.status(400).json({
+          success: false,
+          message: 'Không thể chỉnh sửa lịch hẹn trong vòng 8 tiếng trước khi bắt đầu',
+        });
+      }
+
+      // Kiểm tra trùng lịch
+      const existingAppointment = await Appointment.findOne({
+        timeslotId,
+        _id: { $ne: appointmentId },
+        status: { $ne: 'cancelled' },
+      }).session(session);
+
+      if (existingAppointment) {
+        return res.status(400).json({
+          success: false,
+          message: 'Khung giờ này đã được đặt, vui lòng chọn khung giờ khác',
+        });
+      }
+
+      // Nếu thay đổi timeslot thì cập nhật trạng thái slot cũ
+      if (timeslotId !== appointment.timeslotId.toString()) {
+        const oldTimeslot = await TimeSlot.findById(appointment.timeslotId).session(session);
+        if (oldTimeslot) {
+          oldTimeslot.isAvailable = true;
+          await oldTimeslot.save();
+        }
+
+        timeslot.isAvailable = false;
+        await timeslot.save();
+        updateData.timeslotId = timeslotId;
+      }
+    }
+
+    // Nếu có note hợp lệ thì cập nhật
+    if (sanitizedNote !== undefined) {
+      updateData.note = sanitizedNote;
+    }
+
+    // Nếu không có gì thay đổi
+    if (!updateData.timeslotId && sanitizedNote === undefined) {
+      return res.status(400).json({
+        success: false,
+        message: 'Vui lòng cung cấp ít nhất một thay đổi (khung giờ hoặc ghi chú)',
+      });
+    }
+
+    // Tiến hành cập nhật
+    const updatedAppointment = await Appointment.findByIdAndUpdate(
+      appointmentId,
+      updateData,
+      { new: true, runValidators: true, session }
+    )
+      .populate({
+        path: 'patientId',
+        select: 'userId',
+        populate: {
+          path: 'userId',
+          model: 'User',
+          select: 'fullname email phone address dateOfBirth gender',
+        },
+      })
+      .populate({
+        path: 'doctorId',
+        select: 'userId',
+        populate: {
+          path: 'userId',
+          model: 'User',
+          select: 'fullname',
+        },
+      })
+      .populate({
+        path: 'staffId',
+        select: 'userId',
+        populate: {
+          path: 'userId',
+          model: 'User',
+          select: 'fullname',
+        },
+      })
+      .populate({
+        path: 'serviceId',
+        select: 'serviceName',
+      })
+      .populate({
+        path: 'clinicId',
+        select: 'clinic_name',
+      })
+      .populate({
+        path: 'timeslotId',
+        select: 'date start_time end_time',
+      });
+
+    await session.commitTransaction();
+    res.status(200).json({
+      success: true,
+      data: updatedAppointment,
+      message: 'Cập nhật lịch hẹn thành công',
+    });
+  } catch (error) {
+    await session.abortTransaction();
+    console.error('Lỗi khi cập nhật lịch hẹn:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi khi cập nhật lịch hẹn',
+      error: error.message,
+    });
+  } finally {
+    session.endSession();
+  }
+};
+
 
 module.exports = {
   getAllAppointment,
@@ -820,6 +1012,7 @@ module.exports = {
   cancelAppointmentWithRefund,
   createAppointment,
   editAppointment,
+  editAppointmentByStaff,
   editAppointmentByPatientId,
   deleteAppointment,
   updateAppointmentStatusAndNote,

@@ -106,7 +106,7 @@ const BlogListPage = () => {
     } catch (error) {
       setNotification({
         open: true,
-        message: `Failed to fetch blogs: ${
+        message: `Không thể tải danh sách bài viết: ${
           error.response?.data?.message || error.message
         }`,
         severity: "error",
@@ -126,7 +126,7 @@ const BlogListPage = () => {
     } catch (error) {
       setNotification({
         open: true,
-        message: `Failed to fetch categories: ${
+        message: `Không thể tải danh sách danh mục: ${
           error.response?.data?.message || error.message
         }`,
         severity: "error",
@@ -157,7 +157,7 @@ const BlogListPage = () => {
     if (!isAdmin()) {
       setNotification({
         open: true,
-        message: "Admin access required to upload images.",
+        message: "Yêu cầu quyền quản trị để tải lên hình ảnh.",
         severity: "error",
       });
       return [];
@@ -170,7 +170,7 @@ const BlogListPage = () => {
       setNotification({
         open: true,
         message:
-          "Cannot upload more than 10 images (main image + content images).",
+          "Không thể tải lên quá 10 hình ảnh (hình ảnh chính + hình ảnh nội dung).",
         severity: "error",
       });
       return [];
@@ -190,12 +190,12 @@ const BlogListPage = () => {
           },
         }
       );
-      console.log("Image upload response:", response.data);
+      console.log("Phản hồi tải lên hình ảnh:", response.data);
       return response.data.urls || [];
     } catch (error) {
       setNotification({
         open: true,
-        message: `Failed to upload images: ${
+        message: `Không thể tải lên hình ảnh: ${
           error.response?.data?.message || error.message
         }`,
         severity: "error",
@@ -209,7 +209,7 @@ const BlogListPage = () => {
     if (!blog.title.trim()) {
       setNotification({
         open: true,
-        message: "Please enter a title.",
+        message: "Vui lòng nhập tiêu đề.",
         severity: "error",
       });
       return false;
@@ -217,7 +217,7 @@ const BlogListPage = () => {
     if (!blog.categoryId) {
       setNotification({
         open: true,
-        message: "Please select a category.",
+        message: "Vui lòng chọn danh mục.",
         severity: "error",
       });
       return false;
@@ -228,7 +228,7 @@ const BlogListPage = () => {
     if (!selectedCategory || selectedCategory.status !== "active") {
       setNotification({
         open: true,
-        message: "Selected category is inactive or invalid.",
+        message: "Danh mục đã chọn không hoạt động hoặc không hợp lệ.",
         severity: "error",
       });
       return false;
@@ -236,7 +236,7 @@ const BlogListPage = () => {
     if (!blog.content.length) {
       setNotification({
         open: true,
-        message: "Please add at least one content item.",
+        message: "Vui lòng thêm ít nhất một mục nội dung.",
         severity: "error",
       });
       return false;
@@ -244,7 +244,7 @@ const BlogListPage = () => {
     if (!["active", "inactive"].includes(blog.status)) {
       setNotification({
         open: true,
-        message: "Invalid status selected.",
+        message: "Trạng thái đã chọn không hợp lệ.",
         severity: "error",
       });
       return false;
@@ -257,7 +257,7 @@ const BlogListPage = () => {
     if (!isAdmin()) {
       setNotification({
         open: true,
-        message: "Admin access required to add blogs.",
+        message: "Yêu cầu quyền quản trị để thêm bài viết.",
         severity: "error",
       });
       return;
@@ -269,7 +269,7 @@ const BlogListPage = () => {
         setLoading(false);
         return;
       }
-      console.log("Adding blog with data:", blogToAdd);
+      console.log("Thêm bài viết với dữ liệu:", blogToAdd);
       const imageContentItems = newBlog.content.filter(
         (item) => item.type === "image"
       );
@@ -317,7 +317,7 @@ const BlogListPage = () => {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }
       );
-      console.log("Add blog response:", response.data);
+      console.log("Phản hồi thêm bài viết:", response.data);
       if (currentPage === 1) {
         setBlogs([response.data, ...blogs].slice(0, pageSize));
         setTotalBlogs(totalBlogs + 1);
@@ -336,13 +336,13 @@ const BlogListPage = () => {
       setOpenAddBlog(false);
       setNotification({
         open: true,
-        message: "Blog added successfully!",
+        message: "Thêm bài viết thành công!",
         severity: "success",
       });
     } catch (error) {
       setNotification({
         open: true,
-        message: `Failed to add blog: ${
+        message: `Không thể thêm bài viết: ${
           error.response?.data?.message || error.message
         }`,
         severity: "error",
@@ -357,7 +357,7 @@ const BlogListPage = () => {
     if (!isAdmin()) {
       setNotification({
         open: true,
-        message: "Admin access required to update blogs.",
+        message: "Yêu cầu quyền quản trị để cập nhật bài viết.",
         severity: "error",
       });
       return;
@@ -369,7 +369,7 @@ const BlogListPage = () => {
         setLoading(false);
         return;
       }
-      console.log("Updating blog with data:", updatedBlog);
+      console.log("Cập nhật bài viết với dữ liệu:", updatedBlog);
       const imageContentItems = updatedBlog.content.filter(
         (item) => item.type === "image"
       );
@@ -417,7 +417,7 @@ const BlogListPage = () => {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }
       );
-      console.log("Update blog response:", response.data);
+      console.log("Phản hồi cập nhật bài viết:", response.data);
       setBlogs(
         blogs.map((blog) =>
           blog._id === editingBlog._id ? response.data : blog
@@ -429,13 +429,13 @@ const BlogListPage = () => {
       setOpenEditBlog(false);
       setNotification({
         open: true,
-        message: "Blog updated successfully!",
+        message: "Cập nhật bài viết thành công!",
         severity: "success",
       });
     } catch (error) {
       setNotification({
         open: true,
-        message: `Failed to update blog: ${
+        message: `Không thể cập nhật bài viết: ${
           error.response?.data?.message || error.message
         }`,
         severity: "error",
@@ -450,7 +450,7 @@ const BlogListPage = () => {
     if (!isAdmin()) {
       setNotification({
         open: true,
-        message: "Admin access required to delete blogs.",
+        message: "Yêu cầu quyền quản trị để xóa bài viết.",
         severity: "error",
       });
       return;
@@ -464,7 +464,7 @@ const BlogListPage = () => {
           params: { permanent: deleteBlogType === "permanent" },
         }
       );
-      console.log("Delete blog response:", response.data);
+      console.log("Phản hồi xóa bài viết:", response.data);
       if (deleteBlogType === "soft") {
         setBlogs(
           blogs.map((blog) =>
@@ -491,7 +491,7 @@ const BlogListPage = () => {
     } catch (error) {
       setNotification({
         open: true,
-        message: `Failed to delete blog: ${
+        message: `Không thể xóa bài viết: ${
           error.response?.data?.message || error.message
         }`,
         severity: "error",
@@ -506,7 +506,7 @@ const BlogListPage = () => {
     if (!isAdmin()) {
       setNotification({
         open: true,
-        message: "Admin access required to edit blogs.",
+        message: "Yêu cầu quyền quản trị để chỉnh sửa bài viết.",
         severity: "error",
       });
       return;
@@ -534,7 +534,7 @@ const BlogListPage = () => {
     if (!isAdmin()) {
       setNotification({
         open: true,
-        message: "Admin access required to add blogs.",
+        message: "Yêu cầu quyền quản trị để thêm bài viết.",
         severity: "error",
       });
       return;
@@ -570,7 +570,7 @@ const BlogListPage = () => {
     if (!isAdmin()) {
       setNotification({
         open: true,
-        message: "Admin access required to delete blogs.",
+        message: "Yêu cầu quyền quản trị để xóa bài viết.",
         severity: "error",
       });
       return;
@@ -638,7 +638,7 @@ const BlogListPage = () => {
       const previewUrl = URL.createObjectURL(file);
       setImageFiles((prev) => ({
         ...prev,
-        contentImages: { ...prev.contentImages, [index]: file },
+        fractionationImages: { ...prev.contentImages, [index]: file },
       }));
       setImagePreviews((prev) => ({
         ...prev,
@@ -678,14 +678,14 @@ const BlogListPage = () => {
 
   return (
     <div className="blog-list-page">
-      <h1>Blog Management</h1>
+      <h1>Quản Lý Bài Viết</h1>
       <Box className="filter-search-container">
         <FormControl sx={{ minWidth: 200 }}>
-          <InputLabel id="filter-category-label">Filter by Category</InputLabel>
+          <InputLabel id="filter-category-label">Lọc theo Danh Mục</InputLabel>
           <Select
             labelId="filter-category-label"
             value={filterCategory}
-            label="Filter by Category"
+            label="Lọc theo Danh Mục"
             onChange={(e) => {
               setFilterCategory(e.target.value);
               setCurrentPage(1);
@@ -697,7 +697,7 @@ const BlogListPage = () => {
             }
           >
             <MenuItem value="">
-              <em>All Categories</em>
+              <em>Tất Cả Danh Mục</em>
             </MenuItem>
             {categories
               .filter((category) => category.status === "active")
@@ -709,7 +709,7 @@ const BlogListPage = () => {
           </Select>
         </FormControl>
         <TextField
-          label="Search by Title"
+          label="Tìm kiếm theo Tiêu Đề"
           variant="outlined"
           value={searchQuery}
           onChange={(e) => {
@@ -735,7 +735,7 @@ const BlogListPage = () => {
         }}
       >
         <Typography className="showing-info">
-          Showing {blogs.length} / {totalBlogs} Blogs
+          Hiển thị {blogs.length} / {totalBlogs} Bài Viết
         </Typography>
         {isAdmin() && (
           <Box sx={{ display: "flex", gap: 2 }}>
@@ -746,7 +746,7 @@ const BlogListPage = () => {
               onClick={handleOpenAddBlog}
               disabled={loading}
             >
-              Add Blog
+              Thêm Bài Viết
             </Button>
             <Button
               variant="contained"
@@ -754,12 +754,12 @@ const BlogListPage = () => {
               className="navigation-button"
               startIcon={<CategoryIcon />}
               onClick={() => {
-                console.log("Navigating to /admin/categories");
+                console.log("Điều hướng đến /admin/categories");
                 navigate("/admin/categories");
               }}
               disabled={loading}
             >
-              Go to CategoryBlog
+              Danh Mục Bài Viết
             </Button>
           </Box>
         )}
@@ -770,7 +770,7 @@ const BlogListPage = () => {
         </Box>
       ) : blogs.length === 0 ? (
         <Typography sx={{ textAlign: "center", my: 4 }}>
-          No blogs found.
+          Không tìm thấy bài viết nào.
         </Typography>
       ) : (
         <TableContainer component={Paper}>
@@ -778,14 +778,14 @@ const BlogListPage = () => {
             <TableHead>
               <TableRow>
                 <TableCell className="stt"></TableCell>
-                <TableCell className="title">Title</TableCell>
-                <TableCell className="content">Content</TableCell>
-                <TableCell>Image</TableCell>
-                <TableCell className="category">Category</TableCell>
+                <TableCell className="title">Tiêu Đề</TableCell>
+                <TableCell className="content">Nội Dung</TableCell>
+                <TableCell>Hình Ảnh</TableCell>
+                <TableCell className="category">Danh Mục</TableCell>
                 <TableCell className="slug">Slug</TableCell>
-                <TableCell className="status">Status</TableCell>
+                <TableCell className="status">Trạng Thái</TableCell>
                 {isAdmin() && (
-                  <TableCell className="actions">Actions</TableCell>
+                  <TableCell className="actions">Hành Động</TableCell>
                 )}
               </TableRow>
             </TableHead>
@@ -824,7 +824,7 @@ const BlogListPage = () => {
                     <TableCell
                       className={`status ${blog.status.toLowerCase()}`}
                     >
-                      {blog.status}
+                      {blog.status === "active" ? "Hoạt động" : "Không hoạt động"}
                     </TableCell>
                     {isAdmin() && (
                       <TableCell className="actions">
@@ -874,7 +874,7 @@ const BlogListPage = () => {
         }}
         sx={{ zIndex: 1300 }}
       >
-        <DialogTitle>Add New Blog</DialogTitle>
+        <DialogTitle>Thêm Bài Viết Mới</DialogTitle>
         <DialogContent
           sx={{
             maxHeight: "70vh",
@@ -891,7 +891,7 @@ const BlogListPage = () => {
             <TextField
               sx={{ mt: 2 }}
               autoFocus
-              label="Title"
+              label="Tiêu Đề"
               variant="outlined"
               fullWidth
               value={newBlog.title}
@@ -902,28 +902,28 @@ const BlogListPage = () => {
             />
             <Box className="content-section">
               <Typography variant="subtitle1" gutterBottom>
-                Content
+                Nội Dung
               </Typography>
               {newBlog.content.map((item, index) => (
                 <Box key={index} className="content-item">
                   <FormControl fullWidth className="form-field">
-                    <InputLabel>Type</InputLabel>
+                    <InputLabel>Loại</InputLabel>
                     <Select
                       value={item.type}
-                      label="Type"
+                      label="Loại"
                       onChange={(e) =>
                         handleContentChange(index, "type", e.target.value)
                       }
                     >
-                      <MenuItem value="paragraph">Paragraph</MenuItem>
-                      <MenuItem value="bullet">Bullet</MenuItem>
-                      <MenuItem value="image">Image</MenuItem>
+                      <MenuItem value="paragraph">Đoạn văn</MenuItem>
+                      <MenuItem value="bullet">Dấu đầu dòng</MenuItem>
+                      <MenuItem value="image">Hình ảnh</MenuItem>
                     </Select>
                   </FormControl>
                   {item.type !== "image" ? (
                     <>
                       <TextField
-                        label="Text"
+                        label="Văn Bản"
                         variant="outlined"
                         fullWidth
                         multiline
@@ -948,7 +948,7 @@ const BlogListPage = () => {
                               }
                             />
                           }
-                          label="Bold"
+                          label="In Đậm"
                         />
                         <FormControlLabel
                           control={
@@ -963,13 +963,13 @@ const BlogListPage = () => {
                               }
                             />
                           }
-                          label="Italic"
+                          label="In Nghiêng"
                         />
                         <FormControl className="font-size-select">
-                          <InputLabel>Font Size</InputLabel>
+                          <InputLabel>Kích Thước Chữ</InputLabel>
                           <Select
                             value={item.fontSize || "medium"}
-                            label="Font Size"
+                            label="Kích Thước Chữ"
                             onChange={(e) =>
                               handleContentChange(
                                 index,
@@ -978,9 +978,9 @@ const BlogListPage = () => {
                               )
                             }
                           >
-                            <MenuItem value="small">Small</MenuItem>
-                            <MenuItem value="medium">Medium</MenuItem>
-                            <MenuItem value="large">Large</MenuItem>
+                            <MenuItem value="small">Nhỏ</MenuItem>
+                            <MenuItem value="medium">Trung bình</MenuItem>
+                            <MenuItem value="large">Lớn</MenuItem>
                           </Select>
                         </FormControl>
                       </Box>
@@ -992,7 +992,7 @@ const BlogListPage = () => {
                         component="label"
                         className="upload-button"
                       >
-                        Upload Image
+                        Tải Lên Hình Ảnh
                         <input
                           type="file"
                           hidden
@@ -1005,7 +1005,7 @@ const BlogListPage = () => {
                       {(item.url || imagePreviews.contentImages[index]) && (
                         <img
                           src={imagePreviews.contentImages[index] || item.url}
-                          alt={`Content ${index}`}
+                          alt={`Nội dung ${index}`}
                           className="preview-image"
                         />
                       )}
@@ -1031,21 +1031,21 @@ const BlogListPage = () => {
                   onClick={handleAddContentItem}
                   className="add-content-button"
                 >
-                  Add Content
+                  Thêm Nội Dung
                 </Button>
               )}
             </Box>
             <FormControl fullWidth className="form-field">
-              <InputLabel>Category</InputLabel>
+              <InputLabel>Danh Mục</InputLabel>
               <Select
                 value={newBlog.categoryId}
-                label="Category"
+                label="Danh Mục"
                 onChange={(e) =>
                   setNewBlog({ ...newBlog, categoryId: e.target.value })
                 }
               >
                 <MenuItem value="">
-                  <em>Select a category</em>
+                  <em>Chọn danh mục</em>
                 </MenuItem>
                 {categories
                   .filter((category) => category.status === "active")
@@ -1057,29 +1057,29 @@ const BlogListPage = () => {
               </Select>
             </FormControl>
             <FormControl fullWidth className="form-field">
-              <InputLabel>Status</InputLabel>
+              <InputLabel>Trạng Thái</InputLabel>
               <Select
                 value={newBlog.status}
-                label="Status"
+                label="Trạng Thái"
                 onChange={(e) => {
-                  console.log("New blog status changed to:", e.target.value);
+                  console.log("Trạng thái bài viết mới thay đổi thành:", e.target.value);
                   setNewBlog({ ...newBlog, status: e.target.value });
                 }}
               >
-                <MenuItem value="active">Active</MenuItem>
-                <MenuItem value="inactive">Inactive</MenuItem>
+                <MenuItem value="active">Hoạt động</MenuItem>
+                <MenuItem value="inactive">Không hoạt động</MenuItem>
               </Select>
             </FormControl>
             <Box className="image-upload">
               <Typography variant="subtitle1" gutterBottom>
-                Main Image
+                Hình Ảnh Chính
               </Typography>
               <Button
                 variant="outlined"
                 component="label"
                 className="upload-button"
               >
-                Upload Main Image
+                Tải Lên Hình Ảnh Chính
                 <input
                   type="file"
                   hidden
@@ -1090,7 +1090,7 @@ const BlogListPage = () => {
               {(newBlog.image || imagePreviews.mainImage) && (
                 <img
                   src={imagePreviews.mainImage || newBlog.image}
-                  alt="Main Image"
+                  alt="Hình Ảnh Chính"
                   className="preview-image"
                 />
               )}
@@ -1099,7 +1099,7 @@ const BlogListPage = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseAddBlog} disabled={loading}>
-            Cancel
+            Hủy
           </Button>
           <Button
             variant="contained"
@@ -1107,7 +1107,7 @@ const BlogListPage = () => {
             onClick={handleAddBlog}
             disabled={loading}
           >
-            Add Blog
+            Thêm Bài Viết
           </Button>
         </DialogActions>
       </Dialog>
@@ -1134,7 +1134,7 @@ const BlogListPage = () => {
             alignItems: "center",
           }}
         >
-          Edit Blog
+          Chỉnh Sửa Bài Viết
         </DialogTitle>
         <DialogContent
           sx={{
@@ -1153,7 +1153,7 @@ const BlogListPage = () => {
             <TextField
               sx={{ mt: 2 }}
               autoFocus
-              label="Title"
+              label="Tiêu Đề"
               variant="outlined"
               fullWidth
               value={editingBlog?.title || ""}
@@ -1164,28 +1164,28 @@ const BlogListPage = () => {
             />
             <Box className="content-section">
               <Typography variant="subtitle1" gutterBottom>
-                Content
+                Nội Dung
               </Typography>
               {editingBlog?.content.map((item, index) => (
                 <Box key={index} className="content-item">
                   <FormControl fullWidth className="form-field">
-                    <InputLabel>Type</InputLabel>
+                    <InputLabel>Loại</InputLabel>
                     <Select
                       value={item.type}
-                      label="Type"
+                      label="Loại"
                       onChange={(e) =>
                         handleContentChange(index, "type", e.target.value)
                       }
                     >
-                      <MenuItem value="paragraph">Paragraph</MenuItem>
-                      <MenuItem value="bullet">Bullet</MenuItem>
-                      <MenuItem value="image">Image</MenuItem>
+                      <MenuItem value="paragraph">Đoạn văn</MenuItem>
+                      <MenuItem value="bullet">Dấu đầu dòng</MenuItem>
+                      <MenuItem value="image">Hình ảnh</MenuItem>
                     </Select>
                   </FormControl>
                   {item.type !== "image" ? (
                     <>
                       <TextField
-                        label="Text"
+                        label="Văn Bản"
                         variant="outlined"
                         fullWidth
                         multiline
@@ -1210,7 +1210,7 @@ const BlogListPage = () => {
                               }
                             />
                           }
-                          label="Bold"
+                          label="In Đậm"
                         />
                         <FormControlLabel
                           control={
@@ -1225,13 +1225,13 @@ const BlogListPage = () => {
                               }
                             />
                           }
-                          label="Italic"
+                          label="In Nghiêng"
                         />
                         <FormControl className="font-size-select">
-                          <InputLabel>Font Size</InputLabel>
+                          <InputLabel>Kích Thước Chữ</InputLabel>
                           <Select
                             value={item.fontSize || "medium"}
-                            label="Font Size"
+                            label="Kích Thước Chữ"
                             onChange={(e) =>
                               handleContentChange(
                                 index,
@@ -1240,9 +1240,9 @@ const BlogListPage = () => {
                               )
                             }
                           >
-                            <MenuItem value="small">Small</MenuItem>
-                            <MenuItem value="medium">Medium</MenuItem>
-                            <MenuItem value="large">Large</MenuItem>
+                            <MenuItem value="small">Nhỏ</MenuItem>
+                            <MenuItem value="medium">Trung bình</MenuItem>
+                            <MenuItem value="large">Lớn</MenuItem>
                           </Select>
                         </FormControl>
                       </Box>
@@ -1254,7 +1254,7 @@ const BlogListPage = () => {
                         component="label"
                         className="upload-button"
                       >
-                        Upload Image
+                        Tải Lên Hình Ảnh
                         <input
                           type="file"
                           hidden
@@ -1267,7 +1267,7 @@ const BlogListPage = () => {
                       {(item.url || imagePreviews.contentImages[index]) && (
                         <img
                           src={imagePreviews.contentImages[index] || item.url}
-                          alt={`Content ${index}`}
+                          alt={`Nội dung ${index}`}
                           className="preview-image"
                         />
                       )}
@@ -1293,21 +1293,21 @@ const BlogListPage = () => {
                   onClick={handleAddContentItem}
                   className="add-content-button"
                 >
-                  Add Content
+                  Thêm Nội Dung
                 </Button>
               )}
             </Box>
             <FormControl fullWidth className="form-field">
-              <InputLabel>Category</InputLabel>
+              <InputLabel>Danh Mục</InputLabel>
               <Select
                 value={editingBlog?.categoryId || ""}
-                label="Category"
+                label="Danh Mục"
                 onChange={(e) =>
                   setEditingBlog({ ...editingBlog, categoryId: e.target.value })
                 }
               >
                 <MenuItem value="">
-                  <em>Select a category</em>
+                  <em>Chọn danh mục</em>
                 </MenuItem>
                 {categories
                   .filter((category) => category.status === "active")
@@ -1319,32 +1319,32 @@ const BlogListPage = () => {
               </Select>
             </FormControl>
             <FormControl fullWidth className="form-field">
-              <InputLabel>Status</InputLabel>
+              <InputLabel>Trạng Thái</InputLabel>
               <Select
                 value={editingBlog?.status || "active"}
-                label="Status"
+                label="Trạng Thái"
                 onChange={(e) => {
                   console.log(
-                    "Editing blog status changed to:",
+                    "Trạng thái bài viết đang chỉnh sửa thay đổi thành:",
                     e.target.value
                   );
                   setEditingBlog({ ...editingBlog, status: e.target.value });
                 }}
               >
-                <MenuItem value="active">Active</MenuItem>
-                <MenuItem value="inactive">Inactive</MenuItem>
+                <MenuItem value="active">Hoạt động</MenuItem>
+                <MenuItem value="inactive">Không hoạt động</MenuItem>
               </Select>
             </FormControl>
             <Box className="image-upload">
               <Typography variant="subtitle1" gutterBottom>
-                Main Image
+                Hình Ảnh Chính
               </Typography>
               <Button
                 variant="outlined"
                 component="label"
                 className="upload-button"
               >
-                Upload Main Image
+                Tải Lên Hình Ảnh Chính
                 <input
                   type="file"
                   hidden
@@ -1355,7 +1355,7 @@ const BlogListPage = () => {
               {(editingBlog?.image || imagePreviews.mainImage) && (
                 <img
                   src={imagePreviews.mainImage || editingBlog.image}
-                  alt="Main Image"
+                  alt="Hình Ảnh Chính"
                   className="preview-image"
                 />
               )}
@@ -1364,7 +1364,7 @@ const BlogListPage = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseEditBlog} disabled={loading}>
-            Cancel
+            Hủy
           </Button>
           <Button
             variant="contained"
@@ -1372,7 +1372,7 @@ const BlogListPage = () => {
             onClick={handleUpdateBlog}
             disabled={loading}
           >
-            Update Blog
+            Cập Nhật
           </Button>
         </DialogActions>
       </Dialog>
@@ -1383,17 +1383,17 @@ const BlogListPage = () => {
         fullWidth
         sx={{ zIndex: 1300 }}
       >
-        <DialogTitle>Delete Blog</DialogTitle>
+        <DialogTitle>Xóa Bài Viết</DialogTitle>
         <DialogContent>
           <DialogContentText>
             {deleteBlogType === "soft"
-              ? "After deletion, the blog's status will be set to inactive."
-              : "Are you sure you want to permanently delete this blog?"}
+              ? "Sau khi xóa, trạng thái bài viết sẽ được đặt thành không hoạt động."
+              : "Bạn có chắc chắn muốn xóa vĩnh viễn bài viết này không?"}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDeleteBlogDialog} disabled={loading}>
-            Cancel
+            Hủy
           </Button>
           <Button
             variant="contained"
@@ -1401,7 +1401,7 @@ const BlogListPage = () => {
             onClick={handleDeleteBlog}
             disabled={loading}
           >
-            Delete
+            Xóa
           </Button>
         </DialogActions>
       </Dialog>
@@ -1423,7 +1423,7 @@ const BlogListPage = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseNotification} color="primary">
-            Close
+            Đóng
           </Button>
         </DialogActions>
       </Dialog>

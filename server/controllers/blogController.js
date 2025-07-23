@@ -26,7 +26,7 @@ exports.getAllBlogs = async (req, res) => {
     res.json(blogs);
   } catch (error) {
     console.error("Error fetching blogs:", error);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Lỗi khi tải danh sách bài viết" });
   }
 };
 
@@ -68,7 +68,9 @@ exports.getAllBlogsForAdmin = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching blogs for admin:", error);
-    res.status(500).json({ message: error.message });
+    res
+      .status(500)
+      .json({ message: "Lỗi khi tải danh sách bài viết cho quản trị viên" });
   }
 };
 
@@ -79,12 +81,16 @@ exports.getBlogBySlug = async (req, res) => {
       .populate("author_id", "fullname email")
       .populate("categoryId", "name");
     if (!blog) {
-      return res.status(404).json({ message: "Blog not found or inactive" });
+      return res
+        .status(404)
+        .json({
+          message: "Không tìm thấy bài viết hoặc bài viết không hoạt động",
+        });
     }
     res.json(blog);
   } catch (error) {
     console.error("Error fetching blog by slug:", error);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Lỗi khi tải bài viết theo slug" });
   }
 };
 
@@ -95,20 +101,22 @@ exports.createBlog = async (req, res) => {
     if (!title || !categoryId) {
       return res
         .status(400)
-        .json({ message: "Title and categoryId are required" });
+        .json({ message: "Tiêu đề và ID danh mục là bắt buộc" });
     }
     if (!Array.isArray(content) || content.length === 0) {
-      return res.status(400).json({ message: "Content array is required" });
+      return res.status(400).json({ message: "Mảng nội dung là bắt buộc" });
     }
     if (status && !["active", "inactive"].includes(status)) {
-      return res.status(400).json({ message: "Invalid status value" });
+      return res
+        .status(400)
+        .json({ message: "Giá trị trạng thái không hợp lệ" });
     }
     // Validate category is active
     const category = await CategoryBlog.findById(categoryId);
     if (!category || category.status !== "active") {
       return res
         .status(400)
-        .json({ message: "Category is invalid or inactive" });
+        .json({ message: "Danh mục không hợp lệ hoặc không hoạt động" });
     }
     const slug = slugify(title, { lower: true, strict: true, locale: "vi" });
     let mainImageUrl = req.body.image || "";
@@ -162,7 +170,7 @@ exports.createBlog = async (req, res) => {
           .map((file) => fs.unlink(file.path).catch(console.error))
       );
     }
-    res.status(400).json({ message: error.message });
+    res.status(400).json({ message: "Lỗi khi tạo bài viết" });
   }
 };
 
@@ -172,21 +180,23 @@ exports.updateBlog = async (req, res) => {
     const { title, content, categoryId, status } = req.body;
     if (!title || !categoryId) {
       return res
-        .state(400)
-        .json({ message: "Title and categoryId are required" });
+        .status(400)
+        .json({ message: "Tiêu đề và ID danh mục là bắt buộc" });
     }
     if (!Array.isArray(content) || content.length === 0) {
-      return res.status(400).json({ message: "Content array is required" });
+      return res.status(400).json({ message: "Mảng nội dung là bắt buộc" });
     }
     if (status && !["active", "inactive"].includes(status)) {
-      return res.status(400).json({ message: "Invalid status value" });
+      return res
+        .status(400)
+        .json({ message: "Giá trị trạng thái không hợp lệ" });
     }
     // Validate category is active
     const category = await CategoryBlog.findById(categoryId);
     if (!category || category.status !== "active") {
       return res
         .status(400)
-        .json({ message: "Category is invalid or inactive" });
+        .json({ message: "Danh mục không hợp lệ hoặc không hoạt động" });
     }
     const slug = title
       ? slugify(title, { lower: true, strict: true, locale: "vi" })
@@ -236,7 +246,7 @@ exports.updateBlog = async (req, res) => {
       { new: true }
     );
     if (!updatedBlog) {
-      return res.status(404).json({ message: "Blog not found" });
+      return res.status(404).json({ message: "Không tìm thấy bài viết" });
     }
     res.json(updatedBlog);
   } catch (error) {
@@ -248,7 +258,7 @@ exports.updateBlog = async (req, res) => {
           .map((file) => fs.unlink(file.path).catch(console.error))
       );
     }
-    res.status(400).json({ message: error.message });
+    res.status(400).json({ message: "Lỗi khi cập nhật bài viết" });
   }
 };
 
@@ -257,21 +267,21 @@ exports.deleteBlog = async (req, res) => {
     const { id } = req.params;
     const blog = await Blog.findById(id);
     if (!blog) {
-      return res.status(404).json({ message: "Blog not found" });
+      return res.status(404).json({ message: "Không tìm thấy bài viết" });
     }
     if (blog.status === "active") {
       // Soft delete: set status to inactive
       blog.status = "inactive";
       await blog.save();
-      res.json({ message: "Blog set to inactive", blog });
+      res.json({ message: "Bài viết được đặt thành không hoạt động", blog });
     } else {
       // Permanent delete
       await Blog.findByIdAndDelete(id);
-      res.json({ message: "Blog permanently deleted" });
+      res.json({ message: "Bài viết đã bị xóa vĩnh viễn" });
     }
   } catch (error) {
     console.error("Error deleting blog:", error);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Lỗi khi xóa bài viết" });
   }
 };
 
@@ -279,7 +289,9 @@ exports.uploadImage = async (req, res) => {
   try {
     const files = req.files;
     if (!files || Object.keys(files).length === 0) {
-      return res.status(400).json({ message: "No image files provided" });
+      return res
+        .status(400)
+        .json({ message: "Không có tệp hình ảnh được cung cấp" });
     }
     const uploadResults = await Promise.all(
       Object.entries(files).flatMap(([fieldName, fileArray]) =>
@@ -303,7 +315,7 @@ exports.uploadImage = async (req, res) => {
       );
     }
     res.status(500).json({
-      message: "Failed to upload images to Cloudinary",
+      message: "Không thể tải hình ảnh lên Cloudinary",
       error: error.message,
     });
   }
@@ -316,7 +328,7 @@ exports.getAllCategories = async (req, res) => {
     res.json(categories);
   } catch (error) {
     console.error("Error fetching categories:", error);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Lỗi khi tải danh sách danh mục" });
   }
 };
 
@@ -356,7 +368,9 @@ exports.getAllCategoriesForAdmin = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching categories for admin:", error);
-    res.status(500).json({ message: error.message });
+    res
+      .status(500)
+      .json({ message: "Lỗi khi tải danh sách danh mục cho quản trị viên" });
   }
 };
 
@@ -364,17 +378,19 @@ exports.createCategory = async (req, res) => {
   try {
     const { name, status } = req.body;
     if (!name) {
-      return res.status(400).json({ message: "Category name is required" });
+      return res.status(400).json({ message: "Tên danh mục là bắt buộc" });
     }
     if (status && !["active", "inactive"].includes(status)) {
-      return res.status(400).json({ message: "Invalid status value" });
+      return res
+        .status(400)
+        .json({ message: "Giá trị trạng thái không hợp lệ" });
     }
     const newCategory = new CategoryBlog({ name, status: status || "active" });
     await newCategory.save();
     res.status(201).json(newCategory);
   } catch (error) {
     console.error("Error creating category:", error);
-    res.status(400).json({ message: error.message });
+    res.status(400).json({ message: "Lỗi khi tạo danh mục" });
   }
 };
 
@@ -383,10 +399,12 @@ exports.updateCategory = async (req, res) => {
     const { id } = req.params;
     const { name, status } = req.body;
     if (!name) {
-      return res.status(400).json({ message: "Category name is required" });
+      return res.status(400).json({ message: "Tên danh mục là bắt buộc" });
     }
     if (status && !["active", "inactive"].includes(status)) {
-      return res.status(400).json({ message: "Invalid status value" });
+      return res
+        .status(400)
+        .json({ message: "Giá trị trạng thái không hợp lệ" });
     }
     const updatedCategory = await CategoryBlog.findByIdAndUpdate(
       id,
@@ -394,7 +412,7 @@ exports.updateCategory = async (req, res) => {
       { new: true }
     );
     if (!updatedCategory) {
-      return res.status(404).json({ message: "Category not found" });
+      return res.status(404).json({ message: "Không tìm thấy danh mục" });
     }
     // If category is set to inactive, inactivate associated blogs
     if (status === "inactive") {
@@ -403,7 +421,7 @@ exports.updateCategory = async (req, res) => {
     res.json(updatedCategory);
   } catch (error) {
     console.error("Error updating category:", error);
-    res.status(400).json({ message: error.message });
+    res.status(400).json({ message: "Lỗi khi cập nhật danh mục" });
   }
 };
 
@@ -412,7 +430,7 @@ exports.deleteCategory = async (req, res) => {
     const { id } = req.params;
     const category = await CategoryBlog.findById(id);
     if (!category) {
-      return res.status(404).json({ message: "Category not found" });
+      return res.status(404).json({ message: "Không tìm thấy danh mục" });
     }
     if (category.status === "active") {
       // Soft delete: set category and associated blogs to inactive
@@ -420,17 +438,18 @@ exports.deleteCategory = async (req, res) => {
       await category.save();
       await Blog.updateMany({ categoryId: id }, { status: "inactive" });
       res.json({
-        message: "Category and associated blogs set to inactive",
+        message:
+          "Danh mục và các bài viết liên quan được đặt thành không hoạt động",
         category,
       });
     } else {
       // Permanent delete
       await CategoryBlog.findByIdAndDelete(id);
-      res.json({ message: "Category permanently deleted" });
+      res.json({ message: "Danh mục đã bị xóa vĩnh viễn" });
     }
   } catch (error) {
     console.error("Error deleting category:", error);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Lỗi khi xóa danh mục" });
   }
 };
 
@@ -444,7 +463,9 @@ exports.getTopViewedBlogs = async (req, res) => {
     res.json(topBlogs);
   } catch (error) {
     console.error("Error fetching top viewed blogs:", error);
-    res.status(500).json({ message: error.message });
+    res
+      .status(500)
+      .json({ message: "Lỗi khi tải danh sách bài viết được xem nhiều nhất" });
   }
 };
 
@@ -453,13 +474,17 @@ exports.incrementBlogViews = async (req, res) => {
     const { slug } = req.params;
     const blog = await Blog.findOne({ slug, status: "active" });
     if (!blog) {
-      return res.status(404).json({ message: "Blog not found or inactive" });
+      return res
+        .status(404)
+        .json({
+          message: "Không tìm thấy bài viết hoặc bài viết không hoạt động",
+        });
     }
     blog.views = (blog.views || 0) + 1;
     await blog.save();
-    res.json({ message: "View count incremented", views: blog.views });
+    res.json({ message: "Số lượt xem đã được tăng", views: blog.views });
   } catch (error) {
     console.error("Error incrementing blog views:", error);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Lỗi khi tăng số lượt xem bài viết" });
   }
 };

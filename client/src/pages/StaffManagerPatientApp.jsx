@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import PaymentModalFinal from "./PaymentModalFinal";
 import ReExamModalForStaff from "./ReExamModalForStaff";
+import EditAppointmentByStaff from "./EditAppointmentByStaff";
+import moment from "moment";
 
 const STATUS_TABS = [
   { label: "Confirmed", value: "confirmed" },
@@ -24,7 +26,8 @@ function StaffManagerPatientApp() {
   const [paymentAppointmentId, setPaymentAppointmentId] = useState(null);
   const [refresh, setRefresh] = useState(false);
   const [reExamModal, setReExamModal] = useState({ open: false, rootAppointment: null });
-  const reloadAppointments = () => setRefresh(r => !r)
+  const [editModal, setEditModal] = useState({ open: false, appointment: null }); // Thêm state cho EditAppointment
+  const reloadAppointments = () => setRefresh((r) => !r);
 
   // Debounce search
   useEffect(() => {
@@ -39,10 +42,9 @@ function StaffManagerPatientApp() {
     let query = `status=${status}&page=${page}&limit=${PAGE_SIZE}`;
     if (search) query += `&search=${encodeURIComponent(search)}`;
     axios
-      .get(
-        `http://localhost:9999/app/staff/appointments?${query}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      )
+      .get(`http://localhost:9999/app/staff/appointments?${query}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
       .then((resp) => {
         setAppointments(resp.data.data || resp.data);
         setTotal(resp.data.total || resp.data.length);
@@ -51,7 +53,7 @@ function StaffManagerPatientApp() {
         setAppointments([]);
         setTotal(0);
       });
-  }, [status, token, page, search]);
+  }, [status, token, page, search, refresh]);
 
   const getCount = (tabValue) => (status === tabValue ? total : 0);
   const totalPages = Math.ceil(total / PAGE_SIZE);
@@ -60,42 +62,68 @@ function StaffManagerPatientApp() {
     setPage(1);
   };
 
-  function handleReExam(apt) {
+  const handleReExam = (apt) => {
     setReExamModal({ open: true, rootAppointment: apt });
-  }
+  };
 
+  const handleEditAppointment = (apt) => {
+    setEditModal({ open: true, appointment: apt });
+  };
+
+  // Hàm kiểm tra nếu thời gian hiện tại cách giờ khám dưới 8 tiếng
+  const isEditDisabled = (apt) => {
+    if (!apt.timeslot?.date || !apt.timeslot?.start_time) return true;
+    const appointmentDateTime = moment(
+      `${apt.timeslot.date} ${apt.timeslot.start_time}`,
+      "YYYY-MM-DD HH:mm"
+    );
+    const currentDateTime = moment();
+    const hoursDifference = appointmentDateTime.diff(currentDateTime, "hours");
+    return hoursDifference < 8;
+  };
 
   // Thanh search giao diện đẹp như mẫu
   const searchBox = (
-    <div style={{
-      width: "100%",
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      margin: "22px 0"
-    }}>
-      <div style={{
+    <div
+      style={{
+        width: "100%",
         display: "flex",
+        justifyContent: "center",
         alignItems: "center",
-        background: "#f7fafd",
-        borderRadius: "26px",
-        border: "1.5px solid #e8f0fe",
-        boxShadow: "0 2px 12px 0 #0088ff13",
-        padding: "8px 24px",
-        minWidth: 410,
-        maxWidth: 540,
-        width: "100%"
-      }}>
-        {/* Icon search svg */}
-        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" style={{ marginRight: 10 }}
-          fill="none" stroke="#12b0ee" strokeWidth="2" viewBox="0 0 24 24">
+        margin: "22px 0",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          background: "#f7fafd",
+          borderRadius: "26px",
+          border: "1.5px solid #e8f0fe",
+          boxShadow: "0 2px 12px 0 #0088ff13",
+          padding: "8px 24px",
+          minWidth: 410,
+          maxWidth: 540,
+          width: "100%",
+        }}
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="22"
+          height="22"
+          style={{ marginRight: 10 }}
+          fill="none"
+          stroke="#12b0ee"
+          strokeWidth="2"
+          viewBox="0 0 24 24"
+        >
           <circle cx="11" cy="11" r="8" />
           <line x1="21" y1="21" x2="16.65" y2="16.65" />
         </svg>
         <input
           type="text"
           value={searchInput}
-          onChange={e => setSearchInput(e.target.value)}
+          onChange={(e) => setSearchInput(e.target.value)}
           placeholder="Tìm kiếm tên bệnh nhân, dịch vụ, bác sĩ,..."
           style={{
             flex: 1,
@@ -141,20 +169,11 @@ function StaffManagerPatientApp() {
             }}
           >
             {tab.label}{" "}
-            <span style={{ color: "#888", fontWeight: 400 }}>
-              ({getCount(tab.value)})
-            </span>
+            <span style={{ color: "#888", fontWeight: 400 }}>({getCount(tab.value)})</span>
           </button>
         ))}
       </div>
-      <div
-        style={{
-          overflowX: "auto",
-          padding: 0,
-          margin: 0,
-          background: "#fafbfc",
-        }}
-      >
+      <div style={{ overflowX: "auto", padding: 0, margin: 0, background: "#fafbfc" }}>
         <table
           style={{
             width: "100%",
@@ -182,7 +201,6 @@ function StaffManagerPatientApp() {
           <tbody>
             {appointments.length > 0 ? (
               appointments.map((apt, idx) => {
-                // LẤY DỮ LIỆU ĐÚNG THEO AGGREGATION
                 const patientUser = apt.patientUser || {};
                 const doctorUser = apt.doctorUser || {};
                 const service = apt.service || {};
@@ -200,24 +218,25 @@ function StaffManagerPatientApp() {
                       <span style={badgeStyle}>{patientUser.phone || ""}</span>
                     </td>
                     <td style={tdStyle}>{patientUser.address || ""}</td>
-                    <td style={{
-                      ...tdStyle, whiteSpace: 'normal', wordBreak: 'break-word'
-                    }}>
-                      <div style={{ fontWeight: 600 }}>
-                        {service.serviceName || ""}
-                      </div>
+                    <td
+                      style={{
+                        ...tdStyle,
+                        whiteSpace: "normal",
+                        wordBreak: "break-word",
+                      }}
+                    >
+                      <div style={{ fontWeight: 600 }}>{service.serviceName || ""}</div>
                       {serviceOption.optionName ? (
-                        <div style={{ fontSize: 14, color: '#888', fontWeight: 400 }}>
+                        <div style={{ fontSize: 14, color: "#888", fontWeight: 400 }}>
                           {serviceOption.optionName}
                           {serviceOption.price
-                            ? ` - ${Number(serviceOption.price).toLocaleString('vi-VN')}đ`
-                            : ''
-                          }
+                            ? ` - ${Number(serviceOption.price).toLocaleString("vi-VN")}đ`
+                            : ""}
                         </div>
                       ) : null}
                     </td>
                     <td style={tdStyle}>{doctorUser.fullname || ""}</td>
-                    <td style={{ ...tdStyle, whiteSpace: 'normal', wordBreak: 'break-word' }}>
+                    <td style={{ ...tdStyle, whiteSpace: "normal", wordBreak: "break-word" }}>
                       <div style={{ fontWeight: 600 }}>
                         {timeslot.date
                           ? new Date(timeslot.date).toLocaleDateString("vi-VN")
@@ -232,31 +251,33 @@ function StaffManagerPatientApp() {
                     <td style={tdStyle}>
                       {apt.createdAt
                         ? new Date(apt.createdAt).toLocaleDateString("vi-VN") +
-                        " " +
-                        new Date(apt.createdAt).toLocaleTimeString("vi-VN")
+                          " " +
+                          new Date(apt.createdAt).toLocaleTimeString("vi-VN")
                         : ""}
                     </td>
                     <td style={tdStyle}>{apt.note || ""}</td>
                     <td style={tdStyle}>
-                      {apt.reExaminationOf
-                        ? <span style={{
-                          background: "#e2f8e6",
-                          color: "#109d42",
-                          fontWeight: 500,
-                          borderRadius: 7,
-                          padding: "4px 16px",
-                          fontSize: 15
-                        }}>Tái khám</span>
-                        : <span style={{ color: "#bbb" }}>—</span>}
+                      {apt.reExaminationOf ? (
+                        <span
+                          style={{
+                            background: "#e2f8e6",
+                            color: "#109d42",
+                            fontWeight: 500,
+                            borderRadius: 7,
+                            padding: "4px 16px",
+                            fontSize: 15,
+                          }}
+                        >
+                          Tái khám
+                        </span>
+                      ) : (
+                        <span style={{ color: "#bbb" }}>—</span>
+                      )}
                     </td>
-                    {/* ACTION */}
                     <td style={tdStyle}>
                       {status === "completed" && (
                         <>
-                          <button
-                            style={actionBtnStyle}
-                            onClick={() => handleReExam(apt)}
-                          >
+                          <button style={actionBtnStyle} onClick={() => handleReExam(apt)}>
                             Tái khám
                           </button>
                           <button
@@ -264,7 +285,7 @@ function StaffManagerPatientApp() {
                               ...actionBtnStyle,
                               background: "#127afc",
                               color: "#fff",
-                              marginLeft: 8
+                              marginLeft: 8,
                             }}
                             onClick={() => {
                               setPaymentAppointmentId(apt._id);
@@ -276,17 +297,29 @@ function StaffManagerPatientApp() {
                         </>
                       )}
                       {status === "fully_paid" && (
-                        <button
-                          style={actionBtnStyle}
-                          onClick={() => handleReExam(apt)}
-                        >
+                        <button style={actionBtnStyle} onClick={() => handleReExam(apt)}>
                           Tái khám
+                        </button>
+                      )}
+                      {apt.reExaminationOf && (
+                        <button
+                          style={{
+                            ...actionBtnStyle,
+                            background: "#ff9800",
+                            color: "#fff",
+                            marginLeft: 8,
+                            opacity: isEditDisabled(apt) ? 0.5 : 1,
+                            cursor: isEditDisabled(apt) ? "not-allowed" : "pointer",
+                          }}
+                          onClick={() => !isEditDisabled(apt) && handleEditAppointment(apt)}
+                          disabled={isEditDisabled(apt)}
+                        >
+                          Đổi lịch
                         </button>
                       )}
                     </td>
                   </tr>
                 );
-
               })
             ) : (
               <tr>
@@ -296,7 +329,7 @@ function StaffManagerPatientApp() {
                     ...tdStyle,
                     color: "#8c8c8c",
                     textAlign: "center",
-                    background: "#fff"
+                    background: "#fff",
                   }}
                 >
                   No appointments.
@@ -326,14 +359,17 @@ function StaffManagerPatientApp() {
           />
         )}
 
+        {editModal.open && (
+          <EditAppointmentByStaff
+            visible={editModal.open}
+            onCancel={() => setEditModal({ open: false, appointment: null })}
+            appointment={editModal.appointment}
+            onUpdate={reloadAppointments}
+          />
+        )}
 
-        {/* PAGINATION */}
         {totalPages > 1 && (
-          <div style={{
-            display: "flex",
-            justifyContent: "center",
-            margin: "24px 0"
-          }}>
+          <div style={{ display: "flex", justifyContent: "center", margin: "24px 0" }}>
             <button
               onClick={() => setPage(page - 1)}
               disabled={page === 1}
@@ -349,7 +385,7 @@ function StaffManagerPatientApp() {
                   ...paginationBtnStyle,
                   fontWeight: page === idx + 1 ? "bold" : "normal",
                   color: page === idx + 1 ? "#127afc" : "#333",
-                  borderBottom: page === idx + 1 ? "2px solid #127afc" : "none"
+                  borderBottom: page === idx + 1 ? "2px solid #127afc" : "none",
                 }}
               >
                 {idx + 1}
@@ -363,12 +399,10 @@ function StaffManagerPatientApp() {
               &gt;
             </button>
           </div>
-
         )}
       </div>
     </div>
   );
-
 }
 
 const thStyle = {
@@ -377,14 +411,14 @@ const thStyle = {
   textAlign: "left",
   padding: "14px 14px",
   background: "#fafbfc",
-  border: "1px solid #e2e2e2"
+  border: "1px solid #e2e2e2",
 };
 const tdStyle = {
   padding: "13px 14px",
   fontSize: 16,
   border: "1px solid #e2e2e2",
   background: "#fff",
-  verticalAlign: "top"
+  verticalAlign: "top",
 };
 const badgeStyle = {
   background: "#127afc",
@@ -393,7 +427,7 @@ const badgeStyle = {
   borderRadius: 18,
   fontWeight: 500,
   fontSize: 15,
-  letterSpacing: 1
+  letterSpacing: 1,
 };
 const actionBtnStyle = {
   background: "#e2f8e6",
@@ -404,7 +438,7 @@ const actionBtnStyle = {
   fontWeight: 600,
   fontSize: 15,
   cursor: "pointer",
-  marginBottom: 2
+  marginBottom: 2,
 };
 const paginationBtnStyle = {
   minWidth: 36,
@@ -414,7 +448,7 @@ const paginationBtnStyle = {
   fontSize: 16,
   borderRadius: 6,
   background: "#f4f6fa",
-  cursor: "pointer"
+  cursor: "pointer",
 };
 
 export default StaffManagerPatientApp;

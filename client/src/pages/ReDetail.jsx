@@ -1,9 +1,19 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Card, Descriptions, Spin, Alert, Divider, Table, Tag } from "antd";
+import { Card, Descriptions, Spin, Alert, Divider, Table, Tag, Button } from "antd";
 import dayjs from "dayjs";
+import EditAppointment from "./EditAppointment"; // Adjust the import path as needed
 
-const ReExaminationTable = ({ appointments }) => {
+// Function to check if the appointment is within 8 hours from now
+const isWithin8Hours = (timeslot) => {
+  if (!timeslot?.date || !timeslot?.start_time) return false;
+
+  const appointmentTime = dayjs(`${timeslot.date} ${timeslot.start_time}`, 'YYYY-MM-DD HH:mm');
+  const currentTime = dayjs();
+  return appointmentTime.isBefore(currentTime.add(8, 'hour'));
+};
+
+const ReExaminationTable = ({ appointments, onEdit }) => {
   const columns = [
     {
       title: 'STT',
@@ -55,7 +65,7 @@ const ReExaminationTable = ({ appointments }) => {
     {
       title: 'Ngày đặt',
       dataIndex: 'createdAt',
-      render: (date) => date ? dayjs(date).format('DD/MM/YYYY HH:mm') : '',
+      render: (date) => (date ? dayjs(date).format('DD/MM/YYYY HH:mm') : ''),
     },
     {
       title: 'Ghi chú',
@@ -63,7 +73,21 @@ const ReExaminationTable = ({ appointments }) => {
     },
     {
       title: 'Hành động',
-    
+      render: (_, record) => (
+        <Button
+          type="primary"
+          size="small"
+          onClick={() => onEdit(record)}
+          disabled={
+            record.status === 'completed' ||
+            record.status === 'cancelled' ||
+            isWithin8Hours(record.timeslotId)
+          }
+          aria-label={`Đổi lịch cho lịch khám ${record._id}`}
+        >
+          Đổi lịch
+        </Button>
+      ),
     },
   ];
 
@@ -73,7 +97,7 @@ const ReExaminationTable = ({ appointments }) => {
         columns={columns}
         dataSource={appointments}
         pagination={false}
-        rowKey={record => record._id}
+        rowKey={(record) => record._id}
         bordered
       />
     </div>
@@ -86,13 +110,15 @@ const ReDetail = () => {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
 
   useEffect(() => {
     const fetchAPI = async () => {
       try {
         const token = localStorage.getItem('token');
         const res = await fetch(`http://localhost:9999/app/re-examinations/${id}`, {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
         if (data.success) {
@@ -109,6 +135,26 @@ const ReDetail = () => {
     };
     fetchAPI();
   }, [id]);
+
+  const handleEdit = (appointment) => {
+    setSelectedAppointment(appointment);
+    setEditModalVisible(true);
+  };
+
+  const handleUpdate = (updatedAppointment) => {
+    setAppointments((prev) =>
+      prev.map((appt) =>
+        appt._id === updatedAppointment._id ? updatedAppointment : appt
+      )
+    );
+    setEditModalVisible(false);
+    setSelectedAppointment(null);
+  };
+
+  const handleCancel = () => {
+    setEditModalVisible(false);
+    setSelectedAppointment(null);
+  };
 
   if (loading) return <Spin style={{ marginTop: 56, display: 'block' }} />;
   if (error) return <Alert type="error" message={error} style={{ margin: 32 }} />;
@@ -152,8 +198,18 @@ const ReDetail = () => {
           </Descriptions>
         </Card>
       )}
-      <Divider orientation="left" style={{ fontWeight: 600 }}>Lịch sử các lần tái khám</Divider>
-      <ReExaminationTable appointments={appointments} />
+      <Divider orientation="left" style={{ fontWeight: 600 }}>
+        Lịch sử các lần tái khám
+      </Divider>
+      <ReExaminationTable appointments={appointments} onEdit={handleEdit} />
+      {selectedAppointment && (
+        <EditAppointment
+          visible={editModalVisible}
+          onCancel={handleCancel}
+          appointment={selectedAppointment}
+          onUpdate={handleUpdate}
+        />
+      )}
     </div>
   );
 };
