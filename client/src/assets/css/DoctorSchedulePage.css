@@ -63,6 +63,36 @@
   cursor: not-allowed;
 }
 
+/* Clinic Info */
+.ds-clinic-info {
+  flex: 1;
+  max-width: 300px;
+  background: #f8f9fa;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.ds-clinic-info h3 {
+  margin: 0 0 12px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.ds-clinic-info p {
+  margin: 8px 0;
+  font-size: 14px;
+  color: #333;
+  line-height: 1.5;
+}
+
+.ds-clinic-info p strong {
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
 /* Create Button (dành cho ScheduleManagement.jsx) */
 .ds-create-button {
   padding: 10px 20px;
@@ -339,7 +369,7 @@
 }
 
 .ds-summary p {
-  margin: 8px 0 0 0;
+  margin: 8px 0;
   font-size: 15px;
 }
 
@@ -427,11 +457,16 @@
   padding: 8px 12px;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 17px;
+  font-size: 15px;
   transition: all 0.2s ease;
 }
 
-.ds-week-navigation button:hover {
+.ds-week-navigation button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ds-week-navigation button:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.3);
 }
 
@@ -497,7 +532,7 @@
 
 .ds-empty-slot {
   color: #999;
-  font-size: 17px;
+  font-size: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -508,7 +543,7 @@
   border-radius: 4px;
   padding: 6px;
   height: 100%;
-  font-size: 11px;
+  font-size: 12px;
   text-align: left;
   border: 1px solid #e0e0e0;
   display: flex;
@@ -542,18 +577,18 @@
   border-radius: 3px;
   display: inline-block;
   margin-bottom: 2px;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .ds-appointment-status {
   color: #28a745;
   font-weight: bold;
   margin: 2px 0;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .ds-appointment-availability {
-  font-size: 11px;
+  font-size: 12px;
   color: #666;
 }
 
@@ -579,10 +614,6 @@
   justify-content: center;
   transition: all 0.3s ease;
   align-self: flex-end;
-  -webkit-border-radius: 7px;
-  -moz-border-radius: 7px;
-  -ms-border-radius: 7px;
-  -o-border-radius: 7px;
 }
 
 .ds-delete-button {
@@ -603,7 +634,7 @@
   text-align: center;
   padding: 20px;
   color: #666;
-  font-size: 17px;
+  font-size: 16px;
 }
 
 /* Modal styles */
@@ -672,7 +703,7 @@
 }
 
 .ds-modal-section {
-  margin-bottom: 17px;
+  margin-bottom: 16px;
 }
 
 .ds-modal-section h4 {
@@ -684,7 +715,7 @@
 
 .ds-modal-body p {
   margin: 8px 0;
-  font-size: 13px;
+  font-size: 14px;
   color: #333;
   line-height: 1.6;
 }
@@ -937,7 +968,8 @@
     flex-direction: column;
   }
 
-  .ds-doctor-selector {
+  .ds-doctor-selector,
+  .ds-clinic-info {
     max-width: 100%;
   }
 
@@ -951,7 +983,7 @@
   }
 
   .ds-schedule-table {
-    font-size: 11px;
+    font-size: 12px;
   }
 
   .ds-appointment-slot {

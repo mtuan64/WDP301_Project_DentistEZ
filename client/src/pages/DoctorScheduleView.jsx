@@ -23,7 +23,7 @@ const Notification = ({ message, type, onClose }) => {
 };
 
 // DoctorSelector Component
-const DoctorSelector = ({ onDoctorChange }) => {
+const DoctorSelector = ({ onDoctorChange, onClinicInfoChange }) => {
   const [doctors, setDoctors] = useState([]);
   const [selectedDoctor, setSelectedDoctor] = useState("");
   const [loading, setLoading] = useState(false);
@@ -57,10 +57,45 @@ const DoctorSelector = ({ onDoctorChange }) => {
     fetchDoctors();
   }, []);
 
+  const fetchDoctorClinic = async (doctorId) => {
+    try {
+      const response = await axios.get(
+        `http://localhost:9999/api/doctor/${doctorId}`,
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        }
+      );
+      if (response.data.success && response.data.data.clinic_id) {
+        onClinicInfoChange({
+          name: response.data.data.clinic_id.clinic_name,
+          description: response.data.data.clinic_id.description,
+        });
+      } else {
+        onClinicInfoChange(null);
+        setNotification({
+          message: "Không tìm thấy thông tin phòng khám của bác sĩ",
+          type: "error",
+        });
+      }
+    } catch (error) {
+      console.error("Lỗi khi tải thông tin phòng khám:", error);
+      onClinicInfoChange(null);
+      setNotification({
+        message: "Lỗi khi tải thông tin phòng khám!",
+        type: "error",
+      });
+    }
+  };
+
   const handleDoctorChange = (e) => {
     const doctorId = e.target.value;
     setSelectedDoctor(doctorId);
     onDoctorChange(doctorId);
+    if (doctorId) {
+      fetchDoctorClinic(doctorId);
+    } else {
+      onClinicInfoChange(null);
+    }
   };
 
   return (
@@ -98,6 +133,7 @@ const DoctorScheduleView = () => {
   const [selectedWeek, setSelectedWeek] = useState("");
   const [selectedDoctor, setSelectedDoctor] = useState("");
   const [scheduleData, setScheduleData] = useState({});
+  const [clinicInfo, setClinicInfo] = useState(null);
   const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -331,6 +367,7 @@ const DoctorScheduleView = () => {
       setSelectedYear("");
       setSelectedWeek("");
       setScheduleData({});
+      setClinicInfo(null);
     }
   }, [selectedDoctor]);
 
@@ -420,7 +457,21 @@ const DoctorScheduleView = () => {
       </div>
 
       <div className="ds-selector-container">
-        <DoctorSelector onDoctorChange={setSelectedDoctor} />
+        <DoctorSelector
+          onDoctorChange={setSelectedDoctor}
+          onClinicInfoChange={setClinicInfo}
+        />
+        {clinicInfo && (
+          <div className="ds-clinic-info">
+            <h3>Thông tin phòng khám</h3>
+            <p>
+              <strong>Tên phòng khám:</strong> {clinicInfo.name}
+            </p>
+            <p>
+              <strong>Mô tả:</strong> {clinicInfo.description}
+            </p>
+          </div>
+        )}
         <div className="ds-header-controls">
           <div className="ds-selector-group">
             <label>Năm</label>
@@ -477,7 +528,7 @@ const DoctorScheduleView = () => {
               <tbody>
                 {slots.map((slotIndex) => (
                   <tr key={slotIndex}>
-                    <td className="ds-slot-index">Slot {slotIndex}</td>
+                    <td className="ds-slot-index">Ca {slotIndex}</td>
                     {weekDays.map((day) => (
                       <td
                         key={`${day.key}-${slotIndex}`}
@@ -529,7 +580,7 @@ const DoctorScheduleView = () => {
                 </p>
                 <p>
                   <strong>Phòng khám:</strong>{" "}
-                  {appointmentDetails.clinicId?.clinic_name || "Không xác định"}
+                  {clinicInfo ? clinicInfo.name : "Không xác định"}
                 </p>
                 <p>
                   <strong>Thời gian:</strong>{" "}

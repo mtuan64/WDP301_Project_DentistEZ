@@ -279,7 +279,7 @@ const authAdminOrStaffOrDentistMiddleware = (req, res, next) => {
     if (
       decoded.role === "admin" ||
       decoded.role === "staff" ||
-      decoded.role === "dentist"
+      decoded.role === "doctor"
     ) {
       req.user = decoded;
       next();
