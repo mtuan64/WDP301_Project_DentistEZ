@@ -14,6 +14,7 @@ const PatientAppointmentPage = () => {
   const [loading, setLoading] = useState(false);
   const [cancelId, setCancelId] = useState(null);
   const [refundAccount, setRefundAccount] = useState("");
+  const [refundBank, setRefundBank] = useState("");
   const [isCancelModalVisible, setIsCancelModalVisible] = useState(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
@@ -28,7 +29,7 @@ const PatientAppointmentPage = () => {
   const navigate = useNavigate();
 
   // Xử lý timeslot ra date chuẩn cho mọi trường hợp:
-  const cleanedTimeslots = reExamTimeslots.map(slot => ({
+  const cleanedTimeslots = reExamTimeslots.map((slot) => ({
     ...slot,
     cleanedDate: dayjs(slot.date).format("YYYY-MM-DD"),
   }));
@@ -37,8 +38,8 @@ const PatientAppointmentPage = () => {
   const validDays = [
     ...new Set(
       cleanedTimeslots
-        .filter(slot => slot.isAvailable && slot.status === "active")
-        .map(slot => slot.cleanedDate)
+        .filter((slot) => slot.isAvailable && slot.status === "active")
+        .map((slot) => slot.cleanedDate)
     ),
   ];
 
@@ -87,13 +88,14 @@ const PatientAppointmentPage = () => {
       const token = localStorage.getItem("token");
       await axios.put(
         `http://localhost:9999/app/cancel/${cancelId}`,
-        { refundAccount },
+        { refundAccount, refundBank },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       message.success("Hủy lịch thành công!");
       fetchAppointments();
       setIsCancelModalVisible(false);
       setRefundAccount("");
+      setRefundBank("");
       setCancelId(null);
 
       await fetchAppointments();
@@ -124,7 +126,7 @@ const PatientAppointmentPage = () => {
         `http://localhost:9999/app/timeslots/by-doctor/${doctorId}`,
         {
           params: { doctorId: doctorId },
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
       setReExamTimeslots(res.data.data || []);
@@ -135,11 +137,11 @@ const PatientAppointmentPage = () => {
   };
 
   const appointmentsWithReExams = appointments
-    .filter(app => !app.reExaminationOf)
-    .map(app => ({
+    .filter((app) => !app.reExaminationOf)
+    .map((app) => ({
       ...app,
       reExaminations: appointments.filter(
-        a => String(a.reExaminationOf) === String(app._id)
+        (a) => String(a.reExaminationOf) === String(app._id)
       ),
     }));
 
@@ -155,7 +157,7 @@ const PatientAppointmentPage = () => {
         <div>
           <div>{record.serviceId?.serviceName}</div>
           {record.serviceOptionId && (
-            <div style={{ color: '#888', fontSize: 13 }}>
+            <div style={{ color: "#888", fontSize: 13 }}>
               {record.serviceOptionId.optionName}
               {record.serviceOptionId.price && (
                 <> - {Number(record.serviceOptionId.price).toLocaleString()}₫</>
@@ -222,7 +224,13 @@ const PatientAppointmentPage = () => {
         if (!reExamList.length)
           return <span style={{ color: "#888" }}>(Chưa có)</span>;
         return (
-          <div style={{ display: "flex", flexDirection: "column", position: "relative" }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              position: "relative",
+            }}
+          >
             <div>
               {reExamList.map((exam, idx) => (
                 <div key={exam._id || idx}>
@@ -237,7 +245,7 @@ const PatientAppointmentPage = () => {
             <div style={{ width: "100%", textAlign: "right", marginTop: 2 }}>
               <EyeOutlined
                 title="Xem chi tiết tất cả lần tái khám"
-                onClick={e => {
+                onClick={(e) => {
                   e.stopPropagation();
                   navigate(`/re-examinations/${record._id}`);
                 }}
@@ -251,7 +259,7 @@ const PatientAppointmentPage = () => {
             </div>
           </div>
         );
-      }
+      },
     },
     {
       title: "Ghi Chú",
@@ -262,7 +270,8 @@ const PatientAppointmentPage = () => {
       render: (text, record) => {
         const isCancelled = record.status === "cancelled";
         const canCancelOrChange =
-          dayjs(record.timeslotId.date).diff(dayjs(), "hour") >= 8 && record.status !== "cancelled";
+          dayjs(record.timeslotId.date).diff(dayjs(), "hour") >= 8 &&
+          record.status !== "cancelled";
         const canReExam =
           record.status === "completed" || record.status === "fully_paid";
 
@@ -311,9 +320,15 @@ const PatientAppointmentPage = () => {
 
       {patientInfo && (
         <div className="mb-4">
-          <p><strong>Bệnh nhân:</strong> {patientInfo.fullname}</p>
-          <p><strong>Email:</strong> {patientInfo.email}</p>
-          <p><strong>SĐT:</strong> {patientInfo.phone}</p>
+          <p>
+            <strong>Bệnh nhân:</strong> {patientInfo.fullname}
+          </p>
+          <p>
+            <strong>Email:</strong> {patientInfo.email}
+          </p>
+          <p>
+            <strong>SĐT:</strong> {patientInfo.phone}
+          </p>
         </div>
       )}
 
@@ -339,6 +354,11 @@ const PatientAppointmentPage = () => {
           value={refundAccount}
           onChange={(e) => setRefundAccount(e.target.value)}
         />
+        <Input
+          placeholder="Nhập tên ngân hàng"
+          value={refundBank}
+          onChange={(e) => setRefundBank(e.target.value)}
+        />
       </Modal>
 
       <EditAppointment
@@ -352,14 +372,14 @@ const PatientAppointmentPage = () => {
         title={
           <div
             style={{
-              textAlign: 'center',
+              textAlign: "center",
               fontWeight: 700,
               fontSize: 22,
-              color: '#fff',
+              color: "#fff",
               marginBottom: 0,
               background: "linear-gradient(90deg,#127afc 70%,#12dede 100%)",
               padding: "18px 0 9px",
-              borderRadius: "12px 12px 0 0"
+              borderRadius: "12px 12px 0 0",
             }}
           >
             Đặt lịch tái khám
@@ -371,10 +391,13 @@ const PatientAppointmentPage = () => {
           setReExamModalError("");
         }}
         footer={[
-          <Button key="close" onClick={() => {
-            setIsReExamModalVisible(false);
-            setReExamModalError("");
-          }}>
+          <Button
+            key="close"
+            onClick={() => {
+              setIsReExamModalVisible(false);
+              setReExamModalError("");
+            }}
+          >
             Đóng
           </Button>,
           <Button
@@ -385,7 +408,7 @@ const PatientAppointmentPage = () => {
               border: "none",
               boxShadow: "0 2px 8px #14b2ea69",
               minWidth: 110,
-              fontWeight: 700
+              fontWeight: 700,
             }}
             loading={isReExamSubmitting}
             disabled={!selectedDate || !selectedTimeslotId}
@@ -400,15 +423,23 @@ const PatientAppointmentPage = () => {
                 const res = await axios.post(
                   `http://localhost:9999/app/re-examination/${reExamAppointment._id}`,
                   {
-                    serviceId: reExamAppointment.serviceId?._id || reExamAppointment.serviceId,
-                    serviceOptionId: reExamAppointment.serviceOptionId?._id || reExamAppointment.serviceOptionId,
-                    clinicId: reExamAppointment.clinicId?._id || reExamAppointment.clinicId,
+                    serviceId:
+                      reExamAppointment.serviceId?._id ||
+                      reExamAppointment.serviceId,
+                    serviceOptionId:
+                      reExamAppointment.serviceOptionId?._id ||
+                      reExamAppointment.serviceOptionId,
+                    clinicId:
+                      reExamAppointment.clinicId?._id ||
+                      reExamAppointment.clinicId,
                     timeslotId: selectedTimeslotId,
                     note: reExamNote,
                   },
                   { headers: { Authorization: `Bearer ${token}` } }
                 );
-                message.success(res.data?.message || "Đặt lịch tái khám thành công!");
+                message.success(
+                  res.data?.message || "Đặt lịch tái khám thành công!"
+                );
                 setTimeout(() => {
                   fetchAppointments();
                   setIsReExamModalVisible(false);
@@ -423,41 +454,45 @@ const PatientAppointmentPage = () => {
             }}
           >
             Đặt lịch tái khám
-          </Button>
+          </Button>,
         ]}
         centered
         bodyStyle={{
           background: "#f7fcfe",
           borderRadius: "0 0 12px 12px",
           padding: "28px 36px 18px 36px",
-          boxShadow: "0 4px 19px 0 #127afc19"
+          boxShadow: "0 4px 19px 0 #127afc19",
         }}
         style={{
           borderRadius: 12,
           overflow: "hidden",
-          boxShadow: "0 8px 38px 0 #127afc3a"
+          boxShadow: "0 8px 38px 0 #127afc3a",
         }}
       >
         {reExamAppointment && (
-          <div style={{
-            padding: 0,
-            background: "none",
-            borderRadius: 0,
-            minWidth: 340,
-            maxWidth: 520,
-            margin: "0 auto"
-          }}>
+          <div
+            style={{
+              padding: 0,
+              background: "none",
+              borderRadius: 0,
+              minWidth: 340,
+              maxWidth: 520,
+              margin: "0 auto",
+            }}
+          >
             {reExamModalError && (
-              <div style={{
-                background: "#ffefef",
-                color: "#b91529",
-                border: "1.2px solid #f80d1c33",
-                borderRadius: 7,
-                padding: "10px 16px",
-                marginBottom: 16,
-                fontWeight: 500,
-                textAlign: "center"
-              }}>
+              <div
+                style={{
+                  background: "#ffefef",
+                  color: "#b91529",
+                  border: "1.2px solid #f80d1c33",
+                  borderRadius: 7,
+                  padding: "10px 16px",
+                  marginBottom: 16,
+                  fontWeight: 500,
+                  textAlign: "center",
+                }}
+              >
                 {reExamModalError}
               </div>
             )}
@@ -477,7 +512,10 @@ const PatientAppointmentPage = () => {
                       {" "}
                       -{" "}
                       <span style={{ color: "#ff4300" }}>
-                        {Number(reExamAppointment.serviceOptionId.price).toLocaleString()}₫
+                        {Number(
+                          reExamAppointment.serviceOptionId.price
+                        ).toLocaleString()}
+                        ₫
                       </span>
                     </>
                   )}
@@ -500,28 +538,33 @@ const PatientAppointmentPage = () => {
                   fontWeight: 600,
                   display: "block",
                   marginBottom: 4,
-                  color: "#555"
-                }}>
+                  color: "#555",
+                }}
+              >
                 Ghi chú (tuỳ chọn)
               </label>
               <Input.TextArea
                 value={reExamNote}
-                onChange={e => setReExamNote(e.target.value)}
+                onChange={(e) => setReExamNote(e.target.value)}
                 rows={3}
                 maxLength={300}
                 placeholder="Ghi chú thêm cho bác sĩ..."
                 style={{
                   resize: "vertical",
                   borderRadius: 6,
-                  border: "1.2px solid #dde1ea"
+                  border: "1.2px solid #dde1ea",
                 }}
               />
             </div>
 
             <div style={{ margin: "10px 0" }}>
-              <label style={{
-                fontWeight: 600, display: "block", marginBottom: 4
-              }}>
+              <label
+                style={{
+                  fontWeight: 600,
+                  display: "block",
+                  marginBottom: 4,
+                }}
+              >
                 Ngày tái khám <span style={{ color: "#ff4d4f" }}>*</span>
               </label>
               <DatePicker
@@ -529,7 +572,7 @@ const PatientAppointmentPage = () => {
                   width: "100%",
                   borderRadius: 7,
                   border: "1.2px solid #dde1ea",
-                  fontSize: 15
+                  fontSize: 15,
                 }}
                 locale={locale}
                 placeholder="Chọn ngày tái khám"
@@ -539,12 +582,15 @@ const PatientAppointmentPage = () => {
                     ? dayjs(selectedDate)
                     : null
                 }
-                disabledDate={current =>
-                  current && current.startOf("day").isBefore(dayjs().startOf("day"))
+                disabledDate={(current) =>
+                  current &&
+                  current.startOf("day").isBefore(dayjs().startOf("day"))
                 }
-                onChange={dateObj => {
+                onChange={(dateObj) => {
                   setSelectedDate(
-                    dateObj && dateObj.isValid() ? dateObj.format("YYYY-MM-DD") : ""
+                    dateObj && dateObj.isValid()
+                      ? dateObj.format("YYYY-MM-DD")
+                      : ""
                   );
                   setSelectedTimeslotId("");
                 }}
@@ -552,9 +598,13 @@ const PatientAppointmentPage = () => {
             </div>
 
             <div style={{ margin: "10px 0 24px 0" }}>
-              <label style={{
-                fontWeight: 600, display: "block", marginBottom: 4
-              }}>
+              <label
+                style={{
+                  fontWeight: 600,
+                  display: "block",
+                  marginBottom: 4,
+                }}
+              >
                 Khung giờ <span style={{ color: "#ff4d4f" }}>*</span>
               </label>
               <select
@@ -564,10 +614,10 @@ const PatientAppointmentPage = () => {
                   borderRadius: 7,
                   border: "1.2px solid #dde1ea",
                   background: "#fff",
-                  fontSize: 15
+                  fontSize: 15,
                 }}
                 value={selectedTimeslotId}
-                onChange={e => setSelectedTimeslotId(e.target.value)}
+                onChange={(e) => setSelectedTimeslotId(e.target.value)}
                 disabled={!selectedDate}
               >
                 <option value="">-- Chọn khung giờ --</option>
@@ -577,19 +627,19 @@ const PatientAppointmentPage = () => {
                     const uniqueSlots = [];
                     cleanedTimeslots
                       .filter(
-                        slot =>
+                        (slot) =>
                           slot.cleanedDate === selectedDate &&
                           slot.isAvailable &&
                           slot.status === "active"
                       )
-                      .forEach(slot => {
+                      .forEach((slot) => {
                         const label = `${slot.start_time} - ${slot.end_time}`;
                         if (!shownLabels.has(label)) {
                           shownLabels.add(label);
                           uniqueSlots.push(slot);
                         }
                       });
-                    return uniqueSlots.map(slot => (
+                    return uniqueSlots.map((slot) => (
                       <option key={slot._id} value={slot._id}>
                         {slot.start_time} - {slot.end_time}
                       </option>

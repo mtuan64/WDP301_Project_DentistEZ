@@ -8,16 +8,15 @@ const RefundSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
-  patientId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Patient",
-    required: true,
-  },
   amount: {
     type: Number,
     required: true,
   },
   refundAccount: {
+    type: String,
+    required: true,
+  },
+  refundBank: {
     type: String,
     required: true,
   },

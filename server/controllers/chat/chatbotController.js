@@ -85,12 +85,13 @@ const chatbotController = {
 
         // Consultation Intent
       } else if (
+        lowerCaseMessage.includes("dịch vụ tốt") ||
         lowerCaseMessage.includes("tư vấn") ||
         lowerCaseMessage.includes("consult") ||
         lowerCaseMessage.includes("gợi ý") ||
         lowerCaseMessage.includes("nên chọn") ||
         lowerCaseMessage.includes("đề xuất") ||
-        lowerCaseMessage.includes("dịch vụ nào tốt") ||
+        lowerCaseMessage.includes("dịch vụ nào") ||
         lowerCaseMessage.includes("hãy tư vấn") ||
         lowerCaseMessage.includes("tôi cần tư vấn") ||
         lowerCaseMessage.includes("đau răng") ||
@@ -123,6 +124,7 @@ const chatbotController = {
 
         // Check if user requests a single "best" service
         const isSingleBestService =
+          lowerCaseMessage.includes("dịch vụ nào tốt") ||
           lowerCaseMessage.includes("1 loại dịch vụ") ||
           lowerCaseMessage.includes("chuẩn nhất") ||
           lowerCaseMessage.includes("tốt nhất") ||
