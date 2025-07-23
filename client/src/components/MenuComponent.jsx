@@ -46,7 +46,7 @@ const menuByRole = (role, userId) => {
       { title: "Trang chủ", path: "/", icon: <HomeOutlined /> },
       { title: "Quản lý lịch khám bệnh nhân ", path: "/staffmanager/patientapp", icon: <UserOutlined /> },
       { title: "Lịch sử giao dịch", path: "staffmanager/paymenthistory", icon: <FileTextOutlined /> },
-      { title: "Lịch trình bác sĩ", path: "/schedule", icon: <CalendarOutlined /> },
+      { title: "Quản lý hoàn tiền lịch hủy", path: "/staffmanager/refunds", icon: <DollarOutlined /> },
     ],
     patient: [
       { title: "Trang chủ", path: "/", icon: <HomeOutlined /> },
