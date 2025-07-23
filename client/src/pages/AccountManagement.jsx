@@ -38,7 +38,39 @@ const AccountManagement = () => {
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  // Hàm lọc dữ liệu theo search term
+  /*** MODAL STATE & FN FOR ALERT/CONFIRM ***/
+  const [notice, setNotice] = useState({
+    open: false,
+    content: "",
+    title: "",
+    type: "alert", // "alert" hoặc "confirm"
+    onConfirm: null,
+    onCancel: null,
+  });
+
+  const showAlert = (message) => {
+    setNotice({
+      open: true,
+      content: message,
+      title: "Thông báo",
+      type: "alert",
+      onConfirm: () => setNotice(n => ({ ...n, open: false })),
+      onCancel: null
+    });
+  };
+
+  const showConfirm = (message, onConfirm, onCancel) => {
+    setNotice({
+      open: true,
+      content: message,
+      title: "Xác nhận",
+      type: "confirm",
+      onConfirm: () => { setNotice(n => ({ ...n, open: false })); onConfirm && onConfirm(); },
+      onCancel: () => { setNotice(n => ({ ...n, open: false })); onCancel && onCancel(); }
+    });
+  };
+  /*****************************************/
+
   const getFilteredData = () => {
     if (!searchTerm) return data;
     return data.filter(user =>
@@ -49,11 +81,9 @@ const AccountManagement = () => {
     );
   };
 
-  // Tính tổng số trang dựa trên dữ liệu đã lọc
   const filteredData = getFilteredData();
   const totalPages = Math.ceil(filteredData.length / rowsPerPage);
 
-  // Hàm lấy dữ liệu trang hiện tại
   const getCurrentPageData = () => {
     const startIndex = (page - 1) * rowsPerPage;
     const endIndex = startIndex + rowsPerPage;
@@ -69,19 +99,7 @@ const AccountManagement = () => {
     setPage(1);
   };
 
-  // Hàm hiển thị thông báo confirm
-  const showConfirm = (message) => {
-    return window.confirm(message);
-  };
-
-  // Hàm hiển thị thông báo alert
-  const showAlert = (message) => {
-    window.alert(message);
-  };
-
   const fetchData = async () => {
-    console.log("Fetching data for role:", selectedRole);
-
     if (selectedRole === "all") {
       setLoading(true);
       try {
@@ -96,7 +114,6 @@ const AccountManagement = () => {
             headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
           }),
         ]);
-
         const allData = [
           ...(doctorRes.data.success ? doctorRes.data.data : []),
           ...(patientRes.data.success ? patientRes.data.data : []),
@@ -105,7 +122,7 @@ const AccountManagement = () => {
         setData(allData);
         setError("");
       } catch (err) {
-        setError(err.response?.data?.message || "Failed to fetch data");
+        setError(err.response?.data?.message || "Không thể lấy dữ liệu");
       } finally {
         setLoading(false);
       }
@@ -115,15 +132,14 @@ const AccountManagement = () => {
         const response = await axios.get(API_ENDPOINTS[selectedRole], {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
-
         if (response.data.success) {
           setData(response.data.data);
           setError("");
         } else {
-          setError(response.data.message || "Failed to fetch data");
+          setError(response.data.message || "Không thể lấy dữ liệu");
         }
       } catch (err) {
-        setError(err.response?.data?.message || "Failed to fetch data");
+        setError(err.response?.data?.message || "Không thể lấy dữ liệu");
       } finally {
         setLoading(false);
       }
@@ -133,6 +149,7 @@ const AccountManagement = () => {
   useEffect(() => {
     fetchData();
     fetchClinics();
+    // eslint-disable-next-line
   }, [selectedRole]);
 
   const handleRoleChange = (event) => {
@@ -141,46 +158,49 @@ const AccountManagement = () => {
     setError("");
   };
 
-  // Thay đổi trạng thái 
   const handleChangeStatus = async (recordId, currentStatus, userRole) => {
     const normalizedStatus = currentStatus?.toLowerCase();
     const newStatus = normalizedStatus === 'active' ? 'inactive' : 'active';
+    const roleVN = userRole === "doctor" ? "bác sĩ"
+      : userRole === "staff" ? "nhân viên"
+      : userRole === "patient" ? "bệnh nhân"
+      : "người dùng";
 
-    if (!window.confirm(`Are you sure you want to ${newStatus === 'active' ? 'activate' : 'deactivate'} this ${userRole}?`)) {
-      return;
-    }
+    showConfirm(
+      `Bạn có chắc chắn muốn ${newStatus === 'active' ? 'kích hoạt' : 'vô hiệu hóa'} ${roleVN} này không?`,
+      async () => {
+        try {
+          setLoading(true);
 
-    try {
-      setLoading(true);
+          const response = await axios.patch(
+            `http://localhost:9999/api/admin/update-status/${userRole}/${recordId}`,
+            { Status: newStatus },
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+                'Content-Type': 'application/json'
+              },
+            }
+          );
 
-      const response = await axios.patch(
-        `http://localhost:9999/api/admin/update-status/${userRole}/${recordId}`,
-        { Status: newStatus },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-            'Content-Type': 'application/json'
-          },
+          if (response.data.success) {
+            setData(prevData =>
+              prevData.map(item =>
+                item._id === recordId
+                  ? { ...item, Status: newStatus }
+                  : item
+              ));
+            showAlert(`Cập nhật trạng thái ${roleVN} thành công!`);
+            setError('');
+          }
+        } catch (error) {
+          setError(error.response?.data?.message || 'Cập nhật trạng thái thất bại');
+          showAlert(error.response?.data?.message || "Cập nhật trạng thái thất bại");
+        } finally {
+          setLoading(false);
         }
-      );
-
-      if (response.data.success) {
-        setData(prevData =>
-          prevData.map(item =>
-            item._id === recordId
-              ? { ...item, Status: newStatus }
-              : item
-          ));
-
-        alert(`${userRole} status updated to ${newStatus} successfully!`);
-        setError('');
       }
-    } catch (error) {
-      console.error('Error updating status:', error);
-      setError(error.response?.data?.message || 'Failed to update status');
-    } finally {
-      setLoading(false);
-    }
+    );
   };
 
   const fetchClinics = async () => {
@@ -191,33 +211,26 @@ const AccountManagement = () => {
       if (response.data.success) {
         setClinics(response.data.data);
       }
-    } catch (error) {
-      console.error("Error fetching clinics:", error);
-    }
+    } catch (error) {}
   };
 
   const handleCreateDoctor = async () => {
-    // Kiểm tra dữ liệu đầu vào
     if (!formData.fullname.trim()) {
-      showAlert("Please Enter Full Name");
+      showAlert("Vui lòng nhập họ tên.");
       return;
     }
-
     if (!formData.email.trim()) {
-      showAlert("Please Enter Email");
+      showAlert("Vui lòng nhập email.");
       return;
     }
-
     if (!formData.password.trim()) {
-      showAlert("Please Enter Password");
+      showAlert("Vui lòng nhập mật khẩu.");
       return;
     }
-
     if (!formData.clinic_id || !formData.clinic_id.trim()) {
-      showAlert("Please Select Clinic");
+      showAlert("Vui lòng chọn phòng khám.");
       return;
     }
-
     try {
       setLoading(true);
       const response = await axios.post(
@@ -230,28 +243,24 @@ const AccountManagement = () => {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }
       );
-
       if (response.data.success) {
         setOpenDialog(false);
         setFormData({ fullname: "", email: "", password: "", clinic_id: "" });
-        showAlert("Doctor Account Creation Successful!");
+        showAlert("Tạo tài khoản bác sĩ thành công!");
         await fetchData();
       }
     } catch (error) {
-      console.error("Create doctor error:", error);
-
       if (error.response && error.response.status >= 400 && error.response.status < 500) {
         const errorMsg = error.response.data?.error;
-
         if (errorMsg === "Email đã được đăng ký") {
-          showAlert("This email has already been registered.");
+          showAlert("Email này đã được đăng ký.");
         } else if (errorMsg === "Phòng này đã được sử dụng bởi bác sĩ khác") {
-          showAlert("This clinic has already been used by another doctor.");
+          showAlert("Phòng khám này đã có bác sĩ sử dụng.");
         } else {
-          showAlert(`Error: ${errorMsg || "Failed to create account"}`);
+          showAlert(`Lỗi: ${errorMsg || "Tạo tài khoản thất bại!"}`);
         }
       } else {
-        showAlert("Network error. Please check your connection and try again.");
+        showAlert("Lỗi mạng. Vui lòng kiểm tra kết nối và thử lại.");
       }
     } finally {
       setLoading(false);
@@ -259,22 +268,18 @@ const AccountManagement = () => {
   };
 
   const handleCreateStaff = async () => {
-    // Kiểm tra dữ liệu đầu vào
     if (!staffFormData.fullname.trim()) {
-      showAlert("Please Enter Full Name");
+      showAlert("Vui lòng nhập họ tên.");
       return;
     }
-
     if (!staffFormData.email.trim()) {
-      showAlert("Please Enter Email");
+      showAlert("Vui lòng nhập email.");
       return;
     }
-
     if (!staffFormData.password.trim()) {
-      showAlert("Please Enter Password");
+      showAlert("Vui lòng nhập mật khẩu.");
       return;
     }
-
     try {
       setLoading(true);
       const response = await axios.post(
@@ -287,26 +292,22 @@ const AccountManagement = () => {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }
       );
-
       if (response.data.success) {
         setOpenStaffDialog(false);
         setStaffFormData({ fullname: "", email: "", password: "" });
-        showAlert("Staff Account Creation Successful!");
+        showAlert("Tạo tài khoản nhân viên thành công!");
         await fetchData();
       }
     } catch (error) {
-      console.error("Create staff error:", error);
-
       if (error.response && error.response.status >= 400 && error.response.status < 500) {
         const errorMsg = error.response.data?.error;
-
         if (errorMsg === "Email đã được đăng ký") {
-          showAlert("This email has already been registered.");
+          showAlert("Email này đã được đăng ký.");
         } else {
-          showAlert(`Error: ${errorMsg || "Failed to create staff account"}`);
+          showAlert(`Lỗi: ${errorMsg || "Tạo tài khoản nhân viên thất bại!"}`);
         }
       } else {
-        showAlert("Network error. Please check your connection and try again.");
+        showAlert("Lỗi mạng. Vui lòng kiểm tra kết nối và thử lại.");
       }
     } finally {
       setLoading(false);
@@ -319,7 +320,7 @@ const AccountManagement = () => {
     <div style={{ padding: "24px", maxWidth: "1400px", margin: "0 auto" }}>
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
-        <h2 style={{ margin: 0 }}>User Account Management</h2>
+        <h2 style={{ margin: 0 }}>Quản lý tài khoản người dùng </h2>
         <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
           <FormControl variant="outlined" size="small" style={{ width: "150px" }}>
             <InputLabel>Role</InputLabel>
@@ -328,10 +329,10 @@ const AccountManagement = () => {
               value={selectedRole}
               onChange={handleRoleChange}
             >
-              <MenuItem value="all">All Roles</MenuItem>
-              <MenuItem value="doctor">Doctor</MenuItem>
-              <MenuItem value="patient">Patient</MenuItem>
-              <MenuItem value="staff">Staff</MenuItem>
+              <MenuItem value="all">Tất Cả </MenuItem>
+              <MenuItem value="doctor">Bác Sĩ </MenuItem>
+              <MenuItem value="patient">Bệnh Nhân </MenuItem>
+              <MenuItem value="staff">Nhân Viên </MenuItem>
             </Select>
           </FormControl>
           <div style={{ display: "flex", gap: "8px" }}>
@@ -342,7 +343,7 @@ const AccountManagement = () => {
               style={{ whiteSpace: "nowrap", minWidth: "140px", textTransform: "none" }}
               onClick={() => setOpenDialog(true)}
             >
-              Add Doctor
+              Thêm Bác Sĩ 
             </Button>
             <Button
               variant="contained"
@@ -351,7 +352,7 @@ const AccountManagement = () => {
               style={{ whiteSpace: "nowrap", minWidth: "140px", textTransform: "none" }}
               onClick={() => setOpenStaffDialog(true)}
             >
-              Add Staff
+              Thêm Nhân Viên
             </Button>
           </div>
         </div>
@@ -362,7 +363,7 @@ const AccountManagement = () => {
         <TextField
           fullWidth
           variant="outlined"
-          placeholder="Search by name, email, username, or role..."
+          placeholder="Tìm kiếm theo tên, email, tên đăng nhập hoặc vai trò..."
           value={searchTerm}
           onChange={(e) => {
             setSearchTerm(e.target.value);
@@ -396,8 +397,8 @@ const AccountManagement = () => {
 
       {/* User Count */}
       <p style={{ marginBottom: "16px", fontSize: "16px", color: "#555" }}>
-        Total Users: {filteredData.length}
-        {searchTerm && ` (filtered from ${data.length})`}
+        Tổng số người dùng: {filteredData.length}
+        {searchTerm && ` (lọc từ ${data.length})`}
       </p>
 
       {/* Table */}
@@ -413,31 +414,31 @@ const AccountManagement = () => {
             <TableHead>
               <TableRow sx={{ backgroundColor: "#f5f5f5" }}>
                 <TableCell sx={{ width: "60px", whiteSpace: "nowrap", fontWeight: "bold" }}>
-                  ID
+                  STT
                 </TableCell>
                 <TableCell sx={{ width: "120px", whiteSpace: "nowrap", fontWeight: "bold" }}>
-                  Username
+                  Tên Tài Khoản
                 </TableCell>
                 <TableCell sx={{ width: "150px", whiteSpace: "nowrap", fontWeight: "bold" }}>
-                  Full Name
+                  Họ Tên
                 </TableCell>
                 <TableCell sx={{ width: "200px", whiteSpace: "nowrap", fontWeight: "bold" }}>
                   Email
                 </TableCell>
                 <TableCell sx={{ width: "80px", whiteSpace: "nowrap", fontWeight: "bold" }}>
-                  Role
+                  Vai trò 
                 </TableCell>
                 <TableCell sx={{ width: "120px", whiteSpace: "nowrap", fontWeight: "bold" }}>
-                  Phone
+                  SĐT
                 </TableCell>
                 <TableCell sx={{ width: "180px", whiteSpace: "nowrap", fontWeight: "bold" }}>
-                  Address
+                  Địa Chỉ
                 </TableCell>
                 <TableCell sx={{ width: "100px", whiteSpace: "nowrap", fontWeight: "bold" }}>
-                  Status
+                  Trạng Thái
                 </TableCell>
                 <TableCell sx={{ width: "140px", whiteSpace: "nowrap", fontWeight: "bold" }}>
-                  Actions
+                  Thao Tác
                 </TableCell>
               </TableRow>
             </TableHead>
@@ -445,7 +446,7 @@ const AccountManagement = () => {
               {filteredData.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={9} style={{ textAlign: "center", padding: "40px" }}>
-                    {loading ? "Loading..." : searchTerm ? "No matching results found" : "No data found"}
+                    {loading ? "Đang tải..." : searchTerm ? "Không tìm thấy kết quả phù hợp" : "Không có dữ liệu"}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -513,7 +514,7 @@ const AccountManagement = () => {
                           fontSize: "12px"
                         }}
                       >
-                        {user.Status?.toLowerCase() || "N/A"}
+                        {user.Status?.toLowerCase() === "active" ? "Hoạt động" : user.Status?.toLowerCase() === "inactive" ? "Vô hiệu hóa" : "N/A"}
                       </span>
                     </TableCell>
                     <TableCell sx={{ whiteSpace: "nowrap" }}>
@@ -533,7 +534,7 @@ const AccountManagement = () => {
                           fontSize: "12px"
                         }}
                       >
-                        {loading ? 'Updating...' : 'Change Status'}
+                        {loading ? 'Đang Cập Nhật ...' : 'Thay Đổi Trạng Thái'}
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -567,7 +568,6 @@ const AccountManagement = () => {
                     },
                   }}
                 >
-                  
                   <MenuItem value={10}>10</MenuItem>
                   <MenuItem value={25}>25</MenuItem>
                   <MenuItem value={50}>50</MenuItem>
@@ -630,8 +630,8 @@ const AccountManagement = () => {
 
             {/* Thông tin trang */}
             <Typography variant="body2" sx={{ color: '#666' }}>
-              Showing {filteredData.length === 0 ? 0 : ((page - 1) * rowsPerPage) + 1} to {Math.min(page * rowsPerPage, filteredData.length)} of {filteredData.length} entries
-              {searchTerm && ` (filtered from ${data.length} total entries)`}
+              Hiển thị {filteredData.length === 0 ? 0 : ((page - 1) * rowsPerPage) + 1} đến {Math.min(page * rowsPerPage, filteredData.length)} trên {filteredData.length} bản ghi
+              {searchTerm && ` (lọc từ ${data.length} bản ghi gốc)`}
             </Typography>
           </Box>
         </TableContainer>
@@ -639,11 +639,11 @@ const AccountManagement = () => {
 
       {/* Add Doctor Dialog */}
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
-        <DialogTitle>Add Doctor</DialogTitle>
+        <DialogTitle>Thêm Bác Sĩ </DialogTitle>
         <DialogContent>
           <TextField
             fullWidth
-            label="Full Name"
+            label="Họ Tên"
             margin="normal"
             value={formData.fullname}
             type="text"
@@ -663,7 +663,7 @@ const AccountManagement = () => {
           />
           <TextField
             fullWidth
-            label="Password"
+            label="Mật Khẩu"
             margin="normal"
             type="password"
             value={formData.password}
@@ -672,7 +672,7 @@ const AccountManagement = () => {
             required
           />
           <FormControl fullWidth margin="normal">
-            <InputLabel>Clinic</InputLabel>
+            <InputLabel>Phòng Khám </InputLabel>
             <Select
               value={formData.clinic_id}
               label="Clinic"
@@ -687,24 +687,24 @@ const AccountManagement = () => {
           </FormControl>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
+          <Button onClick={() => setOpenDialog(false)}>Hủy </Button>
           <Button
             onClick={handleCreateDoctor}
             variant="contained"
             color="primary"
           >
-            Create
+            Tạo Mới
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Add Staff Dialog */}
       <Dialog open={openStaffDialog} onClose={() => setOpenStaffDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Add Staff</DialogTitle>
+        <DialogTitle>Thêm Nhân Viên</DialogTitle>
         <DialogContent>
           <TextField
             fullWidth
-            label="Full Name"
+            label="Họ Tên"
             margin="normal"
             value={staffFormData.fullname}
             type="text"
@@ -724,7 +724,7 @@ const AccountManagement = () => {
           />
           <TextField
             fullWidth
-            label="Password"
+            label="Mật Khẩu"
             margin="normal"
             type="password"
             value={staffFormData.password}
@@ -735,7 +735,7 @@ const AccountManagement = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenStaffDialog(false)} disabled={loading}>
-            Cancel
+            Huỷ         
           </Button>
           <Button
             onClick={handleCreateStaff}
@@ -743,8 +743,32 @@ const AccountManagement = () => {
             color="secondary"
             disabled={loading}
           >
-            {loading ? "Creating..." : "Create"}
+            {loading ? "Đang Tạo..." : "Tạo Mới"}
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Modal Notice for Alert/Confirm */}
+      <Dialog open={notice.open} onClose={() => setNotice(n => ({ ...n, open: false }))}>
+        <DialogTitle>{notice.title}</DialogTitle>
+        <DialogContent>
+          <Typography>{notice.content}</Typography>
+        </DialogContent>
+        <DialogActions>
+          {notice.type === "confirm" ? (
+            <>
+              <Button onClick={notice.onCancel} color="inherit">
+                Hủy
+              </Button>
+              <Button onClick={notice.onConfirm} color="primary" variant="contained">
+                Đồng ý
+              </Button>
+            </>
+          ) : (
+            <Button onClick={notice.onConfirm} color="primary" variant="contained">
+              OK
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
     </div>

@@ -137,7 +137,7 @@ const AppointmentPage = () => {
       setTimeout(() => {
         setShowModal(false);
         navigate('/myprofile');
-      }, 3000); 
+      }, 3000);
       return;
     }
     if (!selectedService || !selectedOptionId || !selectedDate || !selectedTimeSlot) {
@@ -735,12 +735,40 @@ const AppointmentPage = () => {
         </Row>
         {showBookingModal && (
           <div style={styles.modalBooking} onClick={() => setShowBookingModal(false)}>
-            <div style={styles.modalBookingContent} onClick={(e) => e.stopPropagation()}>
+            <div style={{
+              ...styles.modalBookingContent,
+              background: '#fff',
+              borderRadius: 16,
+              width: '100%',
+              maxWidth: window.innerWidth < 1000 ? '95vw' : '1080px',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+              minHeight: 420,
+              position: 'relative',
+              padding: 0,
+            }} onClick={(e) => e.stopPropagation()}>
+
               <div style={styles.modalHeader}>
                 <span style={styles.modalTitle}>Đặt Lịch Khám Bệnh</span>
               </div>
-              <div style={styles.modalBody}>
-                <div style={styles.modalLeft}>
+
+              <div style={{
+                ...styles.modalBody,
+                display: 'grid',
+                gridTemplateColumns: window.innerWidth < 800 ? '1fr' : '1fr 1.5fr',
+                gap: 0
+              }}>
+
+                {/* CỘT 1: Thông tin dịch vụ */}
+                <div style={{
+                  ...styles.modalLeft,
+                  borderRight: window.innerWidth < 800 ? 'none' : '1px solid #eee',
+                  borderBottom: window.innerWidth < 800 ? '1px solid #eee' : 'none',
+                  background: '#f8f9fa'
+                }}>
                   <h3 style={{ color: '#007bff', marginBottom: 18 }}>Thông Tin Dịch Vụ</h3>
                   <div style={{ width: '100%', marginBottom: 20, textAlign: 'center' }}>
                     <img
@@ -767,7 +795,7 @@ const AppointmentPage = () => {
                     <span style={{ fontWeight: 600 }}>Bác sĩ: </span>
                     <span>{serviceDetail?.doctorId?.userId?.fullname || '---'}</span>
                   </div>
-                  <div style={{ marginBottom: 7}}>
+                  <div style={{ marginBottom: 7 }}>
                     <span style={{ fontWeight: 600 }}>Phòng khám: </span>
                     <span>{serviceDetail?.clinicId?.clinic_name || '---'}</span>
                   </div>
@@ -783,46 +811,69 @@ const AppointmentPage = () => {
                         : selectedTimeSlot?.time || '---'}
                     </span>
                   </div>
-                  
                 </div>
-                <div style={styles.modalRight}>
-                  <div>
-                    <h3 style={{ color: '#007bff', marginBottom: 18 }}>Thông Tin Người Đặt</h3>
-                    <div style={{ marginBottom: 16 }}>
-                      <label style={{ fontWeight: 600, display: 'block', marginBottom: 6, color: '#34495e' }}>
-                        Họ và tên
-                      </label>
-                      <input type="text" value={user?.fullname || ''} readOnly style={styles.modalInput} />
+
+                {/* CỘT 2: Thông tin người đặt (GHÉP CỘT 2+3) */}
+                <div style={{
+                  ...styles.modalRight,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  minWidth: 400,
+                  background: '#fff'
+                }}>
+
+                  {/* Title căn giữa */}
+                  <div style={{ textAlign: 'center', marginBottom: 18 }}>
+                    <h3 style={{ color: '#007bff', fontSize: 18, margin: 0 }}>Thông Tin Người Đặt</h3>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                    {/* Grid 2 cột cho 4 trường đầu + địa chỉ */}
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: window.innerWidth < 600 ? '1fr' : '1fr 1fr',
+                      gap: 12,
+                      marginBottom: 16
+                    }}>
+                      <div>
+                        <label style={{ fontWeight: 600, display: 'block', marginBottom: 6, color: '#34495e' }}>
+                          Họ và tên
+                        </label>
+                        <input type="text" value={user?.fullname || ''} readOnly style={styles.modalInput} />
+                      </div>
+                      <div>
+                        <label style={{ fontWeight: 600, display: 'block', marginBottom: 6, color: '#34495e' }}>
+                          Ngày sinh
+                        </label>
+                        <input
+                          type="text"
+                          value={formatDateOfBirth(user?.dateOfBirth) || ''}
+                          readOnly
+                          style={styles.modalInput}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ fontWeight: 600, display: 'block', marginBottom: 6, color: '#34495e' }}>
+                          Email
+                        </label>
+                        <input type="email" value={user?.email || ''} readOnly style={styles.modalInput} />
+                      </div>
+                      <div>
+                        <label style={{ fontWeight: 600, display: 'block', marginBottom: 6, color: '#34495e' }}>
+                          Số điện thoại
+                        </label>
+                        <input type="text" value={user?.phone || ''} readOnly style={styles.modalInput} />
+                      </div>
+                      <div style={{ gridColumn: window.innerWidth < 600 ? '1' : '1 / -1' }}>
+                        <label style={{ fontWeight: 600, display: 'block', marginBottom: 6, color: '#34495e' }}>
+                          Địa chỉ
+                        </label>
+                        <input type="text" value={user?.address || ''} readOnly style={styles.modalInput} />
+                      </div>
                     </div>
-                    <div style={{ marginBottom: 16 }}>
-                      <label style={{ fontWeight: 600, display: 'block', marginBottom: 6, color: '#34495e' }}>
-                        Ngày sinh
-                      </label>
-                      <input
-                        type="text"
-                        value={formatDateOfBirth(user?.dateOfBirth) || ''}
-                        readOnly
-                        style={styles.modalInput}
-                      />
-                    </div>
-                    <div style={{ marginBottom: 16 }}>
-                      <label style={{ fontWeight: 600, display: 'block', marginBottom: 6, color: '#34495e' }}>
-                        Email
-                      </label>
-                      <input type="email" value={user?.email || ''} readOnly style={styles.modalInput} />
-                    </div>
-                    <div style={{ marginBottom: 16 }}>
-                      <label style={{ fontWeight: 600, display: 'block', marginBottom: 6, color: '#34495e' }}>
-                        Số điện thoại
-                      </label>
-                      <input type="text" value={user?.phone || ''} readOnly style={styles.modalInput} />
-                    </div>
-                    <div style={{ marginBottom: 14 }}>
-                      <label style={{ fontWeight: 600, display: 'block', marginBottom: 6, color: '#34495e' }}>
-                        Địa chỉ
-                      </label>
-                      <input type="text" value={user?.address || ''} readOnly style={styles.modalInput} />
-                    </div>
+
+                    {/* Ghi chú full width */}
                     <div style={{ marginBottom: 14 }}>
                       <label style={{ fontWeight: 600, display: 'block', marginBottom: 6, color: '#34495e' }}>
                         Ghi chú
@@ -834,11 +885,13 @@ const AppointmentPage = () => {
                         style={styles.modalTextarea}
                       />
                     </div>
+
+                    {/* Upload file full width */}
                     <div style={{ marginBottom: 16 }}>
                       <label style={{ fontWeight: 600, display: 'block', marginBottom: 8, color: '#34495e' }}>
                         Tải lên file bệnh án trước đó (nếu có)
                       </label>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                         <label
                           htmlFor="file-upload"
                           style={styles.fileUploadLabel}
@@ -873,14 +926,20 @@ const AppointmentPage = () => {
                         </div>
                       )}
                     </div>
-                    <div style={{ marginTop: 10, marginBottom: 16 }}>
+                  </div>
+
+                  {/* Tiền cọc + nút thanh toán căn giữa */}
+                  <div style={{ textAlign: 'center', marginTop: 16 }}>
+                    <div style={{ marginBottom: 16 }}>
                       <span style={{ color: '#e74c3c', fontWeight: 600 }}>
                         Số tiền bạn cần cọc trước 30% là: {depositAmount.toLocaleString()} ₫
                       </span>
                     </div>
-                  </div>
-                  <div style={{ textAlign: 'right', margin: '18px 32px' }}>
-                    <button style={styles.paymentButton} onClick={handlePayment}>
+                    <button style={{
+                      ...styles.paymentButton,
+                      minWidth: 200,
+                      margin: 0 // Bỏ margin để căn giữa
+                    }} onClick={handlePayment}>
                       Thanh Toán Ngay
                     </button>
                   </div>
@@ -889,6 +948,7 @@ const AppointmentPage = () => {
             </div>
           </div>
         )}
+
         {showModal && (
           <div style={styles.modal} onClick={() => setShowModal(false)}>
             <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
