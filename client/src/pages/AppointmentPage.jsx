@@ -783,11 +783,7 @@ const AppointmentPage = () => {
                         : selectedTimeSlot?.time || '---'}
                     </span>
                   </div>
-                  <div style={{ marginTop: 10, marginBottom: 16 }}>
-                    <span style={{ color: '#e74c3c', fontWeight: 600 }}>
-                      Vui lòng kiểm tra kỹ thông tin trước khi thanh toán. Nếu bạn hủy lịch sau khi thanh toán, hệ thống sẽ giữ lại 10% tiền cọc.
-                    </span>
-                  </div>
+                  
                 </div>
                 <div style={styles.modalRight}>
                   <div>

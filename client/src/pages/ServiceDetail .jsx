@@ -119,8 +119,16 @@ const ServiceDetail = () => {
       user?.address
     );
   };
+  const isLoggedIn = () => {
+    return !!localStorage.getItem('token');
+  };
 
   const handleBooking = () => {
+    if (!isLoggedIn()) {
+      alert('Vui lòng đăng nhập để đặt lịch!');
+      navigate('/login'); // or your login page path
+      return;
+    }
     if (!isUserProfileComplete()) {
       alert('Bạn cần cập nhật đầy đủ hồ sơ cá nhân trước khi đặt lịch!');
       navigate('/myprofile'); // hoặc đường dẫn trang cập nhật hồ sơ của bạn
@@ -456,9 +464,10 @@ const ServiceDetail = () => {
                   }}
                   onClick={() => {
                     setSelectedOptionId(
-                      options.find(opt => opt.image === img)?.optionName || ''
+                      options.find(opt => opt.image === img)?._id || ''
                     );
                   }}
+
                 >
                   <img
                     src={img || '/api/placeholder/80/80'}
@@ -531,37 +540,37 @@ const ServiceDetail = () => {
               <div>
                 <label style={styles.optionLabel}>Chọn giờ:</label>
                 <div style={styles.timeSlots}>
-  {!selectedDate ? (
-    <span style={{ color: '#888' }}>Vui lòng chọn ngày trước</span>
-  ) : slots.length > 0 ? (
-    slots.map((slot, index) => (
-      <div
-        key={slot._id || slot.time || index}
-        style={{
-          ...styles.timeSlot,
-          ...(selectedTimeSlot === slot ? styles.timeSlotSelected : {}),
-          // Nếu slot đã được đặt thì mờ đi
-          ...(slot.isAvailable === false ? styles.timeSlotDisabled : {})
-        }}
-        // Chỉ cho phép chọn nếu slot còn trống
-        onClick={() =>
-          slot.isAvailable !== false && setSelectedTimeSlot(slot)
-        }
-      >
-        {slot.time
-          ? slot.time
-          : `${slot.start_time || ''}${slot.end_time ? ' - ' + slot.end_time : ''}`}
-        {slot.isAvailable === false && (
-          <span style={{ color: '#e74c3c', fontSize: 12, marginLeft: 6 }}>
-            (Đã đặt)
-          </span>
-        )}
-      </div>
-    ))
-  ) : (
-    <span style={{ color: '#888' }}>Không có slot nào</span>
-  )}
-</div>
+                  {!selectedDate ? (
+                    <span style={{ color: '#888' }}>Vui lòng chọn ngày trước</span>
+                  ) : slots.length > 0 ? (
+                    slots.map((slot, index) => (
+                      <div
+                        key={slot._id || slot.time || index}
+                        style={{
+                          ...styles.timeSlot,
+                          ...(selectedTimeSlot === slot ? styles.timeSlotSelected : {}),
+                          // Nếu slot đã được đặt thì mờ đi
+                          ...(slot.isAvailable === false ? styles.timeSlotDisabled : {})
+                        }}
+                        // Chỉ cho phép chọn nếu slot còn trống
+                        onClick={() =>
+                          slot.isAvailable !== false && setSelectedTimeSlot(slot)
+                        }
+                      >
+                        {slot.time
+                          ? slot.time
+                          : `${slot.start_time || ''}${slot.end_time ? ' - ' + slot.end_time : ''}`}
+                        {slot.isAvailable === false && (
+                          <span style={{ color: '#e74c3c', fontSize: 12, marginLeft: 6 }}>
+                            (Đã đặt)
+                          </span>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <span style={{ color: '#888' }}>Không có slot nào</span>
+                  )}
+                </div>
 
 
               </div>
@@ -722,11 +731,7 @@ const ServiceDetail = () => {
                     </span>
 
                   </div>
-                  <div style={{ marginTop: 10, marginBottom: 16 }}>
-                    <span style={{ color: '#e74c3c', fontWeight: 600 }}>
-                      Vui lòng kiểm tra kỹ thông tin trước khi thanh toán. Nếu bạn hủy lịch sau khi thanh toán, hệ thống sẽ giữ lại 10% tiền cọc.
-                    </span>
-                  </div>
+
 
                 </div>
                 {/* Bên phải: Thông tin người đặt */}
