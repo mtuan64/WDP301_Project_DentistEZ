@@ -35,11 +35,13 @@ const createAcountDoctor = async (req, res) => {
       throw new Error('clinic_id không hợp lệ');
     }
     const existingUser = await User.findOne({ email });
-    if (existingUser) throw new Error('Email đã được đăng ký');
+    if (existingUser) {
+      return res.status(400).json({ error: 'Email đã được đăng ký' });
+    }
 
     const existingDoctorWithClinic = await Doctor.findOne({ clinic_id });
     if (existingDoctorWithClinic) {
-      throw new Error('Phòng này đã được sử dụng bởi bác sĩ khác');
+      return res.status(400).json({ error: 'Phòng này đã được sử dụng bởi bác sĩ khác' });
     }
 
     // 2. Tạo user
@@ -79,6 +81,7 @@ const createAcountDoctor = async (req, res) => {
 
     });
   } catch (error) {
+    console.error('Error creating doctor account:', error);
     await session.abortTransaction();
     session.endSession();
     res.status(500).json({
@@ -363,7 +366,7 @@ const createService = async (req, res) => {
       });
     }
 
-    
+
 
     // Kiểm tra từng option nhỏ
     for (const opt of options) {
