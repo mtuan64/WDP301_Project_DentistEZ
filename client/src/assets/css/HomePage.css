@@ -487,8 +487,7 @@ p {
     transition: background-color 0.3s ease, transform 0.3s ease;
     z-index: 10;
     cursor: pointer;
-    margin: 0 10px;
-    /* Giữ khoảng cách hợp lý */
+    margin: 0 -7px;
     font-size: 24px;
     /* Kích thước chữ cho dấu lớn nhỏ */
     color: var(--primary);

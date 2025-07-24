@@ -244,48 +244,9 @@ exports.getDashboardSummaries = async (req, res) => {
         },
       },
       {
-        $lookup: {
-          from: "appointments",
-          localField: "appointmentId",
-          foreignField: "_id",
-          as: "appointment",
-        },
-      },
-      { $unwind: "$appointment" },
-      {
-        $lookup: {
-          from: "serviceoptions",
-          localField: "appointment.serviceOptionId",
-          foreignField: "_id",
-          as: "serviceOption",
-        },
-      },
-      { $unwind: "$serviceOption" },
-      {
-        $addFields: {
-          calculatedRevenue: {
-            $switch: {
-              branches: [
-                {
-                  case: { $in: ["$appointment.status", ["confirmed", "completed"]] },
-                  then: "$amount",
-                },
-                {
-                  case: { $eq: ["$appointment.status", "fully_paid"] },
-                  then: {
-                    $add: ["$amount", { $multiply: ["$serviceOption.price", 0.7] }],
-                  },
-                },
-              ],
-              default: 0,
-            },
-          },
-        },
-      },
-      {
         $group: {
           _id: null,
-          total: { $sum: "$calculatedRevenue" },
+          total: { $sum: "$amount" },
         },
       },
     ]);
