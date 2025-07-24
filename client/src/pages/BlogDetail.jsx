@@ -264,17 +264,12 @@ const BlogDetail = () => {
                         {truncateText(service.serviceName, 20)}
                       </h4>
                     </Link>
-                    <p className="blogdetail-featured-post-excerpt">
-                      {truncateText(
-                        service.description || "Không có mô tả",
-                        50
-                      )}
-                    </p>
+                   
                     <Link
                       to={`/service-detail/${service._id}`}
                       className="blogdetail-read-more"
                     >
-                      Chi tiết
+                      Xem ngay
                     </Link>
                   </div>
                 </div>

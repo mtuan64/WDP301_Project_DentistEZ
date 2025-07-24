@@ -304,18 +304,12 @@ const BlogPage = () => {
                         <h4 className="blogpage-featured-post-title">
                           {truncateText(service.serviceName, 20)}
                         </h4>
-                      </Link>
-                      <p className="blogpage-featured-post-excerpt">
-                        {truncateText(
-                          service.description || "Không có mô tả",
-                          50
-                        )}
-                      </p>
+                      </Link>                      
                       <Link
                         to={`/service-detail/${service._id}`}
                         className="blogpage-read-more"
                       >
-                        Chi tiết
+                        Xem ngay
                       </Link>
                     </div>
                   </div>
