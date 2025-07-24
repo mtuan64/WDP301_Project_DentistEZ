@@ -157,7 +157,7 @@ const BlogListPage = () => {
     if (!isAdmin()) {
       setNotification({
         open: true,
-        message: "Yêu cầu quyền quản trị để tải lên hình ảnh.",
+        message: "Yêu cầu quyền quản trị để tải hình ảnh.",
         severity: "error",
       });
       return [];
@@ -190,12 +190,12 @@ const BlogListPage = () => {
           },
         }
       );
-      console.log("Phản hồi tải lên hình ảnh:", response.data);
+      console.log("Phản hồi tải hình ảnh:", response.data);
       return response.data.urls || [];
     } catch (error) {
       setNotification({
         open: true,
-        message: `Không thể tải lên hình ảnh: ${
+        message: `Không thể tải hình ảnh: ${
           error.response?.data?.message || error.message
         }`,
         severity: "error",
@@ -244,7 +244,7 @@ const BlogListPage = () => {
     if (!["active", "inactive"].includes(blog.status)) {
       setNotification({
         open: true,
-        message: "Trạng thái đã chọn không hợp lệ.",
+        message: "Trạng thái được chọn không hợp lệ.",
         severity: "error",
       });
       return false;
@@ -269,7 +269,7 @@ const BlogListPage = () => {
         setLoading(false);
         return;
       }
-      console.log("Thêm bài viết với dữ liệu:", blogToAdd);
+      console.log("Đang thêm bài viết với dữ liệu:", blogToAdd);
       const imageContentItems = newBlog.content.filter(
         (item) => item.type === "image"
       );
@@ -369,7 +369,7 @@ const BlogListPage = () => {
         setLoading(false);
         return;
       }
-      console.log("Cập nhật bài viết với dữ liệu:", updatedBlog);
+      console.log("Đang cập nhật bài viết với dữ liệu:", updatedBlog);
       const imageContentItems = updatedBlog.content.filter(
         (item) => item.type === "image"
       );
@@ -638,7 +638,7 @@ const BlogListPage = () => {
       const previewUrl = URL.createObjectURL(file);
       setImageFiles((prev) => ({
         ...prev,
-        fractionationImages: { ...prev.contentImages, [index]: file },
+        contentImages: { ...prev.contentImages, [index]: file },
       }));
       setImagePreviews((prev) => ({
         ...prev,
@@ -678,14 +678,14 @@ const BlogListPage = () => {
 
   return (
     <div className="blog-list-page">
-      <h1>Quản Lý Bài Viết</h1>
+      <h1>Quản lý bài viết</h1>
       <Box className="filter-search-container">
         <FormControl sx={{ minWidth: 200 }}>
-          <InputLabel id="filter-category-label">Lọc theo Danh Mục</InputLabel>
+          <InputLabel id="filter-category-label">Lọc theo danh mục</InputLabel>
           <Select
             labelId="filter-category-label"
             value={filterCategory}
-            label="Lọc theo Danh Mục"
+            label="Lọc theo danh mục"
             onChange={(e) => {
               setFilterCategory(e.target.value);
               setCurrentPage(1);
@@ -697,7 +697,7 @@ const BlogListPage = () => {
             }
           >
             <MenuItem value="">
-              <em>Tất Cả Danh Mục</em>
+              <em>Tất cả danh mục</em>
             </MenuItem>
             {categories
               .filter((category) => category.status === "active")
@@ -709,7 +709,7 @@ const BlogListPage = () => {
           </Select>
         </FormControl>
         <TextField
-          label="Tìm kiếm theo Tiêu Đề"
+          label="Tìm kiếm theo tiêu đề"
           variant="outlined"
           value={searchQuery}
           onChange={(e) => {
@@ -735,7 +735,7 @@ const BlogListPage = () => {
         }}
       >
         <Typography className="showing-info">
-          Hiển thị {blogs.length} / {totalBlogs} Bài Viết
+          Đang hiển thị {blogs.length} / {totalBlogs} bài viết
         </Typography>
         {isAdmin() && (
           <Box sx={{ display: "flex", gap: 2 }}>
@@ -746,7 +746,7 @@ const BlogListPage = () => {
               onClick={handleOpenAddBlog}
               disabled={loading}
             >
-              Thêm Bài Viết
+              Thêm bài viết
             </Button>
             <Button
               variant="contained"
@@ -754,7 +754,7 @@ const BlogListPage = () => {
               className="navigation-button"
               startIcon={<CategoryIcon />}
               onClick={() => {
-                console.log("Điều hướng đến /admin/categories");
+                console.log("Chuyển hướng đến /admin/categories");
                 navigate("/admin/categories");
               }}
               disabled={loading}
@@ -778,14 +778,14 @@ const BlogListPage = () => {
             <TableHead>
               <TableRow>
                 <TableCell className="stt"></TableCell>
-                <TableCell className="title">Tiêu Đề</TableCell>
-                <TableCell className="content">Nội Dung</TableCell>
-                <TableCell>Hình Ảnh</TableCell>
-                <TableCell className="category">Danh Mục</TableCell>
-                <TableCell className="slug">Slug</TableCell>
-                <TableCell className="status">Trạng Thái</TableCell>
+                <TableCell className="title">Tiêu đề</TableCell>
+                <TableCell className="content">Nội dung</TableCell>
+                <TableCell>Hình ảnh</TableCell>
+                <TableCell className="category">Danh mục</TableCell>
+                <TableCell className="slug">Đường dẫn</TableCell>
+                <TableCell className="status">Trạng thái</TableCell>
                 {isAdmin() && (
-                  <TableCell className="actions">Hành Động</TableCell>
+                  <TableCell className="actions">Hành động</TableCell>
                 )}
               </TableRow>
             </TableHead>
@@ -795,7 +795,7 @@ const BlogListPage = () => {
                 const categoryName =
                   blog.categoryId?.name ||
                   categories.find((cat) => cat._id === categoryIdValue)?.name ||
-                  "N/A";
+                  "Không có";
                 return (
                   <TableRow key={blog._id}>
                     <TableCell className="stt">
@@ -806,9 +806,11 @@ const BlogListPage = () => {
                       {blog.content
                         ?.map(
                           (item) =>
-                            `${item.type}: ${item.text || item.url || "N/A"}`
+                            `${item.type}: ${
+                              item.text || item.url || "Không có"
+                            }`
                         )
-                        .join(", ") || "N/A"}
+                        .join(", ") || "Không có"}
                     </TableCell>
                     <TableCell>
                       {blog.image && (
@@ -824,7 +826,9 @@ const BlogListPage = () => {
                     <TableCell
                       className={`status ${blog.status.toLowerCase()}`}
                     >
-                      {blog.status === "active" ? "Hoạt động" : "Không hoạt động"}
+                      {blog.status === "active"
+                        ? "Hoạt động"
+                        : "Không hoạt động"}
                     </TableCell>
                     {isAdmin() && (
                       <TableCell className="actions">
@@ -874,7 +878,7 @@ const BlogListPage = () => {
         }}
         sx={{ zIndex: 1300 }}
       >
-        <DialogTitle>Thêm Bài Viết Mới</DialogTitle>
+        <DialogTitle>Thêm bài viết mới</DialogTitle>
         <DialogContent
           sx={{
             maxHeight: "70vh",
@@ -891,7 +895,7 @@ const BlogListPage = () => {
             <TextField
               sx={{ mt: 2 }}
               autoFocus
-              label="Tiêu Đề"
+              label="Tiêu đề"
               variant="outlined"
               fullWidth
               value={newBlog.title}
@@ -902,7 +906,7 @@ const BlogListPage = () => {
             />
             <Box className="content-section">
               <Typography variant="subtitle1" gutterBottom>
-                Nội Dung
+                Nội dung
               </Typography>
               {newBlog.content.map((item, index) => (
                 <Box key={index} className="content-item">
@@ -916,14 +920,14 @@ const BlogListPage = () => {
                       }
                     >
                       <MenuItem value="paragraph">Đoạn văn</MenuItem>
-                      <MenuItem value="bullet">Dấu đầu dòng</MenuItem>
+                      <MenuItem value="bullet">Danh sách</MenuItem>
                       <MenuItem value="image">Hình ảnh</MenuItem>
                     </Select>
                   </FormControl>
                   {item.type !== "image" ? (
                     <>
                       <TextField
-                        label="Văn Bản"
+                        label="Nội dung văn bản"
                         variant="outlined"
                         fullWidth
                         multiline
@@ -948,7 +952,7 @@ const BlogListPage = () => {
                               }
                             />
                           }
-                          label="In Đậm"
+                          label="Đậm"
                         />
                         <FormControlLabel
                           control={
@@ -963,13 +967,18 @@ const BlogListPage = () => {
                               }
                             />
                           }
-                          label="In Nghiêng"
+                          label="Nghiêng"
                         />
-                        <FormControl className="font-size-select">
-                          <InputLabel>Kích Thước Chữ</InputLabel>
+                        <FormControl
+                          className="font-size-select"
+                          style={{ top: "5px" }}
+                        >
+                          <InputLabel style={{ top: "5px" }}>
+                            Kích thước chữ
+                          </InputLabel>
                           <Select
                             value={item.fontSize || "medium"}
-                            label="Kích Thước Chữ"
+                            label="Kích thước chữ"
                             onChange={(e) =>
                               handleContentChange(
                                 index,
@@ -992,7 +1001,7 @@ const BlogListPage = () => {
                         component="label"
                         className="upload-button"
                       >
-                        Tải Lên Hình Ảnh
+                        Tải hình ảnh
                         <input
                           type="file"
                           hidden
@@ -1031,15 +1040,15 @@ const BlogListPage = () => {
                   onClick={handleAddContentItem}
                   className="add-content-button"
                 >
-                  Thêm Nội Dung
+                  Thêm nội dung
                 </Button>
               )}
             </Box>
             <FormControl fullWidth className="form-field">
-              <InputLabel>Danh Mục</InputLabel>
+              <InputLabel>Danh mục</InputLabel>
               <Select
                 value={newBlog.categoryId}
-                label="Danh Mục"
+                label="Danh mục"
                 onChange={(e) =>
                   setNewBlog({ ...newBlog, categoryId: e.target.value })
                 }
@@ -1057,12 +1066,15 @@ const BlogListPage = () => {
               </Select>
             </FormControl>
             <FormControl fullWidth className="form-field">
-              <InputLabel>Trạng Thái</InputLabel>
+              <InputLabel>Trạng thái</InputLabel>
               <Select
                 value={newBlog.status}
-                label="Trạng Thái"
+                label="Trạng thái"
                 onChange={(e) => {
-                  console.log("Trạng thái bài viết mới thay đổi thành:", e.target.value);
+                  console.log(
+                    "Trạng thái bài viết mới thay đổi thành:",
+                    e.target.value
+                  );
                   setNewBlog({ ...newBlog, status: e.target.value });
                 }}
               >
@@ -1072,14 +1084,14 @@ const BlogListPage = () => {
             </FormControl>
             <Box className="image-upload">
               <Typography variant="subtitle1" gutterBottom>
-                Hình Ảnh Chính
+                Hình ảnh chính
               </Typography>
               <Button
                 variant="outlined"
                 component="label"
                 className="upload-button"
               >
-                Tải Lên Hình Ảnh Chính
+                Tải hình ảnh chính
                 <input
                   type="file"
                   hidden
@@ -1090,7 +1102,7 @@ const BlogListPage = () => {
               {(newBlog.image || imagePreviews.mainImage) && (
                 <img
                   src={imagePreviews.mainImage || newBlog.image}
-                  alt="Hình Ảnh Chính"
+                  alt="Hình ảnh chính"
                   className="preview-image"
                 />
               )}
@@ -1107,7 +1119,7 @@ const BlogListPage = () => {
             onClick={handleAddBlog}
             disabled={loading}
           >
-            Thêm Bài Viết
+            Thêm bài viết
           </Button>
         </DialogActions>
       </Dialog>
@@ -1134,7 +1146,7 @@ const BlogListPage = () => {
             alignItems: "center",
           }}
         >
-          Chỉnh Sửa Bài Viết
+          Chỉnh sửa bài viết
         </DialogTitle>
         <DialogContent
           sx={{
@@ -1153,7 +1165,7 @@ const BlogListPage = () => {
             <TextField
               sx={{ mt: 2 }}
               autoFocus
-              label="Tiêu Đề"
+              label="Tiêu đề"
               variant="outlined"
               fullWidth
               value={editingBlog?.title || ""}
@@ -1164,7 +1176,7 @@ const BlogListPage = () => {
             />
             <Box className="content-section">
               <Typography variant="subtitle1" gutterBottom>
-                Nội Dung
+                Nội dung
               </Typography>
               {editingBlog?.content.map((item, index) => (
                 <Box key={index} className="content-item">
@@ -1178,14 +1190,14 @@ const BlogListPage = () => {
                       }
                     >
                       <MenuItem value="paragraph">Đoạn văn</MenuItem>
-                      <MenuItem value="bullet">Dấu đầu dòng</MenuItem>
+                      <MenuItem value="bullet">Danh sách</MenuItem>
                       <MenuItem value="image">Hình ảnh</MenuItem>
                     </Select>
                   </FormControl>
                   {item.type !== "image" ? (
                     <>
                       <TextField
-                        label="Văn Bản"
+                        label="Nội dung văn bản"
                         variant="outlined"
                         fullWidth
                         multiline
@@ -1210,7 +1222,7 @@ const BlogListPage = () => {
                               }
                             />
                           }
-                          label="In Đậm"
+                          label="Đậm"
                         />
                         <FormControlLabel
                           control={
@@ -1225,13 +1237,18 @@ const BlogListPage = () => {
                               }
                             />
                           }
-                          label="In Nghiêng"
+                          label="Nghiêng"
                         />
-                        <FormControl className="font-size-select">
-                          <InputLabel>Kích Thước Chữ</InputLabel>
+                        <FormControl
+                          className="font-size-select"
+                          style={{ top: "5px" }}
+                        >
+                          <InputLabel style={{ top: "5px" }}>
+                            Kích thước chữ
+                          </InputLabel>
                           <Select
                             value={item.fontSize || "medium"}
-                            label="Kích Thước Chữ"
+                            label="Kích thước chữ"
                             onChange={(e) =>
                               handleContentChange(
                                 index,
@@ -1254,7 +1271,7 @@ const BlogListPage = () => {
                         component="label"
                         className="upload-button"
                       >
-                        Tải Lên Hình Ảnh
+                        Tải hình ảnh
                         <input
                           type="file"
                           hidden
@@ -1293,15 +1310,15 @@ const BlogListPage = () => {
                   onClick={handleAddContentItem}
                   className="add-content-button"
                 >
-                  Thêm Nội Dung
+                  Thêm nội dung
                 </Button>
               )}
             </Box>
             <FormControl fullWidth className="form-field">
-              <InputLabel>Danh Mục</InputLabel>
+              <InputLabel>Danh mục</InputLabel>
               <Select
                 value={editingBlog?.categoryId || ""}
-                label="Danh Mục"
+                label="Danh mục"
                 onChange={(e) =>
                   setEditingBlog({ ...editingBlog, categoryId: e.target.value })
                 }
@@ -1319,10 +1336,10 @@ const BlogListPage = () => {
               </Select>
             </FormControl>
             <FormControl fullWidth className="form-field">
-              <InputLabel>Trạng Thái</InputLabel>
+              <InputLabel>Trạng thái</InputLabel>
               <Select
                 value={editingBlog?.status || "active"}
-                label="Trạng Thái"
+                label="Trạng thái"
                 onChange={(e) => {
                   console.log(
                     "Trạng thái bài viết đang chỉnh sửa thay đổi thành:",
@@ -1337,14 +1354,14 @@ const BlogListPage = () => {
             </FormControl>
             <Box className="image-upload">
               <Typography variant="subtitle1" gutterBottom>
-                Hình Ảnh Chính
+                Hình ảnh chính
               </Typography>
               <Button
                 variant="outlined"
                 component="label"
                 className="upload-button"
               >
-                Tải Lên Hình Ảnh Chính
+                Tải hình ảnh chính
                 <input
                   type="file"
                   hidden
@@ -1355,7 +1372,7 @@ const BlogListPage = () => {
               {(editingBlog?.image || imagePreviews.mainImage) && (
                 <img
                   src={imagePreviews.mainImage || editingBlog.image}
-                  alt="Hình Ảnh Chính"
+                  alt="Hình ảnh chính"
                   className="preview-image"
                 />
               )}
@@ -1372,7 +1389,7 @@ const BlogListPage = () => {
             onClick={handleUpdateBlog}
             disabled={loading}
           >
-            Cập Nhật
+            Cập nhật bài viết
           </Button>
         </DialogActions>
       </Dialog>
@@ -1383,7 +1400,7 @@ const BlogListPage = () => {
         fullWidth
         sx={{ zIndex: 1300 }}
       >
-        <DialogTitle>Xóa Bài Viết</DialogTitle>
+        <DialogTitle>Xóa bài viết</DialogTitle>
         <DialogContent>
           <DialogContentText>
             {deleteBlogType === "soft"

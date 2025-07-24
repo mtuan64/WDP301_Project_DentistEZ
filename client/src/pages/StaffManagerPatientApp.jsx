@@ -26,7 +26,7 @@ function StaffManagerPatientApp() {
   const [paymentAppointmentId, setPaymentAppointmentId] = useState(null);
   const [refresh, setRefresh] = useState(false);
   const [reExamModal, setReExamModal] = useState({ open: false, rootAppointment: null });
-  const [editModal, setEditModal] = useState({ open: false, appointment: null }); // Thêm state cho EditAppointment
+  const [editModal, setEditModal] = useState({ open: false, appointment: null });
   const reloadAppointments = () => setRefresh((r) => !r);
 
   // Debounce search
@@ -70,7 +70,7 @@ function StaffManagerPatientApp() {
     setEditModal({ open: true, appointment: apt });
   };
 
-  // Hàm kiểm tra nếu thời gian hiện tại cách giờ khám dưới 8 tiếng
+  // Hàm kiểm tra nếu thời gian hiện tại cách giờ khám dưới 1 tiếng
   const isEditDisabled = (apt) => {
     if (!apt.timeslot?.date || !apt.timeslot?.start_time) return true;
     const appointmentDateTime = moment(
@@ -79,7 +79,7 @@ function StaffManagerPatientApp() {
     );
     const currentDateTime = moment();
     const hoursDifference = appointmentDateTime.diff(currentDateTime, "hours");
-    return hoursDifference < 8;
+    return hoursDifference < 1;
   };
 
   // Thanh search giao diện đẹp như mẫu
@@ -275,6 +275,22 @@ function StaffManagerPatientApp() {
                       )}
                     </td>
                     <td style={tdStyle}>
+                      {status === "confirmed" && (
+                        <button
+                          style={{
+                            ...actionBtnStyle,
+                            background: "#ff9800",
+                            color: "#fff",
+                            marginLeft: 8,
+                            opacity: isEditDisabled(apt) ? 0.5 : 1,
+                            cursor: isEditDisabled(apt) ? "not-allowed" : "pointer",
+                          }}
+                          onClick={() => !isEditDisabled(apt) && handleEditAppointment(apt)}
+                          disabled={isEditDisabled(apt)}
+                        >
+                          Đổi lịch
+                        </button>
+                      )}
                       {status === "completed" && (
                         <>
                           <button style={actionBtnStyle} onClick={() => handleReExam(apt)}>
@@ -294,28 +310,42 @@ function StaffManagerPatientApp() {
                           >
                             Thanh toán
                           </button>
+                          <button
+                            style={{
+                              ...actionBtnStyle,
+                              background: "#ff9800",
+                              color: "#fff",
+                              marginLeft: 8,
+                              opacity: isEditDisabled(apt) ? 0.5 : 1,
+                              cursor: isEditDisabled(apt) ? "not-allowed" : "pointer",
+                            }}
+                            onClick={() => !isEditDisabled(apt) && handleEditAppointment(apt)}
+                            disabled={isEditDisabled(apt)}
+                          >
+                            Đổi lịch
+                          </button>
                         </>
                       )}
                       {status === "fully_paid" && (
-                        <button style={actionBtnStyle} onClick={() => handleReExam(apt)}>
-                          Tái khám
-                        </button>
-                      )}
-                      {apt.reExaminationOf && (
-                        <button
-                          style={{
-                            ...actionBtnStyle,
-                            background: "#ff9800",
-                            color: "#fff",
-                            marginLeft: 8,
-                            opacity: isEditDisabled(apt) ? 0.5 : 1,
-                            cursor: isEditDisabled(apt) ? "not-allowed" : "pointer",
-                          }}
-                          onClick={() => !isEditDisabled(apt) && handleEditAppointment(apt)}
-                          disabled={isEditDisabled(apt)}
-                        >
-                          Đổi lịch
-                        </button>
+                        <>
+                          <button style={actionBtnStyle} onClick={() => handleReExam(apt)}>
+                            Tái khám
+                          </button>
+                          <button
+                            style={{
+                              ...actionBtnStyle,
+                              background: "#ff9800",
+                              color: "#fff",
+                              marginLeft: 8,
+                              opacity: isEditDisabled(apt) ? 0.5 : 1,
+                              cursor: isEditDisabled(apt) ? "not-allowed" : "pointer",
+                            }}
+                            onClick={() => !isEditDisabled(apt) && handleEditAppointment(apt)}
+                            disabled={isEditDisabled(apt)}
+                          >
+                            Đổi lịch
+                          </button>
+                        </>
                       )}
                     </td>
                   </tr>
@@ -369,37 +399,38 @@ function StaffManagerPatientApp() {
         )}
 
         {totalPages > 1 && (
-          <div style={{ display: "flex", justifyContent: "center", margin: "24px 0" }}>
-            <button
-              onClick={() => setPage(page - 1)}
-              disabled={page === 1}
-              style={paginationBtnStyle}
-            >
-              &lt;
-            </button>
-            {Array.from({ length: totalPages }, (_, idx) => (
-              <button
-                key={idx + 1}
-                onClick={() => setPage(idx + 1)}
-                style={{
-                  ...paginationBtnStyle,
-                  fontWeight: page === idx + 1 ? "bold" : "normal",
-                  color: page === idx + 1 ? "#127afc" : "#333",
-                  borderBottom: page === idx + 1 ? "2px solid #127afc" : "none",
-                }}
-              >
-                {idx + 1}
-              </button>
-            ))}
-            <button
-              onClick={() => setPage(page + 1)}
-              disabled={page === totalPages}
-              style={paginationBtnStyle}
-            >
-              &gt;
-            </button>
-          </div>
-        )}
+  <div style={{ display: "flex", justifyContent: "center", margin: "24px 0" }}>
+    <button
+      onClick={() => setPage(page - 1)}
+      disabled={page === 1}
+      style={paginationBtnStyle}
+    >
+      {"<"}
+    </button>
+    {Array.from({ length: totalPages }, (_, idx) => (
+      <button
+        key={idx + 1}
+        onClick={() => setPage(idx + 1)}
+        style={{
+          ...paginationBtnStyle,
+          fontWeight: page === idx + 1 ? "bold" : "normal",
+          color: page === idx + 1 ? "#127afc" : "#333",
+          borderBottom: page === idx + 1 ? "2px solid #127afc" : "none",
+        }}
+      >
+        {idx + 1}
+      </button>
+    ))}
+    <button
+      onClick={() => setPage(page + 1)}
+      disabled={page === totalPages}
+      style={paginationBtnStyle}
+    >
+      {">"}
+    </button>
+  </div>
+)}
+
       </div>
     </div>
   );

@@ -8,6 +8,7 @@ const BlogPage = () => {
   const [blogs, setBlogs] = useState([]);
   const [topViewedBlogs, setTopViewedBlogs] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [latestServices, setLatestServices] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -22,14 +23,17 @@ const BlogPage = () => {
         const token = localStorage.getItem("token");
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-        const [blogsResponse, categoriesResponse, topViewedResponse] =
-          await Promise.all([
-            axios.get("http://localhost:9999/api/blogs", { headers }),
-            axios.get("http://localhost:9999/api/categories", { headers }),
-            axios.get("http://localhost:9999/api/blogs/top-viewed", {
-              headers,
-            }),
-          ]);
+        const [
+          blogsResponse,
+          categoriesResponse,
+          topViewedResponse,
+          servicesResponse,
+        ] = await Promise.all([
+          axios.get("http://localhost:9999/api/blogs", { headers }),
+          axios.get("http://localhost:9999/api/categories", { headers }),
+          axios.get("http://localhost:9999/api/blogs/top-viewed", { headers }),
+          axios.get("http://localhost:9999/api/view/newservice", { headers }),
+        ]);
 
         const transformedBlogs = blogsResponse.data.map((blog) => ({
           ...blog,
@@ -48,12 +52,13 @@ const BlogPage = () => {
         setBlogs(sortedBlogs);
         setCategories(categoriesResponse.data);
         setTopViewedBlogs(topViewedResponse.data);
+        setLatestServices(servicesResponse.data.data.slice(0, 5));
         setLoading(false);
       } catch (error) {
         console.error("Error fetching data:", error);
         setLoading(false);
         alert(
-          "Failed to load blogs, categories, or top viewed posts. Please try again later."
+          "Failed to load blogs, categories, top viewed posts, or services. Please try again later."
         );
       }
     };
@@ -228,43 +233,94 @@ const BlogPage = () => {
       <div className="blogpage-page">
         <div className="blogpage-layout">
           <aside className="blogpage-sidebar">
-            <h3 className="blogpage-sidebar-title">
-              Tin tức được xem nhiều nhất
-            </h3>
-            <div className="blogpage-featured-posts">
-              {topViewedBlogs.slice(0, 5).map((blog) => (
-                <div key={blog._id} className="blogpage-featured-post-card">
-                  <Link to={`/blog/${blog.slug}`}>
-                    <img
-                      src={blog.image || "https://via.placeholder.com/100x100"}
-                      alt={blog.title}
-                      className="blogpage-featured-post-image"
-                      onError={(e) =>
-                        (e.target.src = "https://via.placeholder.com/100x100")
-                      }
-                    />
-                  </Link>
-                  <div className="blogpage-featured-post-content">
-                    <Link
-                      to={`/blog/${blog.slug}`}
-                      className="blogpage-featured-post-title-link"
-                    >
-                      <h4 className="blogpage-featured-post-title">
-                        {truncateText(blog.title, 20)}
-                      </h4>
+            <div className="blogpage-sidebar-frame">
+              <h3 className="blogpage-sidebar-title">
+                Tin tức được xem nhiều nhất
+              </h3>
+              <div className="blogpage-featured-posts">
+                {topViewedBlogs.slice(0, 5).map((blog) => (
+                  <div key={blog._id} className="blogpage-featured-post-card">
+                    <Link to={`/blog/${blog.slug}`}>
+                      <img
+                        src={
+                          blog.image || "https://via.placeholder.com/100x100"
+                        }
+                        alt={blog.title}
+                        className="blogpage-featured-post-image"
+                        onError={(e) =>
+                          (e.target.src = "https://via.placeholder.com/100x100")
+                        }
+                      />
                     </Link>
-                    <p className="blogpage-featured-post-excerpt">
-                      {getContentSummary(blog.content)}
-                    </p>
-                    <Link
-                      to={`/blog/${blog.slug}`}
-                      className="blogpage-read-more"
-                    >
-                      Chi tiết
-                    </Link>
+                    <div className="blogpage-featured-post-content">
+                      <Link
+                        to={`/blog/${blog.slug}`}
+                        className="blogpage-featured-post-title-link"
+                      >
+                        <h4 className="blogpage-featured-post-title">
+                          {truncateText(blog.title, 20)}
+                        </h4>
+                      </Link>
+                      <p className="blogpage-featured-post-excerpt">
+                        {getContentSummary(blog.content)}
+                      </p>
+                      <Link
+                        to={`/blog/${blog.slug}`}
+                        className="blogpage-read-more"
+                      >
+                        Chi tiết
+                      </Link>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
+            </div>
+
+            <div className="blogpage-sidebar-frame">
+              <h3 className="blogpage-sidebar-title">Dịch vụ mới nhất</h3>
+              <div className="blogpage-featured-posts">
+                {latestServices.map((service) => (
+                  <div
+                    key={service._id}
+                    className="blogpage-featured-post-card"
+                  >
+                    <Link to={`/service-detail/${service._id}`}>
+                      <img
+                        src={
+                          service.image || "https://via.placeholder.com/100x100"
+                        }
+                        alt={service.serviceName}
+                        className="blogpage-featured-post-image"
+                        onError={(e) =>
+                          (e.target.src = "https://via.placeholder.com/100x100")
+                        }
+                      />
+                    </Link>
+                    <div className="blogpage-featured-post-content">
+                      <Link
+                        to={`/service-detail/${service._id}`}
+                        className="blogpage-featured-post-title-link"
+                      >
+                        <h4 className="blogpage-featured-post-title">
+                          {truncateText(service.serviceName, 20)}
+                        </h4>
+                      </Link>
+                      <p className="blogpage-featured-post-excerpt">
+                        {truncateText(
+                          service.description || "Không có mô tả",
+                          50
+                        )}
+                      </p>
+                      <Link
+                        to={`/service-detail/${service._id}`}
+                        className="blogpage-read-more"
+                      >
+                        Chi tiết
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </aside>
 

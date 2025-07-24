@@ -2,26 +2,40 @@
   padding: 20px;
   max-width: 1200px;
   margin: 0 auto;
-  font-family: Arial, sans-serif;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    sans-serif;
+  background-color: #f5f7fa;
+  color: #1f2937;
 }
 
 .blogdetail-wrapper {
   display: flex;
-  gap: 20px;
+  gap: 30px;
+  margin-top: 20px;
 }
 
 .blogdetail-main {
-  flex: 3; 
+  flex: 3;
   min-width: 0;
 }
 
 .blogdetail-sidebar {
-  flex: 1; 
+  width: 305px;
+  height: fit-content;
+  flex-shrink: 0;
   background: #ffffff;
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   min-width: 350px;
+}
+
+.blogdetail-sidebar-frame {
+  background: #ffffff;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
 }
 
 .blogdetail-sidebar-title {
@@ -40,9 +54,10 @@
 .blogdetail-featured-post-card {
   display: flex;
   align-items: center;
-  gap: 10px;
-  background: #e3dfe35e;
-  height: 100px; 
+  gap: 12px;
+  background: #eeecec;
+  border-radius: 8px;
+  height: 100px;
   overflow: hidden;
 }
 
@@ -134,9 +149,9 @@
 
 .blogdetail-meta {
   display: flex;
-  justify-content: flex-end; /* Đặt bên phải */
+  justify-content: flex-end;
   align-items: center;
-  gap: 15px; /* Khoảng cách giữa date và views */
+  gap: 15px;
 }
 
 .blogdetail-date,
@@ -149,7 +164,7 @@
 
 .blogdetail-date svg,
 .blogdetail-views svg {
-  margin-right: 5px; /* Khoảng cách giữa icon và text */
+  margin-right: 5px;
 }
 
 .blogdetail-image img {
@@ -169,10 +184,17 @@
 .content-paragraph,
 .content-bullet {
   margin-bottom: 15px;
+  white-space: pre-wrap;
+}
+
+.content-bullet {
+  display: flex;
+  align-items: flex-start;
 }
 
 .bullet-point {
   margin-right: 10px;
+  flex-shrink: 0;
 }
 
 .content-image {

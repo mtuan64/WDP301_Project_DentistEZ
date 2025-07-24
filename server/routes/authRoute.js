@@ -47,7 +47,7 @@ const { getTimeslotById, getAvailableTimeslots, createTimeslot, updateTimeslot ,
 
 const multer = require("multer");
 const path = require("path");
-const { createAcountDoctor, getAllClinic, createAcountStaff, getAllPatient, getAllStaff, getAllDoctor, changeStatus, createService, getAllService, uploadImageCloudinary, deleteService, editService, getAllServicebyManager } = require("../controllers/adminController");
+const { createAcountDoctor, getAllClinic, createAcountStaff, getAllPatient, getAllStaff, getAllDoctor, changeStatus, createService, getAllService, uploadImageCloudinary, deleteService, editService, getAllServicebyManager,getAllServiceNew } = require("../controllers/adminController");
 const { getDefaultResultOrder } = require("dns");
 const chatbotController = require("../controllers/chat/chatbotController");
 const chatboxController = require("../controllers/chat/chatboxController");
@@ -106,7 +106,7 @@ router.post("/verify-email-otp", verifyEmailOTP);
 router.get("/view/service", getAllService);
 router.get("/view-detail/service/:id", getServiceDetail);
 router.post("/changepass", authMiddleware, changePassword);
-
+router.get("/view/newservice", getAllServiceNew);
 // update profile
 router.get("/user/profile", authMiddleware, getUserProfile);
 router.put("/user/profile", authMiddleware, updateUserProfile);
