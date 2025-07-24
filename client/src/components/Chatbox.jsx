@@ -16,6 +16,8 @@ const Chatbox = () => {
   const [chatNotifications, setChatNotifications] = useState({});
   const [patients, setPatients] = useState([]);
   const messagesEndRef = useRef(null);
+  const [autoScroll, setAutoScroll] = useState(true);
+
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
@@ -220,8 +222,11 @@ const Chatbox = () => {
   }, [user, selectedChat, patients]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    if (autoScroll) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, autoScroll]);
+
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || !selectedChat || !user) {
@@ -450,7 +455,18 @@ const Chatbox = () => {
                 <div className="chat-header">
                   <span className="chat-title">{selectedChat.name}</span>
                 </div>
-                <div className="messages-area">
+                <div
+                  className="messages-area"
+                  onScroll={(e) => {
+                    const element = e.target;
+                    const nearBottom =
+                      element.scrollHeight -
+                        element.scrollTop -
+                        element.clientHeight <
+                      50;
+                    setAutoScroll(nearBottom);
+                  }}
+                >
                   {groupedMessages.map((group, groupIndex) => (
                     <div key={groupIndex} className="message-group">
                       {group.map((msg, index) => (
