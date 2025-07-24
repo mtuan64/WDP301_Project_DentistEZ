@@ -9,6 +9,7 @@ const BlogDetail = () => {
   const { slug } = useParams();
   const [blog, setBlog] = useState(null);
   const [topViewedBlogs, setTopViewedBlogs] = useState([]);
+  const [latestServices, setLatestServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -66,6 +67,15 @@ const BlogDetail = () => {
           { headers }
         );
         setTopViewedBlogs(topViewedResponse.data);
+
+        // Fetch latest services
+        const servicesResponse = await axios.get(
+          "http://localhost:9999/api/view/newservice",
+          { headers }
+        );
+        // Limit to 5 latest services
+        setLatestServices(servicesResponse.data.data.slice(0, 5));
+
         setLoading(false);
       } catch (err) {
         console.error("Error fetching data:", err);
@@ -73,7 +83,7 @@ const BlogDetail = () => {
         console.log("Status:", err.response?.status);
         setError(
           err.response?.data?.message ||
-            "Không thể tải bài viết hoặc bài viết được xem nhiều. Vui lòng kiểm tra slug hoặc điểm cuối API."
+            "Không thể tải bài viết, dịch vụ hoặc bài viết được xem nhiều. Vui lòng kiểm tra slug hoặc điểm cuối API."
         );
         setLoading(false);
       }
@@ -179,45 +189,97 @@ const BlogDetail = () => {
           </div>
         </div>
         <div className="blogdetail-sidebar">
-          <h3 className="blogdetail-sidebar-title">
-            Bài viết được xem nhiều nhất
-          </h3>
-          <div className="blogdetail-featured-posts">
-            {topViewedBlogs.map((topBlog, index) => (
-              <div key={index} className="blogdetail-featured-post-card">
-                <Link to={`/blog/${topBlog.slug}`}>
-                  <img
-                    src={topBlog.image || "https://via.placeholder.com/100x100"}
-                    alt={topBlog.title}
-                    className="blogdetail-featured-post-image"
-                    onError={(e) =>
-                      (e.target.src = "https://via.placeholder.com/100x100")
-                    }
-                  />
-                </Link>
-                <div className="blogdetail-featured-post-content">
-                  <Link
-                    to={`/blog/${topBlog.slug}`}
-                    className="blogdetail-featured-post-title-link"
-                  >
-                    <h4 className="blogdetail-featured-post-title">
-                      {topBlog.title.length > 20
-                        ? topBlog.title.substring(0, 20) + "..."
-                        : topBlog.title}
-                    </h4>
+          <div className="blogdetail-sidebar-frame">
+            <h3 className="blogdetail-sidebar-title">
+              Tin tức được xem nhiều nhất
+            </h3>
+            <div className="blogdetail-featured-posts">
+              {topViewedBlogs.map((topBlog) => (
+                <div
+                  key={topBlog._id}
+                  className="blogdetail-featured-post-card"
+                >
+                  <Link to={`/blog/${topBlog.slug}`}>
+                    <img
+                      src={
+                        topBlog.image || "https://via.placeholder.com/100x100"
+                      }
+                      alt={topBlog.title}
+                      className="blogdetail-featured-post-image"
+                      onError={(e) =>
+                        (e.target.src = "https://via.placeholder.com/100x100")
+                      }
+                    />
                   </Link>
-                  <p className="blogdetail-featured-post-excerpt">
-                    {getContentSummary(topBlog.content)}
-                  </p>
-                  <Link
-                    to={`/blog/${topBlog.slug}`}
-                    className="blogdetail-read-more"
-                  >
-                    Chi tiết
-                  </Link>
+                  <div className="blogdetail-featured-post-content">
+                    <Link
+                      to={`/blog/${topBlog.slug}`}
+                      className="blogdetail-featured-post-title-link"
+                    >
+                      <h4 className="blogdetail-featured-post-title">
+                        {truncateText(topBlog.title, 20)}
+                      </h4>
+                    </Link>
+                    <p className="blogdetail-featured-post-excerpt">
+                      {getContentSummary(topBlog.content)}
+                    </p>
+                    <Link
+                      to={`/blog/${topBlog.slug}`}
+                      className="blogdetail-read-more"
+                    >
+                      Chi tiết
+                    </Link>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+          </div>
+
+          <div className="blogdetail-sidebar-frame">
+            <h3 className="blogdetail-sidebar-title">Dịch vụ mới nhất</h3>
+            <div className="blogdetail-featured-posts">
+              {latestServices.map((service) => (
+                <div
+                  key={service._id}
+                  className="blogdetail-featured-post-card"
+                >
+                  <Link to={`/service-detail/${service._id}`}>
+                    <img
+                      src={
+                        service.image || "https://via.placeholder.com/100x100"
+                      }
+                      alt={service.serviceName}
+                      className="blogdetail-featured-post-image"
+                      onError={(e) =>
+                        (e.target.src = "https://via.placeholder.com/100x100")
+                      }
+                    />
+                  </Link>
+                  <div className="blogdetail-featured-post-content">
+                    <Link
+                      to={`/service-detail/${service._id}`}
+                      className="blogdetail-featured-post-title-link"
+                    >
+                      <h4 className="blogdetail-featured-post-title">
+                        {truncateText(service.serviceName, 20)}
+                      </h4>
+                    </Link>
+                    <p className="blogdetail-featured-post-excerpt">
+                      {truncateText(
+                        service.description || "Không có mô tả",
+                        50
+                      )}
+                    </p>
+                    <Link
+                      to={`/service-detail/${service._id}`}
+                      className="blogdetail-read-more"
+                    >
+                      Chi tiết
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

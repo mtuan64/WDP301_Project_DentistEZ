@@ -296,6 +296,45 @@ const getAllService = async (req, res) => {
     });
   }
 };
+
+const getAllServiceNew = async (req, res) => {
+  try {
+    const services = await Service.find()
+      .sort({ updatedAt: -1 }) 
+      .populate({
+        path: "doctorId",
+        populate: {
+          path: "userId",
+          select: "fullname email",
+        },
+      })
+      .populate("clinicId", "clinic_name");
+
+    // Chỉ lấy các dịch vụ của bác sĩ đang hoạt động
+    const activeServices = services.filter(
+      (sv) => sv.doctorId && sv.doctorId.Status === "active"
+    );
+
+    // Gắn thêm danh sách options (nếu cần)
+    const servicesWithOptions = await Promise.all(
+      activeServices.map(async (sv) => {
+        const options = await ServiceOption.find({ serviceId: sv._id });
+        return { ...sv.toObject(), options };
+      })
+    );
+
+    res.status(200).json({
+      success: true,
+      data: servicesWithOptions,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+};
+
 const getAllServicebyManager = async (req, res) => {
   try {
     const services = await Service.find()
@@ -560,7 +599,5 @@ module.exports = {
   deleteService,
   editService,
   getAllServicebyManager,
-
-
-
-}
+  getAllServiceNew,
+};

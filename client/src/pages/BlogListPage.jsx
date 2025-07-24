@@ -969,8 +969,13 @@ const BlogListPage = () => {
                           }
                           label="Nghiêng"
                         />
-                        <FormControl className="font-size-select">
-                          <InputLabel>Kích thước chữ</InputLabel>
+                        <FormControl
+                          className="font-size-select"
+                          style={{ top: "5px" }}
+                        >
+                          <InputLabel style={{ top: "5px" }}>
+                            Kích thước chữ
+                          </InputLabel>
                           <Select
                             value={item.fontSize || "medium"}
                             label="Kích thước chữ"
@@ -1234,8 +1239,13 @@ const BlogListPage = () => {
                           }
                           label="Nghiêng"
                         />
-                        <FormControl className="font-size-select">
-                          <InputLabel>Kích thước chữ</InputLabel>
+                        <FormControl
+                          className="font-size-select"
+                          style={{ top: "5px" }}
+                        >
+                          <InputLabel style={{ top: "5px" }}>
+                            Kích thước chữ
+                          </InputLabel>
                           <Select
                             value={item.fontSize || "medium"}
                             label="Kích thước chữ"
