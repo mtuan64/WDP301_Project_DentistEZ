@@ -32,7 +32,16 @@ app.use(cors(corsOptions));
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(morgan("dev"));
+app.use(
+  morgan("dev", {
+    skip: function (req, res) {
+      return (
+        req.method === "GET" && req.originalUrl.startsWith("/api/chat/messages")
+      );
+    },
+  })
+);
+
 app.use(express.static('public'));
 app.use(bodyParser.json());
 require('dotenv').config();
