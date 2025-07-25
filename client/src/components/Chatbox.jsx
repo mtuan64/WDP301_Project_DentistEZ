@@ -358,9 +358,9 @@ const Chatbox = () => {
 
   const groupedMessages = groupMessages(messages);
 
-  if (!user) {
-    return <div>Loading user data...</div>;
-  }
+  // if (!user) {
+  //   return <div>Loading user data...</div>;
+  // }
 
   return (
     <div className="chat-container">
