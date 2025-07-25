@@ -198,7 +198,7 @@ const BlogPage = () => {
           <div className="carousel-inner">
             <div className="carousel-item active">
               <img
-                src="https://th.bing.com/th/id/R.338461f2382f9fb756e805abcf101f7c?rik=2gg8BVjwt7kijQ&pid=ImgRaw&r=0"
+                src="/images/tintuc.jpg"
                 className="d-block w-100"
                 alt="News Banner"
                 style={{

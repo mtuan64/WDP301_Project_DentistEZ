@@ -163,7 +163,7 @@ const HomePage = () => {
         <div className="carousel-inner">
           <div className="carousel-item active">
             <img
-              src="https://govi.vn/wp-content/uploads/2022/03/tai-sao-can-phai-co-thiet-ke-nha-khoa-an-tuong.jpg"
+              src="/images/homepage1.jpg"
               className="d-block w-100"
               alt="Dental Banner"
               style={{ objectFit: "cover", height: "90vh" }}
@@ -215,7 +215,7 @@ const HomePage = () => {
         <Row className="align-items-center">
           <Col md={6} className="mb-4 mb-md-0">
             <img
-              src="https://mcohome.vn/wp-content/uploads/2023/03/z4146608990086_40d02c3b4e3dce3f26a1857fca47d952.jpg"
+              src="/images/homepage2.jpg"
               alt="Nha Khoa Việt Hàn"
               className="img-fluid rounded shadow-lg"
               style={{ transition: "transform 0.3s ease", transform: "scale(1)" }}
@@ -274,7 +274,7 @@ const HomePage = () => {
           <div className="carousel-inner">
             <div className="carousel-item active">
               <img
-                src="https://binbadecor.vn/wp-content/uploads/2020/06/10-mau-phong-kham-nha-khoa-dep-nhat.jpg"
+                src="/images/x_quang.jpg"
                 className="d-block w-100"
                 alt="Máy chụp X-quang kỹ thuật số"
                 style={{ objectFit: "cover", height: "50vh", borderRadius: "8px" }}
@@ -300,7 +300,7 @@ const HomePage = () => {
             </div>
             <div className="carousel-item">
               <img
-                src="https://seadent.com.vn/wp-content/uploads/2022/01/mo-phong-kham-nha-khoa.jpg"
+                src="/images/ghedieutri.jpg"
                 className="d-block w-100"
                 alt="Ghế điều trị đa năng"
                 style={{ objectFit: "cover", height: "50vh", borderRadius: "8px" }}
@@ -326,7 +326,7 @@ const HomePage = () => {
             </div>
             <div className="carousel-item">
               <img
-                src="https://anviethouse.vn/wp-content/uploads/2021/07/Mau-thiet-ke-phong-kham-nha-khoa-1-3.png"
+                src="/images/phong_votrung.jpg"
                 className="d-block w-100"
                 alt="Phòng vô trùng"
                 style={{ objectFit: "cover", height: "50vh", borderRadius: "8px" }}
