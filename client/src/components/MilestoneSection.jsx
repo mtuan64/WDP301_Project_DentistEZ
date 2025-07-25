@@ -98,7 +98,7 @@ const MilestoneSection = () => {
         {/* Right: Image (Commented Out) */}
         <div className="col-md-6 px-4">
           <img
-            src="https://anviethouse.vn/wp-content/uploads/2021/07/Mau-thiet-ke-phong-kham-nha-khoa-1-2.png"
+            src="/images/homepage3.jpg"
             alt="Nha sĩ đang làm việc"
             className="img-fluid rounded shadow-lg"
             style={{ transition: 'transform 0.3s ease' }}

@@ -669,7 +669,7 @@ const AppointmentPage = () => {
     <div style={styles.container}>
       <div style={styles.bannerSection}>
         <img
-          src="https://mcohome.vn/wp-content/uploads/2023/03/z4146608990086_40d02c3b4e3dce3f26a1857fca47d952.jpg"
+          src="/images/homepage2.jpg"
           alt="Banner Đặt Lịch Hẹn"
           style={styles.bannerImage}
         />
