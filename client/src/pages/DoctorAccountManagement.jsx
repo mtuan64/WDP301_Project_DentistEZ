@@ -40,6 +40,7 @@ const DoctorAccountManagement = () => {
     Description: "",
     ProfileImage: "",
   });
+  const [validationErrors, setValidationErrors] = useState({});
   const doctorsPerPage = 3;
   const navigate = useNavigate();
 
@@ -141,6 +142,7 @@ const DoctorAccountManagement = () => {
       Description: doctor.Description || "",
       ProfileImage: doctor.ProfileImage || "",
     });
+    setValidationErrors({});
     setOpenEditDialog(true);
   };
 
@@ -154,16 +156,47 @@ const DoctorAccountManagement = () => {
       Description: "",
       ProfileImage: "",
     });
+    setValidationErrors({});
   };
 
   const handleEditFormChange = (e) => {
     const { name, value } = e.target;
     console.log(`Updating ${name} to:`, value);
     setEditForm((prev) => ({ ...prev, [name]: value }));
+    // Clear validation error for the field being edited
+    setValidationErrors((prev) => ({ ...prev, [name]: "" }));
+  };
+
+  const validateForm = () => {
+    const errors = {};
+    if (!editForm.Specialty.trim()) {
+      errors.Specialty = "Chuyên môn là bắt buộc";
+    }
+    if (!editForm.Degree.trim()) {
+      errors.Degree = "Bằng cấp là bắt buộc";
+    }
+    if (!editForm.ExperienceYears || editForm.ExperienceYears < 0) {
+      errors.ExperienceYears = "Số năm kinh nghiệm phải là số không âm";
+    }
+    if (!editForm.Description.trim()) {
+      errors.Description = "Mô tả là bắt buộc";
+    }
+    if (!editForm.ProfileImage) {
+      errors.ProfileImage = "Ảnh đại diện là bắt buộc";
+    }
+    return errors;
   };
 
   const handleEditDoctor = async () => {
     if (!selectedDoctor) return;
+
+    const errors = validateForm();
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      setMessage("Vui lòng điền đầy đủ tất cả các trường bắt buộc.");
+      setTimeout(() => setMessage(null), 3000);
+      return;
+    }
 
     try {
       const formData = new FormData();
@@ -234,7 +267,7 @@ const DoctorAccountManagement = () => {
       {loading && <p>Đang tải...</p>}
       {error && <p className="message error">{error}</p>}
       {message && (
-        <p className={`message ${message.includes("Không thể") ? "error" : "success"}`}>
+        <p className={`message ${message.includes("Không thể") || message.includes("Vui lòng") ? "error" : "success"}`}>
           {message}
         </p>
       )}
@@ -297,9 +330,9 @@ const DoctorAccountManagement = () => {
                       size="small"
                       className="status-button"
                       sx={{
-                        fontSize: '0.75rem', // Reduced font size
-                        padding: '4px 8px',  // Reduced padding
-                        minWidth: '60px',   // Minimum width to maintain shape
+                        fontSize: '0.75rem',
+                        padding: '4px 8px',
+                        minWidth: '60px',
                       }}
                       aria-label={`Đặt trạng thái bác sĩ thành ${doctor.Status === "active" ? "không hoạt động" : "hoạt động"}`}
                     >
@@ -324,9 +357,9 @@ const DoctorAccountManagement = () => {
                       onClick={() => handleOpenEditDialog(doctor)}
                       size="small"
                       sx={{
-                        fontSize: '0.75rem', // Reduced font size
-                        padding: '4px 8px',  // Reduced padding
-                        minWidth: '60px',   // Minimum width to maintain shape
+                        fontSize: '0.75rem',
+                        padding: '4px 8px',
+                        minWidth: '60px',
                       }}
                       aria-label={`Chỉnh sửa bác sĩ ${doctor.userId?.fullname || "N/A"}`}
                     >
@@ -404,6 +437,8 @@ const DoctorAccountManagement = () => {
             value={editForm.Specialty}
             onChange={handleEditFormChange}
             required
+            error={!!validationErrors.Specialty}
+            helperText={validationErrors.Specialty}
             sx={{
               marginBottom: '16px',
               '& .MuiInputBase-root': {
@@ -432,6 +467,8 @@ const DoctorAccountManagement = () => {
             value={editForm.Degree}
             onChange={handleEditFormChange}
             required
+            error={!!validationErrors.Degree}
+            helperText={validationErrors.Degree}
             sx={{
               marginBottom: '16px',
               '& .MuiInputBase-root': {
@@ -460,6 +497,8 @@ const DoctorAccountManagement = () => {
             value={editForm.ExperienceYears}
             onChange={handleEditFormChange}
             required
+            error={!!validationErrors.ExperienceYears}
+            helperText={validationErrors.ExperienceYears}
             inputProps={{ min: 0 }}
             sx={{
               marginBottom: '16px',
@@ -490,6 +529,9 @@ const DoctorAccountManagement = () => {
             onChange={handleEditFormChange}
             multiline
             rows={4}
+            required
+            error={!!validationErrors.Description}
+            helperText={validationErrors.Description}
             sx={{
               marginBottom: '16px',
               '& .MuiInputBase-root': {
@@ -516,6 +558,7 @@ const DoctorAccountManagement = () => {
             onChange={(e) => {
               console.log("Tệp đã chọn:", e.target.files[0]);
               setEditForm((prev) => ({ ...prev, ProfileImage: e.target.files[0] }));
+              setValidationErrors((prev) => ({ ...prev, ProfileImage: "" }));
             }}
             style={{
               marginTop: '16px',
@@ -532,6 +575,11 @@ const DoctorAccountManagement = () => {
               },
             }}
           />
+          {validationErrors.ProfileImage && (
+            <p style={{ color: '#d32f2f', fontSize: '0.75rem', marginTop: '8px' }}>
+              {validationErrors.ProfileImage}
+            </p>
+          )}
           {editForm.ProfileImage && typeof editForm.ProfileImage === "string" && (
             <img
               src={editForm.ProfileImage}
