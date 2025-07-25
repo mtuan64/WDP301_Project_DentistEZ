@@ -286,8 +286,8 @@ function StaffManagerPatientApp() {
                           {serviceOption.optionName}
                           {serviceOption.price
                             ? ` - ${Number(serviceOption.price).toLocaleString(
-                                "vi-VN"
-                              )}đ`
+                              "vi-VN"
+                            )}đ`
                             : ""}
                         </div>
                       ) : null}
@@ -314,8 +314,8 @@ function StaffManagerPatientApp() {
                     <td style={tdStyle}>
                       {apt.createdAt
                         ? new Date(apt.createdAt).toLocaleDateString("vi-VN") +
-                          " " +
-                          new Date(apt.createdAt).toLocaleTimeString("vi-VN")
+                        " " +
+                        new Date(apt.createdAt).toLocaleTimeString("vi-VN")
                         : ""}
                     </td>
                     <td style={tdStyle}>{apt.note || ""}</td>
@@ -379,20 +379,22 @@ function StaffManagerPatientApp() {
                           >
                             Tái khám
                           </button>
-                          <button
-                            style={{
-                              ...actionBtnStyle,
-                              background: "#127afc",
-                              color: "#fff",
-                              marginLeft: 8,
-                            }}
-                            onClick={() => {
-                              setPaymentAppointmentId(apt._id);
-                              setShowPaymentModal(true);
-                            }}
-                          >
-                            Thanh toán
-                          </button>
+                          {!apt.reExaminationOf && (
+                            <button
+                              style={{
+                                ...actionBtnStyle,
+                                background: "#127afc",
+                                color: "#fff",
+                                marginLeft: 8,
+                              }}
+                              onClick={() => {
+                                setPaymentAppointmentId(apt._id);
+                                setShowPaymentModal(true);
+                              }}
+                            >
+                              Thanh toán
+                            </button>
+                          )}
                           <button
                             style={{
                               ...actionBtnStyle,
@@ -452,6 +454,7 @@ function StaffManagerPatientApp() {
                             >
                               Hủy lịch
                             </button>
+                            
                           </>
                         )}
                     </td>
