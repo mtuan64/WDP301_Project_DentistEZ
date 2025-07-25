@@ -1,5 +1,5 @@
 const Staff = require("../models/Staff");
-
+const Appointment = require("../models/Appointment");
 exports.getAllStaffs = async (req, res) => {
   try {
     const staffs = await Staff.find().populate("userId", "fullname email address gender phone").exec();
@@ -52,3 +52,33 @@ exports.updateStaffStatus = async (req, res, next) => {
     return next(error);
   }
 };
+
+exports.cancelAppointment = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const appointment = await Appointment.findById(id);
+    if (!appointment) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy lịch hẹn",
+      });
+    }
+
+    appointment.status = "cancelled";
+    await appointment.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Hủy lịch hẹn thành công",
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Lỗi khi hủy lịch hẹn",
+      error: error.message,
+    });
+  }
+};
+
