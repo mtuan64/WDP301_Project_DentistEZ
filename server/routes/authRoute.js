@@ -61,6 +61,7 @@ const {
   getPaymentsByPatientId,
   getAllPaymentsForStaff,
 } = require("../controllers/paymentController");
+const { cancelAppointment } = require("../controllers/staffController");
 
 // Configure multer for file uploads (used for profile pictures and blog images)
 const storage = multer.diskStorage({
@@ -153,6 +154,7 @@ router.get('/appointment-by-clinic', getAppointmentByClinic);
 
 // Route to get appointment distribution by service (last 30 days)
 router.get('/appointment-by-service', getAppointmentByService);
+router.put("/cancel/:id", cancelAppointment);
 
 //get all payments
 router.get("/admin/payments", getAllPayments);

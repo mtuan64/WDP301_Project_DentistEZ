@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "../assets/css/Register.css";
 import "../assets/css/AuthPages.css";
 import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
+import { Modal } from "antd";
 
 const RegisterPage = () => {
   const [username, setUsername] = useState("");
@@ -16,6 +17,24 @@ const RegisterPage = () => {
   const roleid = 1;
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
+  const [notification, setNotification] = useState({
+    visible: false,
+    title: "",
+    content: "",
+    onOk: null,
+  });
+
+  const showNotification = (title, content, onOk = null) => {
+    setNotification({ visible: true, title, content, onOk });
+  };
+
+  const handleCloseNotification = () => {
+    setNotification((prev) => ({ ...prev, visible: false }));
+    if (notification.onOk) {
+      notification.onOk();
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -38,23 +57,23 @@ const RegisterPage = () => {
       });
       const data = await response.json();
       if (response.ok) {
-        alert("Registration successful! We have sent a verification email to your email address. Please check your email.");
-        console.log("Res data:", data);
-        navigate("/verify-email", { state: { email: data.email } });
-
+        showNotification(
+          "Thành công",
+          "Registration successful! We have sent a verification email to your email address. Please check your email.",
+          () => navigate("/verify-email", { state: { email: data.email } })
+        );
       } else {
-        alert(data.msg);
+        showNotification("Lỗi", data.msg);
       }
     } catch (error) {
       console.error("Error:", error);
-      alert("An error occurred. Please try again.");
+      showNotification("Lỗi", "An error occurred. Please try again.");
     }
   };
 
   return (
     <div className="registerContainer">
       <div className="registerWrapper">
-        {/* Phần bên trái - Hình ảnh mô tả */}
         <div className="imageContainer">
           <div className="imagePlaceholder">
             <img
@@ -64,7 +83,6 @@ const RegisterPage = () => {
             />
           </div>
         </div>
-        {/* Phần bên phải - Form đăng ký */}
         <div className="registerFormContainer">
           <h2 className="registerTitle">ĐĂNG KÝ</h2>
           <form onSubmit={handleSubmit} className="registerForm">
@@ -85,23 +103,21 @@ const RegisterPage = () => {
               <label htmlFor="password" className="label">
                 Mật Khẩu
               </label>
-              <div className="formGroup">
-                <div className="passwordWrapper">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    id="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="input"
-                    required
-                  />
-                  <span
-                    className="passwordToggleIcon"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? <AiFillEyeInvisible /> : <AiFillEye />}
-                  </span>
-                </div>
+              <div className="passwordWrapper">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  id="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="input"
+                  required
+                />
+                <span
+                  className="passwordToggleIcon"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <AiFillEyeInvisible /> : <AiFillEye />}
+                </span>
               </div>
             </div>
             <div className="formGroup">
@@ -195,9 +211,18 @@ const RegisterPage = () => {
           </div>
         </div>
       </div>
+      <Modal
+        title={notification.title}
+        open={notification.visible}
+        onOk={handleCloseNotification}
+        onCancel={handleCloseNotification}
+        okText="Đóng"
+        centered
+      >
+        <p>{notification.content}</p>
+      </Modal>
     </div>
   );
-  s;
 };
 
 export default RegisterPage;
