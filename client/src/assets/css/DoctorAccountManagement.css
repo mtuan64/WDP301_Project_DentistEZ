@@ -211,7 +211,7 @@
   opacity: 0.5;
 }
 
-/********** Dialog Styling **********/
+********* Dialog Styling *********
 .doctor-account-management .MuiDialog-root {
   z-index: 10000 !important; /* High z-index to override header */
 }
@@ -224,7 +224,7 @@
   background-color: var(--white);
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  margin-top: 100px !important; /* Offset for header height (adjust if needed) */
+  margin-top: 150px !important; /* Increased offset for header height */
   position: relative;
   max-width: 600px;
   width: 90%;
@@ -256,7 +256,7 @@
 }
 
 .doctor-account-management .MuiOutlinedInput-notchedOutline {
-  border-color: var(--primary);
+  border-color: var(--首要);
 }
 
 .doctor-account-management .Mui-focused .MuiOutlinedInput-notchedOutline {
@@ -382,7 +382,7 @@
   }
 
   .doctor-account-management .MuiDialog-paper {
-    margin-top: 80px !important; /* Adjust for mobile header height */
+    margin-top: 120px !important; /* Adjusted for mobile header height */
     width: 95%;
     max-width: 100%;
   }
