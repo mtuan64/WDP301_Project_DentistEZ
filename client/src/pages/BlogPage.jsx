@@ -10,6 +10,7 @@ const BlogPage = () => {
   const [categories, setCategories] = useState([]);
   const [latestServices, setLatestServices] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [blogsPerPage] = useState(9);
@@ -122,6 +123,11 @@ const BlogPage = () => {
     }, 10000);
   };
 
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+    setCurrentPage(1);
+  };
+
   if (loading) {
     return (
       <div className="blogpage-loading">
@@ -132,12 +138,19 @@ const BlogPage = () => {
   }
 
   const latestBlogs = blogs.slice(0, 3);
-  const filteredListBlogs = selectedCategory
-    ? blogs.filter((blog) => {
-        const categoryId = blog.categoryId?._id || blog.categoryId;
-        return categoryId && categoryId === selectedCategory;
-      })
-    : blogs;
+  const filteredListBlogs = blogs
+    .filter((blog) => {
+      const categoryId = blog.categoryId?._id || blog.categoryId;
+      return selectedCategory ? categoryId === selectedCategory : true;
+    })
+    .filter((blog) => {
+      const searchLower = searchQuery.toLowerCase();
+      const titleMatch = blog.title.toLowerCase().includes(searchLower);
+      const contentMatch = blog.content.some((item) =>
+        item.text.toLowerCase().includes(searchLower)
+      );
+      return searchQuery ? titleMatch || contentMatch : true;
+    });
 
   const indexOfLastBlog = currentPage * blogsPerPage;
   const indexOfFirstBlog = indexOfLastBlog - blogsPerPage;
@@ -304,7 +317,7 @@ const BlogPage = () => {
                         <h4 className="blogpage-featured-post-title">
                           {truncateText(service.serviceName, 20)}
                         </h4>
-                      </Link>                      
+                      </Link>
                       <Link
                         to={`/service-detail/${service._id}`}
                         className="blogpage-read-more"
@@ -319,6 +332,19 @@ const BlogPage = () => {
           </aside>
 
           <div className="blogpage-content-main">
+            <section className="blogpage-search">
+              <div className="blogpage-search-container">
+                <input
+                  type="text"
+                  className="blogpage-search-input"
+                  placeholder="Tìm kiếm bài viết..."
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  aria-label="Search blogs"
+                />
+                <span className="blogpage-search-icon">🔍</span>
+              </div>
+            </section>
             {currentPage === 1 && latestBlogs.length > 0 && (
               <section className="blogpage-latest-blog">
                 <div className="blogpage-latest-blog-carousel">
@@ -420,44 +446,48 @@ const BlogPage = () => {
                 ))}
               </div>
               <div className="blogpage-list-grid">
-                {currentListBlogs.map((blog) => (
-                  <div key={blog._id} className="blogpage-item">
-                    <div className="blogpage-blog-image">
-                      <Link to={`/blog/${blog.slug}`}>
-                        <img
-                          src={
-                            blog.image || "https://via.placeholder.com/260x160"
-                          }
-                          alt={blog.title}
-                          className="blogpage-list-blog-image"
-                          onError={(e) =>
-                            (e.target.src =
-                              "https://via.placeholder.com/260x160")
-                          }
-                        />
-                      </Link>
+                {currentListBlogs.length > 0 ? (
+                  currentListBlogs.map((blog) => (
+                    <div key={blog._id} className="blogpage-item">
+                      <div className="blogpage-blog-image">
+                        <Link to={`/blog/${blog.slug}`}>
+                          <img
+                            src={
+                              blog.image || "https://via.placeholder.com/260x160"
+                            }
+                            alt={blog.title}
+                            className="blogpage-list-blog-image"
+                            onError={(e) =>
+                              (e.target.src =
+                                "https://via.placeholder.com/260x160")
+                            }
+                          />
+                        </Link>
+                      </div>
+                      <div className="blogpage-blog-content">
+                        <Link
+                          to={`/blog/${blog.slug}`}
+                          className="blogpage-blog-title-link"
+                        >
+                          <h4 className="blogpage-blog-title">
+                            {truncateText(blog.title, 50)}
+                          </h4>
+                        </Link>
+                        <p className="blogpage-blog-excerpt">
+                          {getContentSummary(blog.content)}
+                        </p>
+                        <Link
+                          to={`/blog/${blog.slug}`}
+                          className="btn blogpage-read-more"
+                        >
+                          Chi tiết
+                        </Link>
+                      </div>
                     </div>
-                    <div className="blogpage-blog-content">
-                      <Link
-                        to={`/blog/${blog.slug}`}
-                        className="blogpage-blog-title-link"
-                      >
-                        <h4 className="blogpage-blog-title">
-                          {truncateText(blog.title, 50)}
-                        </h4>
-                      </Link>
-                      <p className="blogpage-blog-excerpt">
-                        {getContentSummary(blog.content)}
-                      </p>
-                      <Link
-                        to={`/blog/${blog.slug}`}
-                        className="btn blogpage-read-more"
-                      >
-                        Chi tiết
-                      </Link>
-                    </div>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <p className="blogpage-no-results">Không tìm thấy bài viết nào.</p>
+                )}
               </div>
               {totalPages > 1 && (
                 <Box
