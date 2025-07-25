@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
 import { Pagination, Box } from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
 import "../assets/css/Blog/BlogPage.css";
 
 const BlogPage = () => {
@@ -342,7 +343,10 @@ const BlogPage = () => {
                   onChange={handleSearchChange}
                   aria-label="Search blogs"
                 />
-                <span className="blogpage-search-icon">🔍</span>
+                <SearchIcon
+                  className="blogpage-search-icon"
+                  sx={{ fontSize: "1.5rem", color: "#6b7280" }}
+                />
               </div>
             </section>
             {currentPage === 1 && latestBlogs.length > 0 && (
@@ -453,7 +457,8 @@ const BlogPage = () => {
                         <Link to={`/blog/${blog.slug}`}>
                           <img
                             src={
-                              blog.image || "https://via.placeholder.com/260x160"
+                              blog.image ||
+                              "https://via.placeholder.com/260x160"
                             }
                             alt={blog.title}
                             className="blogpage-list-blog-image"
@@ -486,7 +491,9 @@ const BlogPage = () => {
                     </div>
                   ))
                 ) : (
-                  <p className="blogpage-no-results">Không tìm thấy bài viết nào.</p>
+                  <p className="blogpage-no-results">
+                    Không tìm thấy bài viết nào.
+                  </p>
                 )}
               </div>
               {totalPages > 1 && (
