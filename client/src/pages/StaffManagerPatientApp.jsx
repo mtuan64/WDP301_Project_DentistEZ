@@ -37,6 +37,7 @@ function StaffManagerPatientApp() {
     appointment: null,
   });
   const reloadAppointments = () => setRefresh((r) => !r);
+
   const handleCancelAppointment = async (appointmentId) => {
     try {
       const response = await axios.put(
@@ -58,6 +59,7 @@ function StaffManagerPatientApp() {
       setIsModalVisible(true);
     }
   };
+
   // Debounce search
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -100,7 +102,7 @@ function StaffManagerPatientApp() {
   };
 
   // Hàm kiểm tra nếu thời gian hiện tại cách giờ khám dưới 1 tiếng
-  const isEditDisabled = (apt) => {
+  const isWithin1Hour = (apt) => {
     if (!apt.timeslot?.date || !apt.timeslot?.start_time) return true;
     const appointmentDateTime = moment(
       `${apt.timeslot.date} ${apt.timeslot.start_time}`,
@@ -346,15 +348,15 @@ function StaffManagerPatientApp() {
                               background: "#ff9800",
                               color: "#fff",
                               marginLeft: 8,
-                              opacity: isEditDisabled(apt) ? 0.5 : 1,
-                              cursor: isEditDisabled(apt)
+                              opacity: isWithin1Hour(apt) ? 0.5 : 1,
+                              cursor: isWithin1Hour(apt)
                                 ? "not-allowed"
                                 : "pointer",
                             }}
                             onClick={() =>
-                              !isEditDisabled(apt) && handleEditAppointment(apt)
+                              !isWithin1Hour(apt) && handleEditAppointment(apt)
                             }
-                            disabled={isEditDisabled(apt)}
+                            disabled={isWithin1Hour(apt)}
                           >
                             Đổi lịch
                           </button>
@@ -364,8 +366,15 @@ function StaffManagerPatientApp() {
                               background: "#f44336",
                               color: "#fff",
                               marginLeft: 8,
+                              opacity: isWithin1Hour(apt) ? 0.5 : 1,
+                              cursor: isWithin1Hour(apt)
+                                ? "not-allowed"
+                                : "pointer",
                             }}
-                            onClick={() => handleCancelAppointment(apt._id)}
+                            onClick={() =>
+                              !isWithin1Hour(apt) && handleCancelAppointment(apt._id)
+                            }
+                            disabled={isWithin1Hour(apt)}
                           >
                             Hủy lịch
                           </button>
@@ -399,15 +408,15 @@ function StaffManagerPatientApp() {
                               background: "#ff9800",
                               color: "#fff",
                               marginLeft: 8,
-                              opacity: isEditDisabled(apt) ? 0.5 : 1,
-                              cursor: isEditDisabled(apt)
+                              opacity: isWithin1Hour(apt) ? 0.5 : 1,
+                              cursor: isWithin1Hour(apt)
                                 ? "not-allowed"
                                 : "pointer",
                             }}
                             onClick={() =>
-                              !isEditDisabled(apt) && handleEditAppointment(apt)
+                              !isWithin1Hour(apt) && handleEditAppointment(apt)
                             }
-                            disabled={isEditDisabled(apt)}
+                            disabled={isWithin1Hour(apt)}
                           >
                             Đổi lịch
                           </button>
@@ -428,16 +437,15 @@ function StaffManagerPatientApp() {
                                 background: "#ff9800",
                                 color: "#fff",
                                 marginLeft: 8,
-                                opacity: isEditDisabled(apt) ? 0.5 : 1,
-                                cursor: isEditDisabled(apt)
+                                opacity: isWithin1Hour(apt) ? 0.5 : 1,
+                                cursor: isWithin1Hour(apt)
                                   ? "not-allowed"
                                   : "pointer",
                               }}
                               onClick={() =>
-                                !isEditDisabled(apt) &&
-                                handleEditAppointment(apt)
+                                !isWithin1Hour(apt) && handleEditAppointment(apt)
                               }
-                              disabled={isEditDisabled(apt)}
+                              disabled={isWithin1Hour(apt)}
                             >
                               Đổi lịch
                             </button>
@@ -447,8 +455,15 @@ function StaffManagerPatientApp() {
                                 background: "#f44336",
                                 color: "#fff",
                                 marginLeft: 8,
+                                opacity: isWithin1Hour(apt) ? 0.5 : 1,
+                                cursor: isWithin1Hour(apt)
+                                  ? "not-allowed"
+                                  : "pointer",
                               }}
-                              onClick={() => handleCancelAppointment(apt._id)}
+                              onClick={() =>
+                                !isWithin1Hour(apt) && handleCancelAppointment(apt._id)
+                              }
+                              disabled={isWithin1Hour(apt)}
                             >
                               Hủy lịch
                             </button>
