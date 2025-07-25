@@ -26,7 +26,24 @@ const PatientAppointmentPage = () => {
   const [selectedDate, setSelectedDate] = useState("");
   const [reExamNote, setReExamNote] = useState("");
   const [reExamModalError, setReExamModalError] = useState("");
+  const [notification, setNotification] = useState({
+    visible: false,
+    title: "",
+    content: "",
+    onOk: null,
+  });
   const navigate = useNavigate();
+
+  const showNotification = (title, content, onOk = null) => {
+    setNotification({ visible: true, title, content, onOk });
+  };
+
+  const handleCloseNotification = () => {
+    setNotification((prev) => ({ ...prev, visible: false }));
+    if (notification.onOk) {
+      notification.onOk();
+    }
+  };
 
   // Xử lý timeslot ra date chuẩn cho mọi trường hợp:
   const cleanedTimeslots = reExamTimeslots.map((slot) => ({
@@ -55,11 +72,11 @@ const PatientAppointmentPage = () => {
         setAppointments(res.data.data.appointments);
         setPatientInfo(res.data.data.patient);
       } else {
-        message.error("Không thể tải lịch sử đặt lịch.");
+        showNotification("Lỗi", "Không thể tải lịch sử đặt lịch.");
       }
     } catch (error) {
       console.error(error);
-      message.error("Đã xảy ra lỗi khi tải lịch sử.");
+      showNotification("Lỗi", "Đã xảy ra lỗi khi tải lịch sử.");
     }
     setLoading(false);
   };
@@ -80,27 +97,32 @@ const PatientAppointmentPage = () => {
 
   const handleCancelAppointment = async () => {
     if (!refundAccount) {
-      message.warning("⚠️ Vui lòng nhập số tài khoản ngân hàng để hoàn tiền.");
+      showNotification(
+        "Cảnh báo",
+        "⚠️ Vui lòng nhập số tài khoản ngân hàng để hoàn tiền."
+      );
       return;
     }
 
     try {
       const token = localStorage.getItem("token");
       await axios.put(
-        `http://localhost:9999/app/cancel/${cancelId}`,
+        `http://localhost:9999/app/cancel-refund/${cancelId}`,
         { refundAccount, refundBank },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      message.success("Hủy lịch thành công!");
-      fetchAppointments();
-      setIsCancelModalVisible(false);
-      setRefundAccount("");
-      setRefundBank("");
-      setCancelId(null);
-
-      await fetchAppointments();
+      showNotification("Thành công", "Hủy lịch thành công!", () => {
+        fetchAppointments();
+        setIsCancelModalVisible(false);
+        setRefundAccount("");
+        setRefundBank("");
+        setCancelId(null);
+      });
     } catch (error) {
-      message.error(error.response?.data?.message || "❌ Hủy lịch thất bại.");
+      showNotification(
+        "Lỗi",
+        error.response?.data?.message || "❌ Hủy lịch thất bại."
+      );
     }
   };
 
@@ -132,7 +154,7 @@ const PatientAppointmentPage = () => {
       setReExamTimeslots(res.data.data || []);
     } catch (err) {
       setReExamTimeslots([]);
-      message.error("Không lấy được danh sách khung giờ tái khám");
+      showNotification("Lỗi", "Không lấy được danh sách khung giờ tái khám");
     }
   };
 
@@ -414,7 +436,10 @@ const PatientAppointmentPage = () => {
             disabled={!selectedDate || !selectedTimeslotId}
             onClick={async () => {
               if (!selectedDate || !selectedTimeslotId) {
-                message.warning("Vui lòng chọn cả ngày và giờ tái khám!");
+                showNotification(
+                  "Cảnh báo",
+                  "Vui lòng chọn cả ngày và giờ tái khám!"
+                );
                 return;
               }
               setIsReExamSubmitting(true);
@@ -437,14 +462,15 @@ const PatientAppointmentPage = () => {
                   },
                   { headers: { Authorization: `Bearer ${token}` } }
                 );
-                message.success(
-                  res.data?.message || "Đặt lịch tái khám thành công!"
+                showNotification(
+                  "Thành công",
+                  res.data?.message || "Đặt lịch tái khám thành công!",
+                  () => {
+                    fetchAppointments();
+                    setIsReExamModalVisible(false);
+                    setReExamModalError("");
+                  }
                 );
-                setTimeout(() => {
-                  fetchAppointments();
-                  setIsReExamModalVisible(false);
-                  setReExamModalError("");
-                }, 500);
               } catch (err) {
                 setReExamModalError(
                   err?.response?.data?.message || "Đặt lịch tái khám thất bại!"
@@ -649,6 +675,17 @@ const PatientAppointmentPage = () => {
             </div>
           </div>
         )}
+      </Modal>
+
+      <Modal
+        title={notification.title}
+        open={notification.visible}
+        onOk={handleCloseNotification}
+        onCancel={handleCloseNotification}
+        okText="Đóng"
+        centered
+      >
+        <p>{notification.content}</p>
       </Modal>
     </div>
   );

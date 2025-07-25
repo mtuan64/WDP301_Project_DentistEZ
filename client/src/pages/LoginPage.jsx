@@ -5,6 +5,7 @@ import { useAuth } from "../context/authContext";
 import "../assets/css/Login.css";
 import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
 import "../assets/css/AuthPages.css";
+import { Modal } from "antd";
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -12,14 +13,30 @@ const LoginPage = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
-  // Google Login
+  const [notification, setNotification] = useState({
+    visible: false,
+    title: "",
+    content: "",
+    onOk: null,
+  });
+
+  const showNotification = (title, content, onOk = null) => {
+    setNotification({ visible: true, title, content, onOk });
+  };
+
+  const handleCloseNotification = () => {
+    setNotification((prev) => ({ ...prev, visible: false }));
+    if (notification.onOk) {
+      notification.onOk();
+    }
+  };
+
   useEffect(() => {
     if (window.google) {
       window.google.accounts.id.initialize({
         client_id:
           "1003280842-hd4tp4najthm4sqal9akmqah10nrevfa.apps.googleusercontent.com",
         callback: handleGoogleResponse,
-
         ux_mode: "popup",
         auto_select: false,
         context: "signin",
@@ -50,24 +67,22 @@ const LoginPage = () => {
       if (res.ok) {
         const user = {
           ...data.user,
-          id: data.user._id || data.user.id, // chuẩn hóa ID
+          id: data.user._id || data.user.id,
         };
 
         localStorage.setItem("user", JSON.stringify(user));
         localStorage.setItem("token", data.token);
-        login(user); // ✅ truyền user đã có id
-        alert(data.msg);
-        navigate("/");
+        login(user);
+        showNotification("Thành công", data.msg, () => navigate("/"));
       } else {
-        alert(data.msg);
+        showNotification("Lỗi", data.msg);
       }
     } catch (err) {
       console.error("Google login error:", err);
-      alert("Có lỗi khi đăng nhập bằng Google.");
+      showNotification("Lỗi", "Có lỗi khi đăng nhập bằng Google.");
     }
   };
 
-  // Normal login
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -84,20 +99,19 @@ const LoginPage = () => {
         localStorage.setItem("user", JSON.stringify(data.user));
         localStorage.setItem("token", data.token);
         login(data.user);
-
-        if (data.requireProfileCompletion) {
-          alert(data.msg);
-          navigate("/myprofile");
-        } else {
-          alert(data.msg);
-          navigate("/");
-        }
+        showNotification("Thành công", data.msg, () => {
+          if (data.requireProfileCompletion) {
+            navigate("/myprofile");
+          } else {
+            navigate("/");
+          }
+        });
       } else {
-        alert(data.msg);
+        showNotification("Lỗi", data.msg);
       }
     } catch (error) {
       console.error("Login error:", error);
-      alert("An error occurred. Please try again.");
+      showNotification("Lỗi", "An error occurred. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -166,7 +180,7 @@ const LoginPage = () => {
             <button type="submit" className="loginButton" disabled={isLoading}>
               {isLoading ? (
                 <>
-                  <span className="spinner" /> Đang đăng nhập...
+                  <span className="spinner" /> Đang xử lý...
                 </>
               ) : (
                 "Đăng Nhập"
@@ -183,6 +197,16 @@ const LoginPage = () => {
           </div>
         </div>
       </div>
+      <Modal
+        title={notification.title}
+        open={notification.visible}
+        onOk={handleCloseNotification}
+        onCancel={handleCloseNotification}
+        okText="Đóng"
+        centered
+      >
+        <p>{notification.content}</p>
+      </Modal>
     </div>
   );
 };

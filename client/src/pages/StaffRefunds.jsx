@@ -4,10 +4,9 @@ import {
   Input,
   DatePicker,
   Select,
-  message,
   Tag,
   Button,
-  Popconfirm,
+  Modal,
 } from "antd";
 import axios from "axios";
 import dayjs from "dayjs";
@@ -22,6 +21,23 @@ const RefundManagement = () => {
   const [dateRange, setDateRange] = useState([]);
   const [statusFilter, setStatusFilter] = useState("");
   const [serviceFilter, setServiceFilter] = useState("");
+  const [notification, setNotification] = useState({
+    visible: false,
+    title: "",
+    content: "",
+    onOk: null,
+  });
+
+  const showNotification = (title, content, onOk = null) => {
+    setNotification({ visible: true, title, content, onOk });
+  };
+
+  const handleCloseNotification = () => {
+    setNotification((prev) => ({ ...prev, visible: false }));
+    if (notification.onOk) {
+      notification.onOk();
+    }
+  };
 
   const fetchRefunds = async () => {
     try {
@@ -34,7 +50,7 @@ const RefundManagement = () => {
       setRefunds(sorted);
       setFilteredRefunds(sorted);
     } catch (err) {
-      message.error("Lỗi khi tải danh sách hoàn tiền");
+      showNotification("Lỗi", "Lỗi khi tải danh sách hoàn tiền");
     }
   };
 
@@ -90,11 +106,12 @@ const RefundManagement = () => {
   const handleConfirmRefund = async (id) => {
     try {
       await axios.put(`http://localhost:9999/app/refunds/confirm/${id}`);
-      message.success("Xác nhận hoàn tiền thành công");
-      fetchRefunds(); // cập nhật lại dữ liệu
+      showNotification("Thành công", "Xác nhận hoàn tiền thành công", () => {
+        fetchRefunds();
+      });
     } catch (error) {
       console.error("Lỗi xác nhận hoàn tiền:", error);
-      message.error("Xác nhận hoàn tiền thất bại");
+      showNotification("Lỗi", "Xác nhận hoàn tiền thất bại");
     }
   };
 
@@ -232,6 +249,17 @@ const RefundManagement = () => {
         bordered
         pagination={{ pageSize: 6 }}
       />
+
+      <Modal
+        title={notification.title}
+        open={notification.visible}
+        onOk={handleCloseNotification}
+        onCancel={handleCloseNotification}
+        okText="Đóng"
+        centered
+      >
+        <p>{notification.content}</p>
+      </Modal>
     </div>
   );
 };
