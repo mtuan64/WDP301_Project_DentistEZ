@@ -113,7 +113,7 @@ exports.registerUser = async (req, res, next) => {
     const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*?&]{6,}$/;
     if (!passwordRegex.test(password)) {
       return res.status(400).json({
-        msg: "Password must be at least 6 characters long and include at least one letter and one number.",
+        msg: "Mật khẩu phải dài ít nhất 6 ký tự và bao gồm ít nhất một chữ cái và một chữ số.",
       });
     }
 

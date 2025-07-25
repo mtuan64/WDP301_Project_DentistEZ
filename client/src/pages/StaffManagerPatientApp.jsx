@@ -4,6 +4,7 @@ import PaymentModalFinal from "./PaymentModalFinal";
 import ReExamModalForStaff from "./ReExamModalForStaff";
 import EditAppointmentByStaff from "./EditAppointmentByStaff";
 import moment from "moment";
+import { Modal } from "antd";
 
 const STATUS_TABS = [
   { label: "Confirmed", value: "confirmed" },
@@ -25,10 +26,38 @@ function StaffManagerPatientApp() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentAppointmentId, setPaymentAppointmentId] = useState(null);
   const [refresh, setRefresh] = useState(false);
-  const [reExamModal, setReExamModal] = useState({ open: false, rootAppointment: null });
-  const [editModal, setEditModal] = useState({ open: false, appointment: null });
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [modalContent, setModalContent] = useState("");
+  const [reExamModal, setReExamModal] = useState({
+    open: false,
+    rootAppointment: null,
+  });
+  const [editModal, setEditModal] = useState({
+    open: false,
+    appointment: null,
+  });
   const reloadAppointments = () => setRefresh((r) => !r);
-
+  const handleCancelAppointment = async (appointmentId) => {
+    try {
+      const response = await axios.put(
+        `http://localhost:9999/api/cancel/${appointmentId}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      setModalContent("Hủy lịch thành công!");
+      setIsModalVisible(true);
+      reloadAppointments();
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message || "Hủy lịch thất bại!";
+      setModalContent(errorMessage);
+      setIsModalVisible(true);
+    }
+  };
   // Debounce search
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -147,7 +176,13 @@ function StaffManagerPatientApp() {
         Quản lý lịch khám của bệnh nhân
       </h2>
       {searchBox}
-      <div style={{ display: "flex", borderBottom: "1px solid #f1f1f1", marginBottom: 24 }}>
+      <div
+        style={{
+          display: "flex",
+          borderBottom: "1px solid #f1f1f1",
+          marginBottom: 24,
+        }}
+      >
         {STATUS_TABS.map((tab) => (
           <button
             key={tab.value}
@@ -160,7 +195,10 @@ function StaffManagerPatientApp() {
               fontWeight: 500,
               fontSize: 18,
               border: "none",
-              borderBottom: status === tab.value ? "2.5px solid #fff" : "2.5px solid transparent",
+              borderBottom:
+                status === tab.value
+                  ? "2.5px solid #fff"
+                  : "2.5px solid transparent",
               borderRadius: status === tab.value ? "12px 12px 0 0" : 0,
               outline: "none",
               cursor: "pointer",
@@ -169,11 +207,20 @@ function StaffManagerPatientApp() {
             }}
           >
             {tab.label}{" "}
-            <span style={{ color: "#888", fontWeight: 400 }}>({getCount(tab.value)})</span>
+            <span style={{ color: "#888", fontWeight: 400 }}>
+              ({getCount(tab.value)})
+            </span>
           </button>
         ))}
       </div>
-      <div style={{ overflowX: "auto", padding: 0, margin: 0, background: "#fafbfc" }}>
+      <div
+        style={{
+          overflowX: "auto",
+          padding: 0,
+          margin: 0,
+          background: "#fafbfc",
+        }}
+      >
         <table
           style={{
             width: "100%",
@@ -210,7 +257,7 @@ function StaffManagerPatientApp() {
                 return (
                   <tr key={apt._id}>
                     <td style={{ ...tdStyle, fontWeight: 700 }}>
-                      {((page - 1) * PAGE_SIZE) + idx + 1}
+                      {(page - 1) * PAGE_SIZE + idx + 1}
                     </td>
                     <td style={tdStyle}>{patientUser.fullname || ""}</td>
                     <td style={tdStyle}>{patientUser.email || ""}</td>
@@ -225,18 +272,34 @@ function StaffManagerPatientApp() {
                         wordBreak: "break-word",
                       }}
                     >
-                      <div style={{ fontWeight: 600 }}>{service.serviceName || ""}</div>
+                      <div style={{ fontWeight: 600 }}>
+                        {service.serviceName || ""}
+                      </div>
                       {serviceOption.optionName ? (
-                        <div style={{ fontSize: 14, color: "#888", fontWeight: 400 }}>
+                        <div
+                          style={{
+                            fontSize: 14,
+                            color: "#888",
+                            fontWeight: 400,
+                          }}
+                        >
                           {serviceOption.optionName}
                           {serviceOption.price
-                            ? ` - ${Number(serviceOption.price).toLocaleString("vi-VN")}đ`
+                            ? ` - ${Number(serviceOption.price).toLocaleString(
+                                "vi-VN"
+                              )}đ`
                             : ""}
                         </div>
                       ) : null}
                     </td>
                     <td style={tdStyle}>{doctorUser.fullname || ""}</td>
-                    <td style={{ ...tdStyle, whiteSpace: "normal", wordBreak: "break-word" }}>
+                    <td
+                      style={{
+                        ...tdStyle,
+                        whiteSpace: "normal",
+                        wordBreak: "break-word",
+                      }}
+                    >
                       <div style={{ fontWeight: 600 }}>
                         {timeslot.date
                           ? new Date(timeslot.date).toLocaleDateString("vi-VN")
@@ -275,25 +338,45 @@ function StaffManagerPatientApp() {
                       )}
                     </td>
                     <td style={tdStyle}>
-                      {status === "confirmed" && (
-                        <button
-                          style={{
-                            ...actionBtnStyle,
-                            background: "#ff9800",
-                            color: "#fff",
-                            marginLeft: 8,
-                            opacity: isEditDisabled(apt) ? 0.5 : 1,
-                            cursor: isEditDisabled(apt) ? "not-allowed" : "pointer",
-                          }}
-                          onClick={() => !isEditDisabled(apt) && handleEditAppointment(apt)}
-                          disabled={isEditDisabled(apt)}
-                        >
-                          Đổi lịch
-                        </button>
+                      {status === "confirmed" && apt.status !== "cancelled" && (
+                        <>
+                          <button
+                            style={{
+                              ...actionBtnStyle,
+                              background: "#ff9800",
+                              color: "#fff",
+                              marginLeft: 8,
+                              opacity: isEditDisabled(apt) ? 0.5 : 1,
+                              cursor: isEditDisabled(apt)
+                                ? "not-allowed"
+                                : "pointer",
+                            }}
+                            onClick={() =>
+                              !isEditDisabled(apt) && handleEditAppointment(apt)
+                            }
+                            disabled={isEditDisabled(apt)}
+                          >
+                            Đổi lịch
+                          </button>
+                          <button
+                            style={{
+                              ...actionBtnStyle,
+                              background: "#f44336",
+                              color: "#fff",
+                              marginLeft: 8,
+                            }}
+                            onClick={() => handleCancelAppointment(apt._id)}
+                          >
+                            Hủy lịch
+                          </button>
+                        </>
                       )}
                       {status === "completed" && (
                         <>
-                          <button style={actionBtnStyle} onClick={() => handleReExam(apt)}>
+                          <button
+                            style={actionBtnStyle}
+                            onClick={() => handleReExam(apt)}
+                          >
                             Tái khám
                           </button>
                           <button
@@ -317,36 +400,60 @@ function StaffManagerPatientApp() {
                               color: "#fff",
                               marginLeft: 8,
                               opacity: isEditDisabled(apt) ? 0.5 : 1,
-                              cursor: isEditDisabled(apt) ? "not-allowed" : "pointer",
+                              cursor: isEditDisabled(apt)
+                                ? "not-allowed"
+                                : "pointer",
                             }}
-                            onClick={() => !isEditDisabled(apt) && handleEditAppointment(apt)}
+                            onClick={() =>
+                              !isEditDisabled(apt) && handleEditAppointment(apt)
+                            }
                             disabled={isEditDisabled(apt)}
                           >
                             Đổi lịch
                           </button>
                         </>
                       )}
-                      {status === "fully_paid" && (
-                        <>
-                          <button style={actionBtnStyle} onClick={() => handleReExam(apt)}>
-                            Tái khám
-                          </button>
-                          <button
-                            style={{
-                              ...actionBtnStyle,
-                              background: "#ff9800",
-                              color: "#fff",
-                              marginLeft: 8,
-                              opacity: isEditDisabled(apt) ? 0.5 : 1,
-                              cursor: isEditDisabled(apt) ? "not-allowed" : "pointer",
-                            }}
-                            onClick={() => !isEditDisabled(apt) && handleEditAppointment(apt)}
-                            disabled={isEditDisabled(apt)}
-                          >
-                            Đổi lịch
-                          </button>
-                        </>
-                      )}
+                      {status === "fully_paid" &&
+                        apt.status !== "cancelled" && (
+                          <>
+                            <button
+                              style={actionBtnStyle}
+                              onClick={() => handleReExam(apt)}
+                            >
+                              Tái khám
+                            </button>
+                            <button
+                              style={{
+                                ...actionBtnStyle,
+                                background: "#ff9800",
+                                color: "#fff",
+                                marginLeft: 8,
+                                opacity: isEditDisabled(apt) ? 0.5 : 1,
+                                cursor: isEditDisabled(apt)
+                                  ? "not-allowed"
+                                  : "pointer",
+                              }}
+                              onClick={() =>
+                                !isEditDisabled(apt) &&
+                                handleEditAppointment(apt)
+                              }
+                              disabled={isEditDisabled(apt)}
+                            >
+                              Đổi lịch
+                            </button>
+                            <button
+                              style={{
+                                ...actionBtnStyle,
+                                background: "#f44336",
+                                color: "#fff",
+                                marginLeft: 8,
+                              }}
+                              onClick={() => handleCancelAppointment(apt._id)}
+                            >
+                              Hủy lịch
+                            </button>
+                          </>
+                        )}
                     </td>
                   </tr>
                 );
@@ -384,7 +491,9 @@ function StaffManagerPatientApp() {
             open={reExamModal.open}
             rootAppointment={reExamModal.rootAppointment}
             token={token}
-            onClose={() => setReExamModal({ open: false, rootAppointment: null })}
+            onClose={() =>
+              setReExamModal({ open: false, rootAppointment: null })
+            }
             onSuccess={reloadAppointments}
           />
         )}
@@ -399,39 +508,52 @@ function StaffManagerPatientApp() {
         )}
 
         {totalPages > 1 && (
-  <div style={{ display: "flex", justifyContent: "center", margin: "24px 0" }}>
-    <button
-      onClick={() => setPage(page - 1)}
-      disabled={page === 1}
-      style={paginationBtnStyle}
-    >
-      {"<"}
-    </button>
-    {Array.from({ length: totalPages }, (_, idx) => (
-      <button
-        key={idx + 1}
-        onClick={() => setPage(idx + 1)}
-        style={{
-          ...paginationBtnStyle,
-          fontWeight: page === idx + 1 ? "bold" : "normal",
-          color: page === idx + 1 ? "#127afc" : "#333",
-          borderBottom: page === idx + 1 ? "2px solid #127afc" : "none",
-        }}
-      >
-        {idx + 1}
-      </button>
-    ))}
-    <button
-      onClick={() => setPage(page + 1)}
-      disabled={page === totalPages}
-      style={paginationBtnStyle}
-    >
-      {">"}
-    </button>
-  </div>
-)}
-
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              margin: "24px 0",
+            }}
+          >
+            <button
+              onClick={() => setPage(page - 1)}
+              disabled={page === 1}
+              style={paginationBtnStyle}
+            >
+              {"<"}
+            </button>
+            {Array.from({ length: totalPages }, (_, idx) => (
+              <button
+                key={idx + 1}
+                onClick={() => setPage(idx + 1)}
+                style={{
+                  ...paginationBtnStyle,
+                  fontWeight: page === idx + 1 ? "bold" : "normal",
+                  color: page === idx + 1 ? "#127afc" : "#333",
+                  borderBottom: page === idx + 1 ? "2px solid #127afc" : "none",
+                }}
+              >
+                {idx + 1}
+              </button>
+            ))}
+            <button
+              onClick={() => setPage(page + 1)}
+              disabled={page === totalPages}
+              style={paginationBtnStyle}
+            >
+              {">"}
+            </button>
+          </div>
+        )}
       </div>
+      <Modal
+        open={isModalVisible}
+        onOk={() => setIsModalVisible(false)}
+        onCancel={() => setIsModalVisible(false)}
+        title="Thông báo"
+      >
+        <p>{modalContent}</p>
+      </Modal>
     </div>
   );
 }

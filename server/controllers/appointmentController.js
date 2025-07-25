@@ -728,6 +728,48 @@ const cancelAppointmentWithRefund = async (req, res) => {
   }
 };
 
+const cancelAppointment = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const appointment = await Appointment.findById(id);
+    if (!appointment) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy lịch hẹn",
+      });
+    }
+
+    const patient = await Patient.findOne({ userId: req.user.userId });
+    if (!patient) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy hồ sơ bệnh nhân của bạn",
+      });
+    }
+
+    if (appointment.patientId.toString() !== patient._id.toString()) {
+      return res.status(403).json({
+        message: "Bạn không có quyền hủy lịch hẹn này",
+        status: "ERROR",
+      });
+    }
+    appointment.status = "cancelled";
+    await appointment.save();
+    res.status(200).json({
+      success: true,
+      message: "Hủy lịch hẹn thành công",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Lỗi khi hủy lịch hẹn",
+      error: error.message,
+      
+    });
+    console.log(error);
+  }
+};
 // controllers/refundController.js
 const getAllRefunds = async (req, res) => {
   try {
@@ -773,7 +815,7 @@ const getAllRefunds = async (req, res) => {
           },
         ],
       })
-      .sort({createdAt: -1});
+      .sort({ createdAt: -1 });
 
     res.status(200).json({ success: true, data: refunds });
   } catch (err) {
@@ -1114,6 +1156,7 @@ module.exports = {
   getAppointmentsByPatient,
   getAllRefunds,
   cancelAppointmentWithRefund,
+  cancelAppointment,
   createAppointment,
   confirmRefund,
   editAppointment,
