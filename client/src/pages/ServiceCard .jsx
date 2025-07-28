@@ -78,7 +78,8 @@ const ServiceCard = () => {
       fontWeight: '600',
       color: '#2c3e50',
       textAlign: 'center',
-      marginBottom: '30px'
+      marginBottom: '30px',
+      marginTop: '20px'
     },
     servicesGrid: {
       display: 'grid',
@@ -128,16 +129,33 @@ const ServiceCard = () => {
   return (
     <div style={styles.servicePage}>
 
-      {/* Banner Section */}
-      <div style={styles.bannerSection}>
-        <img
-          src="/images/servicebanner.png"
-          alt="Service Banner"
-          style={styles.bannerImage}
-          onError={(e) => {
-            e.target.src = '/api/placeholder/1200/300'; // Fallback image
-          }}
-        />
+      {/* Hero Section */}
+      <div id="heroCarousel" className="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="4000">
+        <div className="carousel-inner">
+          <div className="carousel-item active">
+            <img
+              src="/images/dichvu.jpg"
+              className="d-block w-100"
+              alt="Dentist Banner"
+              style={{ objectFit: 'cover', height: '80vh', borderRadius: '8px' }}
+            />
+            <div
+              className="carousel-caption d-flex flex-column justify-content-center align-items-center"
+              style={{
+                backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                top: 0,
+                bottom: 0,
+                left: 0,
+                right: 0,
+                position: 'absolute',
+                borderRadius: '8px'
+              }}
+            >
+              <h1 className="display-3 fw-bold text-white mb-3">Dịch vụ phòng khám</h1>
+              <p className="text-white fs-5">Trải nghiệm các dịch vụ nha khoa tốt nhất hiện nay</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Services Grid */}

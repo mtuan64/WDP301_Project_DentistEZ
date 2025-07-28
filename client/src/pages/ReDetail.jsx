@@ -17,14 +17,14 @@ import dayjs from "dayjs";
 import EditAppointment from "./EditAppointment";
 
 // Kiểm tra lịch có cách thời điểm hiện tại dưới 8 tiếng không
-const isWithin8Hours = (timeslot) => {
-  if (!timeslot?.date || !timeslot?.start_time) return false;
+const isPastAppointmentTime = (timeslot) => {
+  if (!timeslot?.date || !timeslot?.start_time) return true;
   const appointmentTime = dayjs(
     `${timeslot.date} ${timeslot.start_time}`,
     "YYYY-MM-DD HH:mm"
   );
   const currentTime = dayjs();
-  return appointmentTime.isBefore(currentTime.add(8, "hour"));
+  return appointmentTime.isBefore(currentTime);
 };
 
 const ReExaminationTable = ({ appointments, onEdit, onCancel }) => {
@@ -98,12 +98,13 @@ const ReExaminationTable = ({ appointments, onEdit, onCancel }) => {
       title: "Hành động",
       render: (_, record) => {
         const isCancelled = record.status === "cancelled";
+        const isPast = isPastAppointmentTime(record.timeslotId);
         return (
           <div className="flex space-x-2">
             <Button
               type="primary"
               danger
-              disabled={isCancelled || !isWithin8Hours(record.timeslotId)}
+              disabled={isCancelled || isPast}
               onClick={() => onCancel(record._id)}
             >
               {isCancelled ? "Đã huỷ" : "Huỷ lịch"}
@@ -115,7 +116,7 @@ const ReExaminationTable = ({ appointments, onEdit, onCancel }) => {
               disabled={
                 record.status === "completed" ||
                 record.status === "cancelled" ||
-                isWithin8Hours(record.timeslotId)
+                isPast
               }
             >
               Đổi lịch
@@ -260,9 +261,7 @@ const ReDetail = () => {
             </Descriptions.Item>
             <Descriptions.Item label="Ghi chú">{root.note}</Descriptions.Item>
             <Descriptions.Item label="Trạng thái">
-              <span style={{ textTransform: "capitalize" }}>
-                {root.status}
-              </span>
+              <span style={{ textTransform: "capitalize" }}>{root.status}</span>
             </Descriptions.Item>
           </Descriptions>
         </Card>

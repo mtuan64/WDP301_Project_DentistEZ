@@ -86,7 +86,7 @@ const DoctorPage = () => {
         <div className="carousel-inner">
           <div className="carousel-item active">
             <img
-              src="https://seadent.com.vn/wp-content/uploads/2021/12/y-si-nha-khoa-co-duoc-mo-phong-kham-khong.jpg"
+              src="/images/bacsi.jpg"
               className="d-block w-100"
               alt="Dentist Banner"
               style={{ objectFit: 'cover', height: '80vh', borderRadius: '8px' }}
